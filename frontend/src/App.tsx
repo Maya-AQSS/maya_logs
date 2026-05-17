@@ -8,6 +8,7 @@ import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
 import { useOidcSession } from '@maya/shared-auth-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
+import { resolveServiceUrl } from './lib/peerService';
 
 // Code-splitting route-level: cada página carga en chunk separado bajo demanda.
 const ArchivedLogDetailPage = lazy(() =>
@@ -34,8 +35,10 @@ const LogDetailPage = lazy(() =>
 const LogsPage = lazy(() =>
   import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })),
 );
-const DASHBOARD_API_URL = (import.meta.env.VITE_DASHBOARD_API_URL as string | undefined)
-  ?? 'https://dashboard-api.maya.test';
+const DASHBOARD_API_URL = resolveServiceUrl(
+  import.meta.env.VITE_DASHBOARD_API_URL as string | undefined,
+  'dashboard-api',
+);
 
 function AppRoutes() {
   const { t } = useTranslation('common');
@@ -74,8 +77,10 @@ function AppWithLayout() {
 
   const userEmail = (profile?.email ?? user?.email) as string | undefined;
   const onProfile = () => {
-    const dashboardOrigin = (import.meta.env.VITE_DASHBOARD_URL as string | undefined)
-      ?? 'https://dashboard.maya.test';
+    const dashboardOrigin = resolveServiceUrl(
+      import.meta.env.VITE_DASHBOARD_URL as string | undefined,
+      'dashboard',
+    );
     window.location.assign(`${dashboardOrigin}/profile`);
   };
 
