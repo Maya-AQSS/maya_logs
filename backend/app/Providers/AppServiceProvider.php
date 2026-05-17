@@ -30,7 +30,9 @@ use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use App\Services\ErrorCodeService;
 use App\Services\LogService;
+use App\Models\User;
 use App\Services\PanelUserService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -64,5 +66,16 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment(['production', 'staging'])) {
             URL::forceScheme('https');
         }
+
+        // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
+        // que JwtMiddleware deposita en el request tras validar el token.
+        Auth::viaRequest('jwt-token', function ($request) {
+            $profile = $request->attributes->get('jwt_user');
+            if (! is_array($profile) || empty($profile['id'])) {
+                return null;
+            }
+
+            return User::query()->find($profile['id']);
+        });
     }
 }
