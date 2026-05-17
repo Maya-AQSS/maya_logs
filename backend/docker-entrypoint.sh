@@ -11,6 +11,10 @@ chown -R www-data:www-data bootstrap/cache 2>/dev/null || true
 
 # Limpiar cache de bootstrap obsoleto
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+# config.php cacheado congela env() — eliminarlo permite que tests/bootstrap.php
+# imponga sqlite ANTES de Laravel cargar config. Sin esto, pest --coverage ejecuta
+# contra la BD pgsql cacheada.
+rm -f bootstrap/cache/config.php
 
 # Composer dependencies (volumen bind monta packages/ en runtime)
 if [ ! -f "vendor/autoload.php" ] || [ "composer.json" -nt "vendor/autoload.php" ]; then
@@ -35,7 +39,9 @@ chown -R www-data:www-data storage 2>/dev/null || true
 # Package discovery
 php artisan package:discover --ansi 2>/dev/null || true
 
-# Config cache (bake env vars including FRONTEND_URL for CORS)
-php artisan config:cache 2>/dev/null || true
+# NOTE: config:cache eliminado a propósito. Cachear config hace que
+# `php artisan test --coverage` corra con env vars cacheadas (DB_CONNECTION del
+# shell), pisando el tests/bootstrap.php que fuerza sqlite. El coste de no
+# cachear es <50ms por request — aceptable en desarrollo.
 
 exec php artisan serve --host=0.0.0.0 --port=8000

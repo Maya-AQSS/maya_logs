@@ -8,6 +8,12 @@ RUN apk add --no-cache \
 RUN docker-php-ext-install \
     pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip sockets
 
+# pcov para coverage rápido en `php artisan test --coverage` (más rápido que xdebug).
+RUN apk add --no-cache $PHPIZE_DEPS \
+    && pecl install pcov \
+    && docker-php-ext-enable pcov \
+    && apk del $PHPIZE_DEPS
+
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
