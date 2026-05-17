@@ -9,7 +9,7 @@ use App\Models\User;
 final readonly class UserRefDto
 {
     public function __construct(
-        public int $id,
+        public string $id,
         public string $name,
     ) {}
 
