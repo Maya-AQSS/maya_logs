@@ -10,13 +10,30 @@ use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
 use App\Services\Contracts\LogServiceInterface;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Maya\Http\Pagination\PaginatedDto;
+use Maya\Messaging\Publishers\AuditPublisher;
+use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Throwable;
 
 class LogService implements LogServiceInterface
 {
+    private const AUDIT_ENTITY_TYPE = 'log';
+
+    private const CODE_MARK_RESOLVED_FAILED = 'LAR-LOG-018';
+
+    private const CODE_NOT_FOUND = 'LAR-LOG-019';
+
     public function __construct(
-        private LogRepositoryInterface $logRepository
+        private LogRepositoryInterface $logRepository,
+        private AuditPublisher $auditPublisher,
+        private ResilientLogPublisher $resilientLogPublisher,
     ) {}
+
+    private function messagingAppSlug(): string
+    {
+        return (string) config('messaging.app');
+    }
 
     public function paginate(int $perPage = 25): PaginatedDto
     {
@@ -28,7 +45,18 @@ class LogService implements LogServiceInterface
 
     public function findOrFail(int $id): LogDto
     {
-        return LogDto::fromModel($this->logRepository->findOrFail($id));
+        try {
+            return LogDto::fromModel($this->logRepository->findOrFail($id));
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                self::CODE_NOT_FOUND,
+                ['log_id' => $id],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
     }
 
     public function streamPayload(int $limit = 10): array
@@ -131,10 +159,55 @@ class LogService implements LogServiceInterface
         return $this->logRepository->archivedLogIdFor($logId);
     }
 
-    public function resolved(int $logId): void
+    /**
+     * Marca el log como resuelto.
+     *
+     * Si el log no existe o falla la persistencia se publica incidencia a maya.logs
+     * (LAR-LOG-018) y se relanza. Si la operación tiene efecto, publica a maya.audit
+     * vía AuditPublisher con el actor JWT — RetryAmqpPublishJob recupera fallos
+     * (LAR-LOG-020 documenta la incidencia AMQP).
+     */
+    public function resolved(int $logId, string $actorUserId): void
     {
-        $this->logRepository->findOrFail($logId);
-        $this->logRepository->resolved($logId);
+        try {
+            $this->logRepository->findOrFail($logId);
+            $this->logRepository->resolved($logId);
+
+            $this->afterCommit(function () use ($logId, $actorUserId): void {
+                $this->auditPublisher->publish(
+                    applicationSlug: $this->messagingAppSlug(),
+                    entityType: self::AUDIT_ENTITY_TYPE,
+                    entityId: (string) $logId,
+                    action: 'Marcar un log como resuelto',
+                    userId: $actorUserId,
+                    previousValue: ['resolved' => false],
+                    newValue: ['resolved' => true],
+                );
+            });
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                self::CODE_MARK_RESOLVED_FAILED,
+                ['log_id' => $logId, 'actor_user_id' => $actorUserId],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
+    }
+
+    /**
+     * Sin transacción activa, publica de inmediato; dentro de DB::transaction difiere al commit.
+     */
+    private function afterCommit(callable $callback): void
+    {
+        if (DB::transactionLevel() === 0) {
+            $callback();
+
+            return;
+        }
+
+        DB::afterCommit($callback);
     }
 
     /**

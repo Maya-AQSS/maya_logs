@@ -113,9 +113,22 @@ class LogController extends Controller
         }
     }
 
-    public function resolve(int $id): JsonResponse
+    public function resolve(Request $request, int $id): JsonResponse
     {
-        $this->logService->resolved($id);
+        /** @var array<string, mixed>|null $jwtUser */
+        $jwtUser = $request->attributes->get('jwt_user');
+        $jwtSubject = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
+
+        if (! is_string($jwtSubject) || $jwtSubject === '') {
+            return response()->json([
+                'error' => [
+                    'code' => 'actor_missing',
+                    'message' => __('logs.actor_missing'),
+                ],
+            ], 403);
+        }
+
+        $this->logService->resolved($id, $jwtSubject);
 
         return response()->json([
             'data' => ['id' => $id, 'resolved' => true],

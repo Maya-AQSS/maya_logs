@@ -9,13 +9,18 @@ use App\Repositories\Contracts\CommentRepositoryInterface;
 use App\Services\CommentService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
+use Maya\Messaging\Publishers\LogPublisher;
+use Maya\Messaging\Publishers\ResilientLogPublisher;
 use Mews\Purifier\Facades\Purifier;
 
 uses(\Tests\TestCase::class);
 
 beforeEach(function () {
     $this->mockRepo = Mockery::mock(CommentRepositoryInterface::class);
-    $this->service  = new CommentService($this->mockRepo);
+    // ResilientLogPublisher es final → instanciar real con LogPublisher mock
+    // (igual que ArchivedLogServiceArchiveEventTest).
+    $publisher = new ResilientLogPublisher(Mockery::mock(LogPublisher::class)->shouldIgnoreMissing());
+    $this->service  = new CommentService($this->mockRepo, $publisher);
 });
 
 afterEach(function () {

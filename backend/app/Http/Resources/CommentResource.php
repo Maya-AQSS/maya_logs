@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Dtos\CommentDto;
+use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
@@ -19,7 +21,7 @@ class CommentResource extends JsonResource
         /** @var CommentDto $dto */
         $dto = $this->resource;
 
-        $authUser = $request->user();
+        $authUser = $this->resolveViewerForGates($request);
         $canEdit = $authUser !== null && Gate::forUser($authUser)->check('update', $dto->source);
         $canDelete = $authUser !== null && Gate::forUser($authUser)->check('delete', $dto->source);
 
@@ -41,5 +43,32 @@ class CommentResource extends JsonResource
         }
 
         return $payload;
+    }
+
+    /**
+     * Las rutas API usan middleware JWT stateless: {@see Request::user()} es null en muchos
+     * flujos (el guard `api` resuelve User via attribute, pero no siempre se inyecta a
+     * tiempo para los Resources). Los flags `can_edit`/`can_delete` deben evaluarse contra
+     * el mismo actor que update/delete — fallback al sujeto JWT depositado por el
+     * middleware {@see \Maya\Auth\Middleware\JwtMiddleware} en el attribute `jwt_user`.
+     *
+     * Cherry-pick conceptual del commit 23af11b de refactor/globalExperts adaptado a la
+     * arquitectura DTO de v2.
+     */
+    private function resolveViewerForGates(Request $request): ?User
+    {
+        $user = $request->user();
+        if ($user instanceof User) {
+            return $user;
+        }
+
+        /** @var array<string, mixed>|null $jwtUser */
+        $jwtUser = $request->attributes->get('jwt_user');
+        $subject = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
+        if (! is_string($subject) || $subject === '') {
+            return null;
+        }
+
+        return app(UserRepositoryInterface::class)->findByKey($subject);
     }
 }
