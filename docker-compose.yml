@@ -35,6 +35,11 @@ services:
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
       SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
       SESSION_ENCRYPT: ${SESSION_ENCRYPT:-false}
+      # ─── Redis (caché JWKS + perfil JWT en shared-auth-laravel) ─
+      REDIS_HOST: ${REDIS_HOST:-maya_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secret}
+      REDIS_DB: ${REDIS_DB:-0}
       # ─── Auth (gateway externo) ─────────────────────────────────
       AUTH_EXTERNAL_URL: ${AUTH_EXTERNAL_URL:-http://maya_auth_backend:8000}
       AUTH_EXTERNAL_PUBLIC_URL: ${AUTH_EXTERNAL_PUBLIC_URL}
@@ -98,6 +103,10 @@ services:
       DB_USERNAME: ${DB_USERNAME:-log_mgmt_user}
       DB_PASSWORD: ${DB_PASSWORD:-secret}
       CACHE_STORE: database
+      REDIS_HOST: ${REDIS_HOST:-maya_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secret}
+      REDIS_DB: ${REDIS_DB:-0}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-maya_rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USER: ${RABBITMQ_USER:-admin}
