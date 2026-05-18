@@ -77,11 +77,16 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        // Migraciones académicas compartidas (teams, team_members,
-        // user_study_types, user_studies, user_course_modules) vienen del
-        // paquete `maya/shared-profile-laravel`. Carga opt-in: dms no las
-        // usa porque tiene su propia variante con FK al catálogo académico.
-        $this->loadMigrationsFrom(ProfileMigrations::academicViews());
+        // Migraciones FDW compartidas del paquete `maya/shared-profile-laravel`:
+        //   - academicAssignments: user_study_types, user_studies, user_course_modules
+        //   - teams: teams, team_members
+        //   - userPermissions: user_resolved_permissions (la vista remota se
+        //     configura por app en `database.fdw.user_permissions.remote_view`).
+        // dms carga solo los dos primeros grupos (tiene su propio modelo de
+        // permisos basado en `permission_code`).
+        $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
+        $this->loadMigrationsFrom(ProfileMigrations::teams());
+        $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
 
         // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
         // que JwtMiddleware deposita en el request tras validar el token.

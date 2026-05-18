@@ -149,6 +149,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | FDW — Foreign Data Wrapper connections (read-only)
+    |--------------------------------------------------------------------------
+    |
+    | Cada app del ecosistema proyecta sus FDW desde Odoo (datos académicos /
+    | de equipos) y maya_authorization (permisos resueltos). El paquete
+    | `maya/shared-profile-laravel` consume estos bloques.
+    */
+
+    'fdw' => [
+        // Vista de permisos resueltos por maya_authorization (resolución de
+        // roles + overrides). Cada app declara su vista específica
+        // (`v_audit_user_permissions`, `v_logs_user_permissions`, …).
+        'user_permissions' => [
+            'host'        => env('FDW_USER_PERMISSIONS_HOST', 'maya_infra_postgres'),
+            'port'        => env('FDW_USER_PERMISSIONS_PORT', '5432'),
+            'database'    => env('FDW_USER_PERMISSIONS_DATABASE', 'maya_auth'),
+            'username'    => env('FDW_USER_PERMISSIONS_USERNAME', 'maya'),
+            'password'    => env('FDW_USER_PERMISSIONS_PASSWORD', 'secret'),
+            'schema'      => env('FDW_USER_PERMISSIONS_SCHEMA', 'public'),
+            'remote_view' => env('FDW_USER_PERMISSIONS_REMOTE_VIEW', 'v_logs_user_permissions'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Redis Databases
     |--------------------------------------------------------------------------
     |
