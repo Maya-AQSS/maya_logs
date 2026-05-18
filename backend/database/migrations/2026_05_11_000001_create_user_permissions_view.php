@@ -17,9 +17,18 @@ return new class extends Migration
     private const FDW_TABLE  = 'user_resolved_permissions_fdw';
     private const FDW_SERVER = 'maya_auth_user_permissions_server';
 
+    private function isTestEnv(): bool
+    {
+        if (app()->environment("testing")) {
+            return true;
+        }
+        $db = config("database.connections.pgsql.database");
+        return is_string($db) && str_ends_with($db, "_test");
+    }
+
     public function up(): void
     {
-        if (app()->environment('testing')) {
+        if ($this->isTestEnv()) {
             DB::statement('
                 CREATE TABLE IF NOT EXISTS ' . self::VIEW_NAME . ' (
                     user_id          VARCHAR(255) NOT NULL,
@@ -35,7 +44,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (app()->environment('testing')) {
+        if ($this->isTestEnv()) {
             DB::statement('DROP TABLE IF EXISTS ' . self::VIEW_NAME);
             return;
         }

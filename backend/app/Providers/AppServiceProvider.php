@@ -18,7 +18,7 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
-use App\Repositories\Resolvers\CanonicalProfileResolver;
+use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
 use App\Services\ArchivedLogService;
 use App\Services\CommentContentSanitizer;
@@ -62,10 +62,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ErrorCodeRepositoryInterface::class, ErrorCodeRepository::class);
         $this->app->singleton(ErrorCodeServiceInterface::class, ErrorCodeService::class);
 
-        // Resolver de perfil canónico cross-app: el shared MeController consume
-        // este binding para devolver /me con permisos/tipo_estudios/estudios/
-        // modulos/equipos (vacíos en maya_logs — no tiene tablas locales).
-        $this->app->singleton(UserProfileResolverInterface::class, CanonicalProfileResolver::class);
+        // Resolver de perfil enriquecido cross-app: el shared MeController consume
+        // este binding para devolver /me con permissions/study_type_ids/study_ids/
+        // module_ids/team_ids/teams enriquecidos desde las FDW locales (mismas
+        // vistas que el resto de apps Maya proyectan localmente — sin
+        // dependencias cruzadas en runtime).
+        $this->app->singleton(UserProfileResolverInterface::class, FdwAcademicResolver::class);
     }
 
     public function boot(): void
