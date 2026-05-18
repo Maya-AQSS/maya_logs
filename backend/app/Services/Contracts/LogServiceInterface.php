@@ -49,5 +49,8 @@ interface LogServiceInterface
 
     public function archivedLogIdFor(int $logId): ?int;
 
-    public function resolved(int $logId): void;
+    /**
+     * Marca un log como resuelto. Publica a maya.audit con el actor JWT.
+     */
+    public function resolved(int $logId, string $actorUserId): void;
 }
