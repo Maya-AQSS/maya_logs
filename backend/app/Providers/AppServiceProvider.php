@@ -18,6 +18,7 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
+use App\Repositories\Resolvers\CanonicalProfileResolver;
 use App\Services\ApplicationService;
 use App\Services\ArchivedLogService;
 use App\Services\CommentContentSanitizer;
@@ -35,6 +36,7 @@ use App\Services\PanelUserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Maya\Profile\Repositories\Contracts\UserProfileResolverInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,6 +61,11 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(ErrorCodeRepositoryInterface::class, ErrorCodeRepository::class);
         $this->app->singleton(ErrorCodeServiceInterface::class, ErrorCodeService::class);
+
+        // Resolver de perfil canónico cross-app: el shared MeController consume
+        // este binding para devolver /me con permisos/tipo_estudios/estudios/
+        // modulos/equipos (vacíos en maya_logs — no tiene tablas locales).
+        $this->app->singleton(UserProfileResolverInterface::class, CanonicalProfileResolver::class);
     }
 
     public function boot(): void
