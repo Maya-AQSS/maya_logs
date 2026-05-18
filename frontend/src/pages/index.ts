@@ -1,4 +1,3 @@
-export { PlaceholderPage } from './PlaceholderPage';
 export { DashboardPage } from './DashboardPage';
 export { LogsPage } from './LogsPage';
 export { LogDetailPage } from './LogDetailPage';

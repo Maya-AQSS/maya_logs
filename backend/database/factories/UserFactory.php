@@ -11,11 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class UserFactory extends Factory
 {
     /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
-
-    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
@@ -23,9 +18,13 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'external_id' => fake()->uuid(),
+            'id'           => fake()->uuid(),
+            'name'         => fake()->name(),
+            'email'        => fake()->unique()->safeEmail(),
+            'first_name'   => fake()->firstName(),
+            'last_name'    => fake()->lastName(),
+            'username'     => fake()->unique()->userName(),
+            'is_active'    => true,
         ];
     }
 }

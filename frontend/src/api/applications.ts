@@ -1,4 +1,4 @@
-import type { ApiEnvelope } from '../types/api';
+import type { ApiEnvelope } from '@maya/shared-auth-react';
 import type { ApplicationRef } from '../types/logs';
 import { apiGetJson } from './http';
 

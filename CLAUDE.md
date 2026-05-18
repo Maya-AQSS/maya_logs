@@ -2,7 +2,7 @@
 
 ## Qué es este proyecto
 Sistema de gestión y visualización de logs del ecosistema Maya (CEEDCV).
-- **Backend**: Laravel 12 / PHP 8.4
+- **Backend**: Laravel 13 / PHP 8.4
 - **Frontend**: React 19 + Vite + TypeScript
 - **IdP**: Keycloak 24 (realm `maya`)
 - **BD**: PostgreSQL 17
@@ -15,14 +15,10 @@ Sistema de gestión y visualización de logs del ecosistema Maya (CEEDCV).
 - Servicios: `backend`, `worker`, `frontend`
 
 ## Accesos locales (vía Traefik)
-- Frontend:  http://maya_logs.localhost
-- Backend:   http://maya_logs_api.localhost/api/v1
-- Keycloak:  http://keycloak.localhost
+- Frontend:  https://logs.maya.test
+- Backend:   https://logs-api.maya.test/api/v1
+- Keycloak:  https://keycloak.maya.test
 - Traefik:   http://localhost:8888/dashboard/
-
-## Nota: Laravel 12
-Este proyecto usa **Laravel 12** (los otros usan Laravel 13). Mantener la versión
-hasta que se planifique la migración.
 
 ## Paquetes compartidos
 - `maya-shared-auth-laravel`: middleware JWT/JWKS (Composer path en `../infra/packages/`)

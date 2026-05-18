@@ -1,21 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Dtos\ArchivedLogDto;
+use App\Events\ArchivedLogFieldsWereUpdated;
+use App\Events\ArchivedLogWasDeleted;
+use App\Events\LogWasArchived;
 use App\Models\ArchivedLog;
 use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use App\Services\Contracts\ArchivedLogServiceInterface;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Maya\Http\Pagination\PaginatedDto;
+use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Throwable;
 
 class ArchivedLogService implements ArchivedLogServiceInterface
 {
     public function __construct(
-        private ArchivedLogRepositoryInterface $archivedLogRepository
+        private ArchivedLogRepositoryInterface $archivedLogRepository,
+        private ResilientLogPublisher $resilientLogPublisher,
     ) {}
 
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    private function messagingAppSlug(): string
     {
-        return $this->archivedLogRepository->paginate($perPage);
+        return (string) config('messaging.app');
+    }
+
+    public function paginate(int $perPage = 15): PaginatedDto
+    {
+        return PaginatedDto::fromPaginator(
+            $this->archivedLogRepository->paginate($perPage),
+            static fn (ArchivedLog $m) => ArchivedLogDto::fromModel($m),
+        );
     }
 
     public function searchAndFilter(
@@ -26,45 +43,154 @@ class ArchivedLogService implements ArchivedLogServiceInterface
         ?string $sortBy,
         string $sortDir,
         int $perPage = 15
-    ): LengthAwarePaginator {
-        return $this->archivedLogRepository->searchAndFilter(
-            $severities,
-            $applicationId,
-            $dateFrom,
-            $dateTo,
-            $sortBy,
-            $sortDir,
-            $perPage
+    ): PaginatedDto {
+        return PaginatedDto::fromPaginator(
+            $this->archivedLogRepository->searchAndFilter(
+                $severities,
+                $applicationId,
+                $dateFrom,
+                $dateTo,
+                $sortBy,
+                $sortDir,
+                $perPage
+            ),
+            static fn (ArchivedLog $m) => ArchivedLogDto::fromModel($m),
         );
     }
 
-    public function findOrFail(int $id): ArchivedLog
+    public function findOrFail(int $id): ArchivedLogDto
     {
-        return $this->archivedLogRepository->findOrFail($id);
+        return ArchivedLogDto::fromModel($this->findModelOrFail($id));
+    }
+
+    public function findModelOrFail(int $id): ArchivedLog
+    {
+        try {
+            return $this->archivedLogRepository->findOrFail($id);
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                'LAR-LOG-004',
+                ['archived_log_id' => $id],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
     }
 
     /**
-     * Sanitizes string fields (trim + blank→null) before persisting.
+     * Actualiza los campos de un log archivado.
      *
-     * @param  array<string, mixed>  $fields
+     * El actor en auditoría es `archived_by_id` (subject JWT), coherente con {@see ArchivedLogPolicy}.
+     * Si los valores ya coinciden con lo enviado (no-op / doble envío), no se persiste ni se emite
+     * {@see ArchivedLogFieldsWereUpdated} (evita duplicar filas en maya.audit).
      */
     public function updateArchivedFields(ArchivedLog $archivedLog, array $fields): void
     {
-        $sanitized = array_map(
-            static fn ($value) => is_string($value) ? (blank($value) ? null : trim($value)) : $value,
-            $fields
-        );
+        try {
+            $sanitized = array_map(
+                static fn ($value) => is_string($value) ? (blank($value) ? null : trim($value)) : $value,
+                $fields
+            );
 
-        $this->archivedLogRepository->updateArchivedFields($archivedLog, $sanitized);
+            if ($sanitized === [] || ! $this->archivedLogSanitizedDiffersFromModel($archivedLog, $sanitized)) {
+                return;
+            }
+
+            $previousValue = [];
+            foreach (array_keys($sanitized) as $key) {
+                $previousValue[$key] = $archivedLog->getAttribute($key);
+            }
+
+            $this->archivedLogRepository->updateArchivedFields($archivedLog, $sanitized);
+
+            ArchivedLogFieldsWereUpdated::dispatch(
+                $archivedLog->id,
+                (string) $archivedLog->archived_by_id,
+                $previousValue,
+                $sanitized,
+            );
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                'LAR-LOG-001',
+                ['archived_log_id' => $archivedLog->id],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
     }
 
+    /**
+     * Elimina un log archivado.
+     *
+     * Solo se emite {@see ArchivedLogWasDeleted} si el soft delete se aplicó (evita duplicar audit
+     * si {@see ArchivedLogRepositoryInterface::delete} no modifica filas).
+     */
     public function delete(ArchivedLog $archivedLog): void
     {
-        $this->archivedLogRepository->delete($archivedLog);
+        try {
+            $archivedLogId = $archivedLog->id;
+            $archivedByUserId = (string) $archivedLog->archived_by_id;
+
+            if (! $this->archivedLogRepository->delete($archivedLog)) {
+                return;
+            }
+
+            ArchivedLogWasDeleted::dispatch($archivedLogId, $archivedByUserId);
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                'LAR-LOG-002',
+                ['archived_log_id' => $archivedLog->id],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
     }
 
-    public function archiveFromLogId(int $logId, int $archivedById): ArchivedLog
+    /**
+     * @param  array<string, mixed>  $sanitized
+     */
+    private function archivedLogSanitizedDiffersFromModel(ArchivedLog $archivedLog, array $sanitized): bool
     {
-        return $this->archivedLogRepository->archiveFromLogId($logId, $archivedById);
+        foreach ($sanitized as $key => $value) {
+            if ($archivedLog->getAttribute($key) != $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Archiva un log por su id.
+     *
+     * Solo se emite {@see LogWasArchived} cuando el repositorio crea un registro nuevo.
+     * Si devuelve uno ya existente (huella duplicada o segunda petición concurrente), no se
+     * vuelve a publicar a maya.audit (evita filas duplicadas con el mismo `archived_log`).
+     */
+    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLog
+    {
+        try {
+            $archivedLog = $this->archivedLogRepository->archiveFromLogId($logId, $archivedByUserId);
+            if ($archivedLog->wasRecentlyCreated) {
+                LogWasArchived::dispatch($archivedLog, $archivedByUserId);
+            }
+
+            return $archivedLog;
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                'LAR-LOG-003',
+                ['log_id' => $logId],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
     }
 }

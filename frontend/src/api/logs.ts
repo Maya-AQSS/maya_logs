@@ -1,4 +1,4 @@
-import type { ApiEnvelope, PaginatedResponse, SortDir } from '../types/api';
+import type { ApiEnvelope, PaginatedResponse, SortDir } from '@maya/shared-auth-react';
 import type { Log, LogStreamPayload } from '../types/logs';
 import { ApiHttpError, apiFetchJson, apiGetJson, buildApiUrl, getBearerToken } from './http';
 import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';

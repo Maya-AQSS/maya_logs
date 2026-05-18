@@ -1,10 +1,9 @@
-import type { MeProfile, MeProfileResponse } from '../types/users';
-import { apiGetJson } from './http';
+import { createProfileApi } from '@maya/shared-profile-react';
+import { apiFetchJson, apiGetJson } from './http';
+import type { MeProfile } from '../types/users';
 
 export type { MeProfile } from '../types/users';
 
-/** GET /api/v1/me — perfil proyectado desde el JWT. */
-export async function fetchMe(): Promise<MeProfile> {
-  const body = await apiGetJson<MeProfileResponse>('me');
-  return body.data;
-}
+const profileApi = createProfileApi<MeProfile>({ apiFetchJson, apiGetJson });
+
+export const { fetchMe, updateMyLocale } = profileApi;

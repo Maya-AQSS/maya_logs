@@ -1,44 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
-use App\Models\ArchivedLog;
+use App\Dtos\ArchivedLogDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin ArchivedLog
+ * @property ArchivedLogDto $resource
  */
 class ArchivedLogResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->id,
-            'severity' => $this->severity,
-            'message' => $this->message,
-            'metadata' => $this->metadata,
-            'metadata_formatted' => $this->metadata_formatted,
-            'description' => $this->description,
-            'url_tutorial' => $this->url_tutorial,
-            'original_created_at' => $this->original_created_at?->toIso8601String(),
-            'archived_at' => $this->archived_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
-            'deleted_at' => $this->deleted_at?->toIso8601String(),
-            'application' => $this->whenLoaded('application', fn () => $this->application ? [
-                'id' => $this->application->id,
-                'name' => $this->application->name,
-            ] : null),
-            'archived_by' => $this->whenLoaded('archivedBy', fn () => $this->archivedBy ? [
-                'id' => $this->archivedBy->id,
-                'name' => $this->archivedBy->name,
-            ] : null),
-            'error_code' => $this->whenLoaded('errorCode', fn () => $this->errorCode ? [
-                'id' => $this->errorCode->id,
-                'code' => $this->errorCode->code,
-                'name' => $this->errorCode->name,
-            ] : null),
-            'comments_count' => $this->when(isset($this->comments_count), fn () => (int) $this->comments_count),
+        /** @var ArchivedLogDto $dto */
+        $dto = $this->resource;
+
+        $payload = [
+            'id' => $dto->id,
+            'severity' => $dto->severity,
+            'message' => $dto->message,
+            'metadata' => $dto->metadata,
+            'metadata_formatted' => $dto->metadataFormatted,
+            'description' => $dto->description,
+            'url_tutorial' => $dto->urlTutorial,
+            'original_created_at' => $dto->originalCreatedAt,
+            'archived_at' => $dto->archivedAt,
+            'updated_at' => $dto->updatedAt,
+            'deleted_at' => $dto->deletedAt,
         ];
+
+        if ($dto->applicationLoaded) {
+            $payload['application'] = $dto->application !== null
+                ? ['id' => $dto->application->id, 'name' => $dto->application->name]
+                : null;
+        }
+
+        if ($dto->archivedByLoaded) {
+            $payload['archived_by'] = $dto->archivedBy !== null
+                ? ['id' => $dto->archivedBy->id, 'name' => $dto->archivedBy->name]
+                : null;
+        }
+
+        if ($dto->errorCodeLoaded) {
+            $payload['error_code'] = $dto->errorCode !== null
+                ? ['id' => $dto->errorCode->id, 'code' => $dto->errorCode->code, 'name' => $dto->errorCode->name]
+                : null;
+        }
+
+        if ($dto->commentsCount !== null) {
+            $payload['comments_count'] = $dto->commentsCount;
+        }
+
+        return $payload;
     }
 }

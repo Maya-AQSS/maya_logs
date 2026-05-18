@@ -36,6 +36,7 @@
   },
   "actions": {
     "create": "Create code",
+    "new": "New code",
     "save": "Save changes",
     "delete": "Delete"
   }

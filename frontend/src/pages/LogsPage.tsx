@@ -1,27 +1,57 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Alert,
+  DataTable,
+  DatePicker,
+  FilterField,
+  MultiSelect,
+  PageTitle,
+  Pagination,
+  Select,
+  TextInput,
+  useTablePreferences,
+  type ColumnDef,
+  type SortState,
+} from '@maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { fetchApplications } from '../api/applications';
+import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { fetchLogs, type LogsFilters as ApiLogsFilters, type LogsSortBy } from '../api/logs';
-import {
-  LogsFilters,
-  LogsTable,
-  type LogsFiltersState,
-  type LogsSortKey,
-} from '../components/logs';
-import { Pagination } from '../components/table';
+import type { LogsFiltersState } from '../components/logs';
+import { SeverityBadge, severityLabel } from '../components/severity';
 import { useLogStream } from '../hooks';
-import type { PaginatedResponse, SortDir } from '../types/api';
+import { createDataHook, type PaginatedResponse, type SortDir } from '@maya/shared-auth-react';
 import type { ApplicationRef, Log } from '../types/logs';
 import { LOG_SEVERITY_KEYS } from '../types/logs';
+import { formatDateTime } from '@maya/shared-ui-react';
+
+export type LogsSortKey = 'application' | 'severity' | 'created_at';
 
 const VALID_SORT_COLUMNS: readonly LogsSortKey[] = ['application', 'severity', 'created_at'];
 const VALID_SORT_DIRS: readonly SortDir[] = ['asc', 'desc'];
 
-type ListState =
-  | { status: 'loading'; data: PaginatedResponse<Log> | null }
-  | { status: 'ready'; data: PaginatedResponse<Log> }
-  | { status: 'error'; error: string; data: PaginatedResponse<Log> | null };
+const useApplicationsQuery = createDataHook<ApplicationScope, ApplicationRef[]>({
+  queryKey: (scope) => ['applications', scope],
+  fetcher: (scope) => fetchApplications(scope),
+  defaultOptions: { staleTime: 60_000 },
+});
+
+const useLogsListQuery = createDataHook<ApiLogsFilters, PaginatedResponse<Log>>({
+  queryKey: (filters) => ['logs', filters],
+  fetcher: (filters) => fetchLogs(filters),
+  defaultOptions: {
+    // Tabla paginada — mantenemos el resultado previo mientras se carga la siguiente página.
+    placeholderData: (prev) => prev,
+    staleTime: 0,
+  },
+});
+
+function truncate(text: string | null | undefined, max = 120): string {
+  if (!text) return '-';
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}…`;
+}
 
 function parseFiltersFromUrl(params: URLSearchParams): {
   filters: LogsFiltersState;
@@ -97,6 +127,7 @@ function toApiFilters(
   sortBy: LogsSortKey | null,
   sortDir: SortDir | null,
   page: number,
+  perPage?: number,
 ): ApiLogsFilters {
   return {
     search: filters.search.trim() || null,
@@ -109,15 +140,29 @@ function toApiFilters(
     sort_by: sortBy ? (sortBy as LogsSortBy) : null,
     sort_dir: sortDir,
     page,
+    per_page: perPage ?? null,
   };
+}
+
+function countActiveFilters(f: LogsFiltersState): number {
+  let n = 0;
+  if (f.search.trim() !== '') n += 1;
+  if (f.severity.length > 0) n += 1;
+  if (f.applicationId != null) n += 1;
+  if (f.dateFrom) n += 1;
+  if (f.dateTo) n += 1;
+  if (f.resolved !== 'all') n += 1;
+  return n;
 }
 
 export function LogsPage() {
   const { t } = useTranslation('logs');
+  const { t: tCommon } = useTranslation('common');
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [applications, setApplications] = useState<ApplicationRef[]>([]);
-  const [state, setState] = useState<ListState>({ status: 'loading', data: null });
-  const [refreshNonce, setRefreshNonce] = useState(0);
+  const { hiddenIds, toggleHidden, pageSize, setPageSize } = useTablePreferences({
+    storageKey: 'maya:logs:logs-table',
+  });
   const lastStreamIdRef = useRef<number | null>(null);
 
   const { filters, sortBy, sortDir, page } = useMemo(
@@ -125,41 +170,14 @@ export function LogsPage() {
     [searchParams],
   );
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchApplications('with_logs')
-      .then((apps) => {
-        if (!cancelled) setApplications(apps);
-      })
-      .catch(() => {
-        /* sin bloqueador: dejamos dropdown vacío */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Dropdown de aplicaciones. Fallo silencioso (dropdown vacío).
+  const applicationsQuery = useApplicationsQuery('with_logs');
+  const applications = applicationsQuery.data ?? [];
 
-  useEffect(() => {
-    let cancelled = false;
-    setState((prev) => ({ status: 'loading', data: prev.data }));
-    fetchLogs(toApiFilters(filters, sortBy, sortDir, page))
-      .then((data) => {
-        if (!cancelled) setState({ status: 'ready', data });
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setState((prev) => ({
-            status: 'error',
-            error: e instanceof Error ? e.message : String(e),
-            data: prev.data,
-          }));
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [filters, sortBy, sortDir, page, refreshNonce]);
+  // Listado paginado de logs.
+  const logsQuery = useLogsListQuery(toApiFilters(filters, sortBy, sortDir, page, pageSize));
 
+  // Refresh por log stream: cuando llega un id nuevo, invalidamos la query.
   const { payload: streamPayload } = useLogStream({ intervalMs: 5000 });
 
   useEffect(() => {
@@ -171,9 +189,9 @@ export function LogsPage() {
     }
     if (maxId > lastStreamIdRef.current) {
       lastStreamIdRef.current = maxId;
-      setRefreshNonce((n) => n + 1);
+      void logsQuery.refetch();
     }
-  }, [streamPayload]);
+  }, [streamPayload, logsQuery]);
 
   const updateFilters = useCallback(
     (patch: Partial<LogsFiltersState>) => {
@@ -184,8 +202,16 @@ export function LogsPage() {
   );
 
   const resetFilters = useCallback(() => {
-    setSearchParams(new URLSearchParams());
-  }, [setSearchParams]);
+    const emptyFilters: LogsFiltersState = {
+      search: '',
+      severity: [],
+      applicationId: null,
+      dateFrom: null,
+      dateTo: null,
+      resolved: 'all',
+    };
+    setSearchParams(writeFiltersToUrl(emptyFilters, sortBy, sortDir, 1));
+  }, [setSearchParams, sortBy, sortDir]);
 
   const changePage = useCallback(
     (nextPage: number) => {
@@ -194,57 +220,199 @@ export function LogsPage() {
     [filters, sortBy, sortDir, setSearchParams],
   );
 
-  const changeSort = useCallback(
-    (column: LogsSortKey) => {
-      let nextDir: SortDir = 'desc';
-      if (sortBy === column) {
-        nextDir = sortDir === 'asc' ? 'desc' : 'asc';
-      }
-      setSearchParams(writeFiltersToUrl(filters, column, nextDir, 1));
+  const onSortChange = useCallback(
+    (next: SortState) => {
+      const column = next.columnId as LogsSortKey;
+      if (!(VALID_SORT_COLUMNS as readonly string[]).includes(column)) return;
+      setSearchParams(writeFiltersToUrl(filters, column, next.direction, 1));
     },
-    [filters, sortBy, sortDir, setSearchParams],
+    [filters, setSearchParams],
   );
 
-  const pagination = state.data;
+  const sortState: SortState | null = useMemo(
+    () => (sortBy && sortDir ? { columnId: sortBy, direction: sortDir } : null),
+    [sortBy, sortDir],
+  );
+
+  const columns: ColumnDef<Log>[] = useMemo(
+    () => [
+      {
+        id: 'application',
+        header: t('columns.application'),
+        cell: (l) => l.application?.name ?? '-',
+        sortable: true,
+      },
+      {
+        id: 'severity',
+        header: t('columns.severity'),
+        cell: (l) => <SeverityBadge severity={l.severity} />,
+        sortable: true,
+      },
+      {
+        id: 'message',
+        header: t('columns.message'),
+        cell: (l) => (
+          <span className="block break-words max-w-md">{truncate(l.message, 120)}</span>
+        ),
+      },
+      {
+        id: 'errorCode',
+        header: t('columns.errorCode'),
+        cell: (l) => l.error_code?.code ?? '-',
+      },
+      {
+        id: 'created_at',
+        header: t('columns.createdAt'),
+        cell: (l) => formatDateTime(l.created_at),
+        sortable: true,
+      },
+      {
+        id: 'resolved',
+        header: t('columns.resolved'),
+        cell: (l) => (
+          <span
+            className={
+              l.resolved
+                ? 'inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success-dark ring-1 ring-inset ring-success/20'
+                : 'inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning-dark ring-1 ring-inset ring-warning/20'
+            }
+          >
+            {l.resolved ? t('detail.fields.resolved') : t('detail.fields.unresolved')}
+          </span>
+        ),
+      },
+    ],
+    [t],
+  );
+
+  const pagination = logsQuery.data;
   const logs = pagination?.data ?? [];
+  const meta = pagination?.meta;
+  const startIndex = meta && meta.from != null ? meta.from : 0;
+  const endIndex = meta && meta.to != null ? meta.to : 0;
+  const total = meta?.total ?? 0;
+  const activeCount = countActiveFilters(filters);
+  const errorMessage = logsQuery.error
+    ? (logsQuery.error instanceof Error ? logsQuery.error.message : String(logsQuery.error))
+    : null;
+
+  const filtersPanel = (
+    <>
+      <FilterField label={tCommon('filters.searchLabel')} htmlFor="logs-filter-search">
+        <TextInput
+          id="logs-filter-search"
+          type="search"
+          value={filters.search}
+          placeholder={t('filters.searchPlaceholder')}
+          onChange={(e) => updateFilters({ search: e.target.value })}
+        />
+      </FilterField>
+      <FilterField label={t('filters.dateFrom')}>
+        <DatePicker
+          value={filters.dateFrom}
+          onChange={(d) => updateFilters({ dateFrom: d })}
+          placeholder={t('filters.dateFrom')}
+          ariaLabel={t('filters.dateFrom')}
+          max={filters.dateTo ?? undefined}
+        />
+      </FilterField>
+      <FilterField label={t('filters.dateTo')}>
+        <DatePicker
+          value={filters.dateTo}
+          onChange={(d) => updateFilters({ dateTo: d })}
+          placeholder={t('filters.dateTo')}
+          ariaLabel={t('filters.dateTo')}
+          min={filters.dateFrom ?? undefined}
+        />
+      </FilterField>
+      <FilterField label={tCommon('filters.applicationLabel')} htmlFor="logs-filter-application">
+        <Select
+          id="logs-filter-application"
+          value={filters.applicationId ?? ''}
+          onChange={(e) => {
+            const v = e.target.value;
+            updateFilters({ applicationId: v === '' ? null : Number(v) });
+          }}
+        >
+          <option value="">{t('filters.applicationAll')}</option>
+          {applications.map((app) => (
+            <option key={app.id} value={app.id}>
+              {app.name}
+            </option>
+          ))}
+        </Select>
+      </FilterField>
+      <FilterField label={t('filters.resolved')} htmlFor="logs-filter-resolved">
+        <Select
+          id="logs-filter-resolved"
+          value={filters.resolved}
+          onChange={(e) =>
+            updateFilters({ resolved: e.target.value as LogsFiltersState['resolved'] })
+          }
+        >
+          <option value="all">{tCommon('resolved.all')}</option>
+          <option value="unresolved">{tCommon('resolved.unresolved')}</option>
+          <option value="only">{tCommon('resolved.only')}</option>
+        </Select>
+      </FilterField>
+      <FilterField label={tCommon('filters.severityLabel')}>
+        <MultiSelect
+          options={LOG_SEVERITY_KEYS.map((key) => ({ value: key, label: severityLabel(key) }))}
+          value={filters.severity}
+          onChange={(next) => updateFilters({ severity: next })}
+          placeholder={t('filters.severityAll', { defaultValue: 'Todas' })}
+          ariaLabel={tCommon('filters.severityLabel')}
+        />
+      </FilterField>
+    </>
+  );
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <header className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-text-primary dark:text-text-dark-primary">
-          {t('title')}
-        </h1>
-      </header>
+      <PageTitle title={t('title')} />
 
-      <LogsFilters
-        value={filters}
-        applications={applications}
-        onChange={updateFilters}
-        onReset={resetFilters}
-      />
-
-      {state.status === 'error' && (
-        <div className="mt-4 rounded-lg border border-danger-light bg-danger-light/30 p-3 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger">
-          {t('loadError', { message: state.error })}
-        </div>
+      {logsQuery.isError && errorMessage && (
+        <Alert tone="danger" className="mt-4">{t('loadError', { message: errorMessage })}
+        </Alert>
       )}
 
-      {state.status === 'loading' && !pagination && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('loading')}
-        </div>
-      )}
-
-      {pagination && (
-        <>
-          <LogsTable
-            logs={logs}
-            sortBy={sortBy}
-            sortDir={sortDir}
-            onSort={changeSort}
+      <div className="mt-3">
+        <DataTable
+          title={t('table.activeTitle', { defaultValue: 'Logs activos' })}
+          columns={columns}
+          rows={logs}
+          rowKey={(l) => l.id}
+          loading={logsQuery.isLoading || logsQuery.isFetching}
+          hiddenColumnIds={hiddenIds}
+          onToggleHiddenColumn={toggleHidden}
+          filtersStorageKey="maya:logs:logs-table"
+          filtersPanel={filtersPanel}
+          filtersActiveCount={activeCount}
+          onClearFilters={resetFilters}
+          filtersDefaultOpen={false}
+          sortBy={sortState}
+          onSortChange={onSortChange}
+          pageSize={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
+          }}
+          onRowClick={(l) => navigate(`/logs/${l.id}`)}
+          emptyMessage={t('table.emptyText')}
+        />
+      </div>
+      {meta && (
+        <div className="mt-4">
+          <Pagination
+            currentPage={meta.current_page}
+            totalPages={meta.last_page}
+            onChange={changePage}
+            ariaLabel={tCommon('pagination.ariaLabel')}
+            prevLabel={tCommon('pagination.previous')}
+            nextLabel={tCommon('pagination.next')}
+            info={tCommon('pagination.rangeOf', { from: startIndex, to: endIndex, total })}
           />
-          <Pagination meta={pagination.meta} onChangePage={changePage} />
-        </>
+        </div>
       )}
     </div>
   );

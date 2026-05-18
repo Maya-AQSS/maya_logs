@@ -1,4 +1,5 @@
 {
+  "title": "Panell",
   "loading": "Carregant panell…",
   "error": "No s'ha pogut carregar el panell",
   "unresolvedLabel": "Sense resoldre",
@@ -6,5 +7,30 @@
   "byApplication": "Per aplicació",
   "byApplicationHint": "Volum de logs al sistema per servei. Polsa una fila per obrir el llistat filtrat per eixa aplicació.",
   "logsTotalLabel": "Logs al sistema",
-  "openFilteredLogs": "Veure logs filtrats per {{app}}"
+  "openFilteredLogs": "Veure logs filtrats per {{app}}",
+  "edit": {
+    "toggle": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancel·lar",
+    "reset": "Restaurar",
+    "removeWidget": "Eliminar widget"
+  },
+  "widgets": {
+    "empty": "No hi ha widgets al panell. Restaura el disseny per defecte per a tornar a veure'ls.",
+    "errorCount": {
+      "title": "Errors 24h",
+      "label": "Errors 24h"
+    },
+    "recentLogs": {
+      "title": "Logs recents",
+      "empty": "Sense logs recents"
+    },
+    "severityCards": {
+      "title": "Per severitat"
+    },
+    "applicationTotals": {
+      "title": "Per aplicació",
+      "empty": "Sense aplicacions amb logs"
+    }
+  }
 }

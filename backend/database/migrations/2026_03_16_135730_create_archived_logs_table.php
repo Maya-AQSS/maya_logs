@@ -10,8 +10,10 @@ return new class extends Migration
     {
         Schema::create('archived_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
-            $table->foreignId('archived_by_id')->constrained('users')->restrictOnDelete();
+            // application_id sin FK: 'applications' es una vista sobre FDW
+            $table->unsignedBigInteger('application_id');
+            // archived_by_id: UUID del usuario de Odoo vía FDW (varchar); sin FK (view)
+            $table->string('archived_by_id', 255);
             $table->foreignId('error_code_id')->nullable()->constrained('error_codes')->nullOnDelete();
             $table->enum('severity', ['critical', 'high', 'medium', 'low', 'other']);
             $table->text('message');
@@ -23,6 +25,7 @@ return new class extends Migration
             $table->timestamptz('updated_at')->nullable();
 
             $table->index(['application_id', 'archived_at']);
+            $table->index('archived_by_id');
         });
     }
 

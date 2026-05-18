@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import DOMPurify from 'dompurify';
+import { Alert, Button } from '@maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -8,17 +10,40 @@ import {
   type CommentableKind,
 } from '../../api/comments';
 import type { Comment } from '../../types/logs';
-import { ConfirmDialog } from '../ui';
+import { ConfirmDialog } from '@maya/shared-ui-react';
+import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
 
 type CommentThreadProps = {
   commentableType: CommentableKind;
   commentableId: number;
 };
 
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'ready'; comments: Comment[] }
-  | { status: 'error'; error: string; comments: Comment[] };
+const useCommentsQuery = createDataHook<
+  { type: CommentableKind; id: number },
+  Comment[]
+>({
+  queryKey: ({ type, id }) => ['comments', type, id],
+  fetcher: ({ type, id }) => fetchComments(type, id),
+  defaultOptions: { staleTime: 0 },
+});
+
+type CreateVars = { type: CommentableKind; id: number; content: string };
+const useCreateComment = createMutationHook<CreateVars, Comment>({
+  mutationFn: ({ type, id, content }) => createComment(type, id, { content }),
+  invalidates: ({ type, id }) => [['comments', type, id]],
+});
+
+type UpdateVars = { type: CommentableKind; id: number; commentId: number; content: string };
+const useUpdateComment = createMutationHook<UpdateVars, Comment>({
+  mutationFn: ({ commentId, content }) => updateComment(commentId, { content }),
+  invalidates: ({ type, id }) => [['comments', type, id]],
+});
+
+type DeleteVars = { type: CommentableKind; id: number; commentId: number };
+const useDeleteComment = createMutationHook<DeleteVars, void>({
+  mutationFn: ({ commentId }) => deleteComment(commentId),
+  invalidates: ({ type, id }) => [['comments', type, id]],
+});
 
 function formatTimestamp(value: string | null): string {
   if (!value) return '';
@@ -42,75 +67,49 @@ function plainTextToHtml(text: string): string {
 
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
   const { t } = useTranslation('comments');
-  const [state, setState] = useState<LoadState>({ status: 'loading' });
+
+  const commentsQuery = useCommentsQuery({ type: commentableType, id: commentableId });
+  const createMutation = useCreateComment();
+  const updateMutation = useUpdateComment();
+  const deleteMutation = useDeleteComment();
+
   const [newContent, setNewContent] = useState('');
-  const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
-  const [editingBusy, setEditingBusy] = useState(false);
   const [editingError, setEditingError] = useState<string | null>(null);
 
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
-  const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    let cancelled = false;
-    setState((prev) =>
-      prev.status === 'ready' || prev.status === 'error'
-        ? { status: 'error', error: '', comments: prev.comments }
-        : { status: 'loading' },
-    );
-    fetchComments(commentableType, commentableId)
-      .then((comments) => {
-        if (!cancelled) setState({ status: 'ready', comments });
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        const message = e instanceof Error ? e.message : String(e);
-        setState((prev) => ({
-          status: 'error',
-          error: message,
-          comments: prev.status === 'ready' || prev.status === 'error' ? prev.comments : [],
-        }));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [commentableType, commentableId]);
+  const creating = createMutation.isPending;
+  const editingBusy = updateMutation.isPending;
+  const deleteBusy = deleteMutation.isPending;
 
-  useEffect(() => {
-    const cleanup = load();
-    return cleanup;
-  }, [load]);
+  const comments = commentsQuery.data ?? [];
+  const loadErrorMessage =
+    commentsQuery.isError && commentsQuery.error
+      ? commentsQuery.error instanceof Error
+        ? commentsQuery.error.message
+        : String(commentsQuery.error)
+      : null;
 
-  const comments = state.status === 'ready' || state.status === 'error' ? state.comments : [];
-
-  const onCreate = useCallback(async () => {
+  const onCreate = useCallback(() => {
     const content = newContent.trim();
     if (content.length < 3) {
       setCreateError(t('minLength'));
       return;
     }
-    setCreating(true);
     setCreateError(null);
-    try {
-      const created = await createComment(commentableType, commentableId, {
-        content: plainTextToHtml(content),
-      });
-      setState((prev) => {
-        const prior = prev.status === 'ready' || prev.status === 'error' ? prev.comments : [];
-        return { status: 'ready', comments: [created, ...prior] };
-      });
-      setNewContent('');
-    } catch (e) {
-      setCreateError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setCreating(false);
-    }
-  }, [commentableType, commentableId, newContent, t]);
+    createMutation.mutate(
+      { type: commentableType, id: commentableId, content: plainTextToHtml(content) },
+      {
+        onSuccess: () => setNewContent(''),
+        onError: (e) => setCreateError(e instanceof Error ? e.message : String(e)),
+      },
+    );
+  }, [commentableType, commentableId, newContent, t, createMutation]);
 
   const onStartEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
@@ -133,53 +132,42 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
     setEditingError(null);
   }, []);
 
-  const onUpdate = useCallback(async () => {
+  const onUpdate = useCallback(() => {
     if (editingId == null) return;
     const content = editingContent.trim();
     if (content.length < 3) {
       setEditingError(t('minLength'));
       return;
     }
-    setEditingBusy(true);
     setEditingError(null);
-    try {
-      const updated = await updateComment(editingId, { content: plainTextToHtml(content) });
-      setState((prev) => {
-        const prior = prev.status === 'ready' || prev.status === 'error' ? prev.comments : [];
-        return {
-          status: 'ready',
-          comments: prior.map((c) => (c.id === updated.id ? updated : c)),
-        };
-      });
-      setEditingId(null);
-      setEditingContent('');
-    } catch (e) {
-      setEditingError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setEditingBusy(false);
-    }
-  }, [editingId, editingContent, t]);
+    updateMutation.mutate(
+      {
+        type: commentableType,
+        id: commentableId,
+        commentId: editingId,
+        content: plainTextToHtml(content),
+      },
+      {
+        onSuccess: () => {
+          setEditingId(null);
+          setEditingContent('');
+        },
+        onError: (e) => setEditingError(e instanceof Error ? e.message : String(e)),
+      },
+    );
+  }, [commentableType, commentableId, editingId, editingContent, t, updateMutation]);
 
-  const onConfirmDelete = useCallback(async () => {
+  const onConfirmDelete = useCallback(() => {
     if (deleteTargetId == null) return;
-    setDeleteBusy(true);
     setDeleteError(null);
-    try {
-      await deleteComment(deleteTargetId);
-      setState((prev) => {
-        const prior = prev.status === 'ready' || prev.status === 'error' ? prev.comments : [];
-        return {
-          status: 'ready',
-          comments: prior.filter((c) => c.id !== deleteTargetId),
-        };
-      });
-      setDeleteTargetId(null);
-    } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setDeleteBusy(false);
-    }
-  }, [deleteTargetId]);
+    deleteMutation.mutate(
+      { type: commentableType, id: commentableId, commentId: deleteTargetId },
+      {
+        onSuccess: () => setDeleteTargetId(null),
+        onError: (e) => setDeleteError(e instanceof Error ? e.message : String(e)),
+      },
+    );
+  }, [commentableType, commentableId, deleteTargetId, deleteMutation]);
 
   return (
     <div className="space-y-4">
@@ -208,37 +196,29 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
           </p>
         )}
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onCreate}
-            disabled={creating}
-            className="bg-odoo-purple dark:bg-odoo-dark-purple text-text-inverse border-odoo-purple dark:border-odoo-dark-purple hover:bg-odoo-purple-d dark:hover:bg-odoo-dark-purple-d hover:border-odoo-purple-d dark:hover:border-odoo-dark-purple-d px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button variant="primary" size="sm" onClick={onCreate} disabled={creating} loading={creating}>
             {creating ? t('busy') : t('save')}
-          </button>
+          </Button>
         </div>
       </div>
 
-      {state.status === 'error' && state.error && (
-        <div className="rounded-lg border border-danger-light bg-danger-light/30 p-3 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger">
-          {t('listLoadError', { message: state.error })}
-        </div>
+      {loadErrorMessage && (
+        <Alert tone="danger" className="mt-4">{t('listLoadError', { message: loadErrorMessage })}
+        </Alert>
       )}
 
       {deleteError && (
-        <div className="rounded-lg border border-danger-light bg-danger-light/30 p-3 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger">
-          {deleteError}
-        </div>
+        <Alert tone="danger" className="mt-4">{deleteError}</Alert>
       )}
 
       <div className="space-y-3">
-        {state.status === 'loading' && (
+        {commentsQuery.isLoading && (
           <p className="rounded-xl border border-dashed border-ui-border bg-ui-card px-4 py-6 text-center text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary">
             {t('loading')}
           </p>
         )}
 
-        {state.status !== 'loading' && comments.length === 0 && (
+        {!commentsQuery.isLoading && comments.length === 0 && (
           <p className="rounded-xl border border-dashed border-ui-border bg-ui-card px-4 py-6 text-center text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary">
             {t('empty')}
           </p>
@@ -263,22 +243,14 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                 {!isEditing && (comment.can_edit || comment.can_delete) && (
                   <div className="flex gap-2">
                     {comment.can_edit && (
-                      <button
-                        type="button"
-                        onClick={() => onStartEdit(comment)}
-                        className="text-sm font-medium text-odoo-purple hover:underline"
-                      >
+                      <Button variant="ghost" size="xs" onClick={() => onStartEdit(comment)}>
                         {t('edit')}
-                      </button>
+                      </Button>
                     )}
                     {comment.can_delete && (
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTargetId(comment.id)}
-                        className="text-sm font-medium text-danger hover:underline"
-                      >
+                      <Button variant="danger" size="xs" onClick={() => setDeleteTargetId(comment.id)}>
                         {t('delete')}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -302,28 +274,24 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                     </p>
                   )}
                   <div className="flex gap-2">
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={onUpdate}
                       disabled={editingBusy}
-                      className="bg-odoo-purple dark:bg-odoo-dark-purple text-text-inverse border-odoo-purple dark:border-odoo-dark-purple hover:bg-odoo-purple-d dark:hover:bg-odoo-dark-purple-d hover:border-odoo-purple-d dark:hover:border-odoo-dark-purple-d px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border disabled:cursor-not-allowed disabled:opacity-60"
+                      loading={editingBusy}
                     >
                       {editingBusy ? t('busy') : t('update')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onCancelEdit}
-                      disabled={editingBusy}
-                      className="inline-flex items-center bg-transparent text-text-secondary dark:text-text-dark-secondary border border-ui-border dark:border-ui-dark-border hover:text-text-primary dark:hover:text-text-dark-primary hover:border-text-secondary dark:hover:border-text-dark-secondary px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-                    >
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={onCancelEdit} disabled={editingBusy}>
                       {t('cancel')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <div
                   className="rte-content mt-3 text-sm text-text-primary dark:text-text-dark-primary"
-                  dangerouslySetInnerHTML={{ __html: comment.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content) }}
                 />
               )}
             </article>
@@ -334,10 +302,10 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
       <ConfirmDialog
         open={deleteTargetId !== null}
         title={t('confirmDelete.title')}
-        message={t('confirmDelete.message')}
+        description={t('confirmDelete.message')}
         confirmLabel={t('confirmDelete.confirmLabel')}
-        confirmTone="danger"
-        busy={deleteBusy}
+        variant="danger"
+        loading={deleteBusy}
         onConfirm={onConfirmDelete}
         onCancel={() => !deleteBusy && setDeleteTargetId(null)}
       />

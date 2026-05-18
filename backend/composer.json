@@ -10,7 +10,10 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "maya/shared-auth-laravel": "@dev",
+        "maya/shared-http-laravel": "@dev",
         "maya/shared-messaging-laravel": "@dev",
+        "maya/shared-platform-laravel": "@dev",
+        "maya/shared-profile-laravel": "@dev",
         "mews/purifier": "^3.4",
         "predis/predis": "^3.4",
         "vladimir-yuldashev/laravel-queue-rabbitmq": "dev-master"
@@ -95,9 +98,21 @@
             "type": "path",
             "url": "../../maya_infra/packages/maya-shared-auth-laravel"
         },
+        "maya-shared-http": {
+            "type": "path",
+            "url": "../../maya_infra/packages/maya-shared-http-laravel"
+        },
         "maya-shared-messaging": {
             "type": "path",
             "url": "../../maya_infra/packages/maya-shared-messaging-laravel"
+        },
+        "maya-shared-platform": {
+            "type": "path",
+            "url": "../../maya_infra/packages/maya-shared-platform-laravel"
+        },
+        "maya-shared-profile": {
+            "type": "path",
+            "url": "../../maya_infra/packages/maya-shared-profile-laravel"
         }
     }
 }

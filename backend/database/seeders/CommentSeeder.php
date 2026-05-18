@@ -16,7 +16,7 @@ class CommentSeeder extends Seeder
             ['id' => 1],
             [
                 'content' => 'Comment 1 de Admin',
-                'user_id' => 1,
+                'user_id' => '1',
                 'commentable_type' => ErrorCode::class,
                 'commentable_id' => 1,
             ]
@@ -26,7 +26,7 @@ class CommentSeeder extends Seeder
             ['id' => 2],
             [
                 'content' => 'Comment 2 de User',
-                'user_id' => 2,
+                'user_id' => '2',
                 'commentable_type' => ErrorCode::class,
                 'commentable_id' => 1,
             ]
@@ -36,7 +36,7 @@ class CommentSeeder extends Seeder
             ['id' => 3],
             [
                 'content' => 'Comment 3 de Admin',
-                'user_id' => 1,
+                'user_id' => '1',
                 'commentable_type' => ArchivedLog::class,
                 'commentable_id' => 1,
             ]
@@ -46,7 +46,7 @@ class CommentSeeder extends Seeder
             ['id' => 4],
             [
                 'content' => 'Comment 2 de User',
-                'user_id' => 2,
+                'user_id' => '2',
                 'commentable_type' => ArchivedLog::class,
                 'commentable_id' => 1,
             ]

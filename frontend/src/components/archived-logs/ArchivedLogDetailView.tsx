@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { ArchivedLog } from '../../types/logs';
-import { formatDateTime } from '../../utils/date';
+import { formatDateTime } from '@maya/shared-ui-react';
 import { SeverityBadge } from '../severity';
 
 type ArchivedLogDetailViewProps = {

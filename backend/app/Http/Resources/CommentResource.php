@@ -1,36 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
-use App\Models\Comment;
+use App\Dtos\CommentDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * @mixin Comment
+ * @property CommentDto $resource
  */
 class CommentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $authUser = $request->user();
-        $canEdit = $authUser !== null && Gate::forUser($authUser)->check('update', $this->resource);
-        $canDelete = $authUser !== null && Gate::forUser($authUser)->check('delete', $this->resource);
+        /** @var CommentDto $dto */
+        $dto = $this->resource;
 
-        return [
-            'id' => $this->id,
-            'content' => $this->content,
-            'commentable_type' => $this->commentable_type,
-            'commentable_id' => $this->commentable_id,
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+        $authUser = $request->user();
+        $canEdit = $authUser !== null && Gate::forUser($authUser)->check('update', $dto->source);
+        $canDelete = $authUser !== null && Gate::forUser($authUser)->check('delete', $dto->source);
+
+        $payload = [
+            'id' => $dto->id,
+            'content' => $dto->content,
+            'commentable_type' => $dto->commentableType,
+            'commentable_id' => $dto->commentableId,
+            'created_at' => $dto->createdAt,
+            'updated_at' => $dto->updatedAt,
             'can_edit' => $canEdit,
             'can_delete' => $canDelete,
-            'user' => $this->whenLoaded('user', fn () => $this->user ? [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-            ] : null),
         ];
+
+        if ($dto->userLoaded) {
+            $payload['user'] = $dto->user !== null
+                ? ['id' => $dto->user->id, 'name' => $dto->user->name]
+                : null;
+        }
+
+        return $payload;
     }
 }

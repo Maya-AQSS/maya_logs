@@ -20,7 +20,7 @@ class ArchivedLogSeeder extends Seeder
             ['id' => 1],
             [
                 'application_id' => 1,
-                'archived_by_id' => 1,
+                'archived_by_id' => '1',
                 'error_code_id' => 1,
                 'severity' => 'low',
                 'message' => 'Seed: archived log de prueba - '.$messageBody,
@@ -36,7 +36,7 @@ class ArchivedLogSeeder extends Seeder
             ['id' => 2],
             [
                 'application_id' => 1,
-                'archived_by_id' => 2,
+                'archived_by_id' => '2',
                 'error_code_id' => 1,
                 'severity' => 'medium',
                 'message' => 'Seed: archived log de prueba - '.$messageBody,
@@ -52,7 +52,7 @@ class ArchivedLogSeeder extends Seeder
             ['id' => 4],
             [
                 'application_id' => 1,
-                'archived_by_id' => 1,
+                'archived_by_id' => '1',
                 'error_code_id' => 1,
                 'severity' => 'high',
                 'message' => 'Seed: archived long message fixture - '.$messageBody,
@@ -74,7 +74,7 @@ class ArchivedLogSeeder extends Seeder
             ['id' => 3],
             [
                 'application_id' => 1,
-                'archived_by_id' => 1,
+                'archived_by_id' => '1',
                 'error_code_id' => 1,
                 'severity' => 'critical',
                 'message' => sprintf(

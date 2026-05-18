@@ -1,36 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources;
 
-use App\Models\Log;
+use App\Dtos\LogDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin Log
+ * @property LogDto $resource
  */
 class LogResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->id,
-            'severity' => $this->severity,
-            'message' => $this->message,
-            'metadata' => $this->metadata,
-            'resolved' => (bool) $this->resolved,
-            'file' => $this->file,
-            'line' => $this->line,
-            'created_at' => $this->created_at?->toIso8601String(),
-            'application' => $this->whenLoaded('application', fn () => [
-                'id' => $this->application->id,
-                'name' => $this->application->name,
-            ]),
-            'error_code' => $this->whenLoaded('errorCode', fn () => $this->errorCode ? [
-                'id' => $this->errorCode->id,
-                'code' => $this->errorCode->code,
-                'name' => $this->errorCode->name,
-            ] : null),
+        /** @var LogDto $dto */
+        $dto = $this->resource;
+
+        $payload = [
+            'id' => $dto->id,
+            'severity' => $dto->severity,
+            'message' => $dto->message,
+            'metadata' => $dto->metadata,
+            'resolved' => $dto->resolved,
+            'file' => $dto->file,
+            'line' => $dto->line,
+            'created_at' => $dto->createdAt,
         ];
+
+        if ($dto->applicationLoaded && $dto->application !== null) {
+            $payload['application'] = [
+                'id' => $dto->application->id,
+                'name' => $dto->application->name,
+            ];
+        }
+
+        if ($dto->errorCodeLoaded) {
+            $payload['error_code'] = $dto->errorCode !== null
+                ? [
+                    'id' => $dto->errorCode->id,
+                    'code' => $dto->errorCode->code,
+                    'name' => $dto->errorCode->name,
+                ]
+                : null;
+        }
+
+        return $payload;
     }
 }

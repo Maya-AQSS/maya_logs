@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { Log } from '../../types/logs';
-import { formatDateTime } from '../../utils/date';
+import { formatDateTime } from '@maya/shared-ui-react';
 import { SeverityBadge } from '../severity';
 
 type LogDetailViewProps = {
@@ -53,8 +53,8 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
           <span
             className={
               log.resolved
-                ? 'inline-flex items-center rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success ring-1 ring-inset ring-success/20'
-                : 'inline-flex items-center rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning ring-1 ring-inset ring-warning/20'
+                ? 'inline-flex items-center rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success-dark ring-1 ring-inset ring-success/20'
+                : 'inline-flex items-center rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning-dark ring-1 ring-inset ring-warning/20'
             }
           >
             {log.resolved ? t('detail.fields.resolved') : t('detail.fields.unresolved')}

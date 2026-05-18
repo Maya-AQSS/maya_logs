@@ -1,14 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Contracts;
 
+use App\Dtos\ArchivedLogDto;
 use App\Models\ArchivedLog;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Maya\Http\Pagination\PaginatedDto;
 
 interface ArchivedLogServiceInterface
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator;
+    /**
+     * @return PaginatedDto<ArchivedLogDto>
+     */
+    public function paginate(int $perPage = 15): PaginatedDto;
 
+    /**
+     * @return PaginatedDto<ArchivedLogDto>
+     */
     public function searchAndFilter(
         ?array $severities,
         ?int $applicationId,
@@ -17,9 +26,15 @@ interface ArchivedLogServiceInterface
         ?string $sortBy,
         string $sortDir,
         int $perPage = 15
-    ): LengthAwarePaginator;
+    ): PaginatedDto;
 
-    public function findOrFail(int $id): ArchivedLog;
+    public function findOrFail(int $id): ArchivedLogDto;
+
+    /**
+     * Model lookup for the controller's policy gate (authorize uses the Eloquent
+     * instance). Kept separate from {@see self::findOrFail()} which returns a DTO.
+     */
+    public function findModelOrFail(int $id): ArchivedLog;
 
     /**
      * @param  array<string, mixed>  $fields
@@ -28,5 +43,5 @@ interface ArchivedLogServiceInterface
 
     public function delete(ArchivedLog $archivedLog): void;
 
-    public function archiveFromLogId(int $logId, int $archivedById): ArchivedLog;
+    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLog;
 }

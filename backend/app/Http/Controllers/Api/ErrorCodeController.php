@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreErrorCodeRequest;
 use App\Http\Requests\Api\UpdateErrorCodeRequest;
 use App\Http\Resources\ErrorCodeResource;
+use App\Models\ErrorCode;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ErrorCodeController extends Controller
 {
@@ -17,54 +19,61 @@ class ErrorCodeController extends Controller
         private ErrorCodeServiceInterface $errorCodeService,
     ) {}
 
-    /**
-     * Listado paginado y filtrado de error codes.
-     */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->integer('per_page', 15);
 
-        $paginator = $this->errorCodeService->searchAndFilter(
+        $page = $this->errorCodeService->searchAndFilter(
             search: $request->string('search')->toString() ?: null,
             filterApp: $request->filled('application_id') ? (int) $request->input('application_id') : null,
             perPage: $perPage > 0 ? $perPage : 15,
         );
 
-        return ErrorCodeResource::collection($paginator);
+        return response()->json([
+            ...$page->jsonSerialize(),
+            'data' => ErrorCodeResource::collection($page->items)->resolve($request),
+        ]);
     }
 
-    public function show(int $id): ErrorCodeResource
+    public function show(int $id): JsonResponse
     {
-        $errorCode = $this->errorCodeService->findOrFail($id);
-        $errorCode->loadMissing('application');
-        $errorCode->loadCount('comments');
+        $dto = $this->errorCodeService->findOrFail($id);
 
-        return new ErrorCodeResource($errorCode);
+        return response()->json([
+            'data' => (new ErrorCodeResource($dto))->resolve(),
+        ]);
     }
 
     public function store(StoreErrorCodeRequest $request): JsonResponse
     {
-        $errorCode = $this->errorCodeService->create($request->validated());
-        $errorCode->loadMissing('application');
+        $this->authorize('create', ErrorCode::class);
 
-        return (new ErrorCodeResource($errorCode))
-            ->response()
-            ->setStatusCode(201);
+        $dto = $this->errorCodeService->create($request->validated());
+
+        return response()->json([
+            'data' => (new ErrorCodeResource($dto))->resolve($request),
+        ], 201);
     }
 
-    public function update(UpdateErrorCodeRequest $request, int $id): ErrorCodeResource
+    public function update(UpdateErrorCodeRequest $request, int $id): JsonResponse
     {
-        $errorCode = $this->errorCodeService->findOrFail($id);
-        $errorCode = $this->errorCodeService->update($errorCode, $request->validated());
-        $errorCode->loadMissing('application');
-        $errorCode->loadCount('comments');
+        $errorCode = $this->errorCodeService->findModelOrFail($id);
 
-        return new ErrorCodeResource($errorCode);
+        $this->authorize('update', $errorCode);
+
+        $dto = $this->errorCodeService->update($errorCode, $request->validated());
+
+        return response()->json([
+            'data' => (new ErrorCodeResource($dto))->resolve($request),
+        ]);
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $errorCode = $this->errorCodeService->findOrFail($id);
+        $errorCode = $this->errorCodeService->findModelOrFail($id);
+
+        $this->authorize('delete', $errorCode);
+
         $this->errorCodeService->delete($errorCode);
 
         return response()->json(null, 204);

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Application;
 use App\Models\ErrorCode;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -11,28 +10,25 @@ class ErrorCodeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * 'applications' es una vista FDW de solo lectura sobre maya_auth.applications.
+     * Resolvemos por slug si viene 'application' en el mock; nunca creamos apps.
      */
     public function run(): void
     {
         $errorCodes = require database_path('data/mock-error-codes.php');
 
-        // Cache application name → id lookups
-        $appCache = [];
+        $appIdBySlug = DB::table('applications')->pluck('id', 'slug')->toArray();
 
         foreach ($errorCodes as $errorCode) {
             $appId = $errorCode['application_id'] ?? null;
 
-            // If no application_id, resolve from application name
             if ($appId === null && isset($errorCode['application'])) {
-                $appName = $errorCode['application'];
-                if (! isset($appCache[$appName])) {
-                    $app = Application::firstOrCreate(
-                        ['name' => $appName],
-                        ['description' => $appName.' application']
-                    );
-                    $appCache[$appName] = $app->id;
-                }
-                $appId = $appCache[$appName];
+                $appId = $appIdBySlug[$errorCode['application']] ?? null;
+            }
+
+            if ($appId === null) {
+                continue;
             }
 
             $attributes = [

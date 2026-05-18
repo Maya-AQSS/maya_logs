@@ -1,4 +1,4 @@
-import type { ApiEnvelope } from '../types/api';
+import type { ApiEnvelope } from '@maya/shared-auth-react';
 import type { Comment } from '../types/logs';
 import { apiFetchJson, apiGetJson } from './http';
 

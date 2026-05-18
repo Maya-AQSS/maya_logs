@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +14,8 @@ class Application extends Model
 
     public const UPDATED_AT = null;
 
-    protected $fillable = ['name', 'description'];
+    // applications es una vista sobre FDW → maya_auth — solo lectura
+    protected $guarded = ['*'];
 
     protected function casts(): array
     {

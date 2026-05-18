@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Eloquent;
 
 use App\Enums\Severity;
@@ -121,14 +123,14 @@ class LogRepository implements LogRepositoryInterface
             ->when($severity, fn ($q) => $q->whereIn('severity', $severity))
             ->when($applicationId !== null, fn ($q) => $q->where('application_id', $applicationId))
             ->when($archived, function ($q) use ($archived): void {
-                if ($archived === 'archived') {
+                if ($archived === 'only') {
                     $q->whereExists(fn ($subQuery) => $this->applyArchivedMatchForLogsQuery($subQuery));
-                } elseif ($archived === 'not_archived') {
+                } elseif ($archived === 'without') {
                     $q->whereNotExists(fn ($subQuery) => $this->applyArchivedMatchForLogsQuery($subQuery));
                 }
             })
             ->when($resolved, function ($q) use ($resolved): void {
-                if ($resolved === 'resolved') {
+                if ($resolved === 'only') {
                     $q->where('resolved', true);
                 } elseif ($resolved === 'unresolved') {
                     $q->where('resolved', false);

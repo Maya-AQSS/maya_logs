@@ -102,7 +102,7 @@ make logs      # sigue logs de todos los servicios
 | --- | --- | --- |
 | Frontend React | <http://logs.localhost> | <http://localhost:5176> |
 | Backend API | <http://logs-api.localhost> | <http://localhost:8002> |
-| Keycloak | <http://keycloak.localhost> | <http://localhost:8180> |
+| Keycloak | <https://keycloak.maya.test> | <http://localhost:8180> |
 | Traefik dashboard | <http://localhost:8888> | — |
 
 ### Credenciales por defecto

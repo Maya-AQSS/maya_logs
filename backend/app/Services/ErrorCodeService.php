@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Dtos\ErrorCodeDto;
 use App\Models\ErrorCode;
 use App\Repositories\Contracts\ErrorCodeRepositoryInterface;
 use App\Services\Contracts\ErrorCodeServiceInterface;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Maya\Http\Pagination\PaginatedDto;
 
 class ErrorCodeService implements ErrorCodeServiceInterface
 {
@@ -14,37 +17,54 @@ class ErrorCodeService implements ErrorCodeServiceInterface
         private ErrorCodeRepositoryInterface $errorCodeRepository
     ) {}
 
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    public function paginate(int $perPage = 15): PaginatedDto
     {
-        return $this->errorCodeRepository->paginate($perPage);
+        return PaginatedDto::fromPaginator(
+            $this->errorCodeRepository->paginate($perPage),
+            static fn (ErrorCode $m) => ErrorCodeDto::fromModel($m),
+        );
     }
 
     public function searchAndFilter(
         ?string $search,
         ?int $filterApp,
         int $perPage = 15
-    ): LengthAwarePaginator {
-        return $this->errorCodeRepository->searchAndFilter($search, $filterApp, $perPage);
+    ): PaginatedDto {
+        return PaginatedDto::fromPaginator(
+            $this->errorCodeRepository->searchAndFilter($search, $filterApp, $perPage),
+            static fn (ErrorCode $m) => ErrorCodeDto::fromModel($m),
+        );
     }
 
-    public function findOrFail(int $id): ErrorCode
+    public function findOrFail(int $id): ErrorCodeDto
+    {
+        return ErrorCodeDto::fromModel($this->findModelOrFail($id));
+    }
+
+    public function findModelOrFail(int $id): ErrorCode
     {
         return $this->errorCodeRepository->findOrFail($id);
     }
 
-    public function create(array $data): ErrorCode
+    public function create(array $data): ErrorCodeDto
     {
-        return $this->errorCodeRepository->create($data);
+        $errorCode = $this->errorCodeRepository->create($data);
+        $errorCode->loadMissing('application');
+
+        return ErrorCodeDto::fromModel($errorCode);
     }
 
-    public function update(ErrorCode $errorCode, array $data): ErrorCode
+    public function update(ErrorCode $errorCode, array $data): ErrorCodeDto
     {
-        return $this->errorCodeRepository->update($errorCode, $data);
+        $updated = $this->errorCodeRepository->update($errorCode, $data);
+        $updated->loadMissing('application');
+        $updated->loadCount('comments');
+
+        return ErrorCodeDto::fromModel($updated);
     }
 
     public function delete(ErrorCode $errorCode): void
     {
-        // Use transaction to ensure data integrity
         DB::transaction(function () use ($errorCode) {
             $this->errorCodeRepository->delete($errorCode);
         });

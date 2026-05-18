@@ -1,3 +1,5 @@
+name: ${MAYA_SLOT_PROJECT:-maya}-logs
+
 services:
 
   # ─── Backend (Laravel 12 API) ────────────────────────────────
@@ -5,14 +7,14 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: maya_log_mgmt
     restart: unless-stopped
+    mem_limit: 512m
     environment:
       APP_NAME: ${APP_NAME:-Log Management}
       APP_ENV: ${APP_ENV:-local}
       APP_KEY: ${APP_KEY:-}
       APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://maya_logs.localhost}
+      APP_URL: ${APP_URL}
       APP_LOCALE: ${APP_LOCALE:-es}
       APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-es}
       APP_FAKER_LOCALE: ${APP_FAKER_LOCALE:-es_ES}
@@ -33,9 +35,14 @@ services:
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
       SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
       SESSION_ENCRYPT: ${SESSION_ENCRYPT:-false}
+      # ─── Redis (caché JWKS + perfil JWT en shared-auth-laravel) ─
+      REDIS_HOST: ${REDIS_HOST:-maya_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secret}
+      REDIS_DB: ${REDIS_DB:-0}
       # ─── Auth (gateway externo) ─────────────────────────────────
       AUTH_EXTERNAL_URL: ${AUTH_EXTERNAL_URL:-http://maya_auth_backend:8000}
-      AUTH_EXTERNAL_PUBLIC_URL: ${AUTH_EXTERNAL_PUBLIC_URL:-http://maya_authorization.localhost}
+      AUTH_EXTERNAL_PUBLIC_URL: ${AUTH_EXTERNAL_PUBLIC_URL}
       AUTH_MOCK_USER_ID: ${AUTH_MOCK_USER_ID:-1}
       # ─── Logging ────────────────────────────────────────────────
       LOG_CHANNEL: stack
@@ -52,21 +59,26 @@ services:
       # ─── JWT / JWKS ───────────────────────────────────────────
       JWKS_URL: ${JWKS_URL:-http://maya_auth_keycloak:8080/realms/maya/protocol/openid-connect/certs}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-maya-logs}
-      JWT_ISSUER: ${JWT_ISSUER:-http://keycloak.localhost/realms/maya}
+      JWT_ISSUER: ${JWT_ISSUER}
       # ─── CORS ─────────────────────────────────────────────────
-      FRONTEND_URL: ${FRONTEND_URL:-http://maya_logs.localhost}
+      FRONTEND_URL: ${FRONTEND_URL}
     volumes:
       - ./backend:/var/www/html
       - ../maya_infra/packages:/var/maya_infra/packages
-      - /var/www/html/vendor
       - /var/www/html/node_modules
-    ports:
-      - "${BACKEND_PORT:-8002}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health/live || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 150s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maya-logs-api.rule=Host(`maya_logs_api.localhost`)"
-      - "traefik.http.routers.maya-logs-api.entrypoints=web"
-      - "traefik.http.services.maya-logs-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-api.rule=Host(`${HOST_PREFIX}logs-api.${DOMAIN_SUFFIX}`)"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-api.service=${MAYA_SLOT_PROJECT}-maya-logs-api"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-api.entrypoints=websecure"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-api.tls=true"
+      - "traefik.http.services.${MAYA_SLOT_PROJECT}-maya-logs-api.loadbalancer.server.port=8000"
     networks:
       - maya_network
 
@@ -75,10 +87,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: maya_log_mgmt_worker
     restart: unless-stopped
+    mem_limit: 256m
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       APP_NAME: ${APP_NAME:-Log Management}
       APP_ENV: ${APP_ENV:-local}
@@ -90,6 +103,10 @@ services:
       DB_USERNAME: ${DB_USERNAME:-log_mgmt_user}
       DB_PASSWORD: ${DB_PASSWORD:-secret}
       CACHE_STORE: database
+      REDIS_HOST: ${REDIS_HOST:-maya_redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-secret}
+      REDIS_DB: ${REDIS_DB:-0}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-maya_rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       RABBITMQ_USER: ${RABBITMQ_USER:-admin}
@@ -104,32 +121,18 @@ services:
       LOG_CHANNEL: stack
       LOG_STACK: "daily"
       LOG_LEVEL: info
-    # Override del ENTRYPOINT del Dockerfile (que hace exec php artisan serve
-    # hardcoded e ignora CMD). Cada servicio tiene su propio volumen anonymous
-    # para vendor/, asi que el worker instala sus deps tambien (rapido en el
-    # segundo run porque composer cache de paquetes existe en la imagen).
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        cd /var/www/html
-        if [ ! -f vendor/autoload.php ]; then
-          echo "[worker] vendor missing, running composer install..."
-          composer install --optimize-autoloader --no-interaction --no-ansi
-        fi
-        echo "[worker] vendor ready — waiting for backend migrations (logs table)..."
-        until php -r "exit(is_file('vendor/autoload.php') ? 0 : 1);" 2>/dev/null && \
-              php artisan migrate:status --no-interaction 2>/dev/null | grep -q "create_logs_table"; do
-          sleep 3
-        done
-        echo "[worker] migrations ready — starting logs:consume"
-        exec php artisan logs:consume
+      QUEUE_CONNECTION: database
+      WORKER_LABEL: "[worker]"
+      WORKER_WAIT_MIGRATION: create_logs_table
+      WORKER_PATCH_CONSUMER: "1"
+      WORKER_CONSUMERS: logs:consume
+    entrypoint: ["/maya_infra/scripts/worker-entrypoint.sh"]
     command: []
     volumes:
       - ./backend:/var/www/html
       - ../maya_infra/packages:/var/maya_infra/packages
-      - /var/www/html/vendor
       - /var/www/html/node_modules
+      - ../maya_infra/scripts:/maya_infra/scripts:ro
     networks:
       - maya_network
 
@@ -138,27 +141,32 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: maya_log_mgmt_frontend
     restart: unless-stopped
+    # vitest + jsdom necesita >1g para suites medianas sin OOM (exit 137).
+    mem_limit: 2g
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://maya_logs_api.localhost/api/v1}
-      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://keycloak.localhost}
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
       VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-maya}
       VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-maya-logs}
-      VITE_DASHBOARD_API_URL: ${VITE_DASHBOARD_API_URL:-http://maya_dashboard_api.localhost}
+      VITE_DASHBOARD_API_URL: ${VITE_DASHBOARD_API_URL}
     volumes:
       - ./frontend:/app
       - ../maya_infra/packages:/maya_infra/packages
+      - ../maya_infra/configs:/maya_infra/configs:ro
       - /app/node_modules
     ports:
       - "${FRONTEND_PORT:-5176}:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.maya-logs-front.rule=Host(`maya_logs.localhost`)"
-      - "traefik.http.routers.maya-logs-front.entrypoints=web"
-      - "traefik.http.services.maya-logs-front.loadbalancer.server.port=5173"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-front.rule=Host(`${HOST_PREFIX}logs.${DOMAIN_SUFFIX}`)"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-front.service=${MAYA_SLOT_PROJECT}-maya-logs-front"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-front.entrypoints=websecure"
+      - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-front.tls=true"
+      - "traefik.http.services.${MAYA_SLOT_PROJECT}-maya-logs-front.loadbalancer.server.port=5173"
     networks:
       - maya_network
 

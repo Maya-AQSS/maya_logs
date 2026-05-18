@@ -343,4 +343,29 @@ return [
         'name' => 'External Rate Limit Hit (429)',
         'description' => 'El script está siendo bloqueado por un servicio externo (Moodle, pasarelas de firma) por exceso de peticiones concurrentes (HTTP 429).',
     ],
+    // Códigos de error para el archivado de logs
+    [
+        'application_id' => 4,
+        'code' => 'LAR-LOG-001',
+        'name' => 'Archived log fields update failed',
+        'description' => 'Fallo al persistir la actualización de campos editables (descripción, URL de tutorial, etc.) de un log archivado.',
+    ],
+    [
+        'application_id' => 4,
+        'code' => 'LAR-LOG-002',
+        'name' => 'Archived log delete failed',
+        'description' => 'Fallo al eliminar (soft delete) un log archivado.',
+    ],
+    [
+        'application_id' => 4,
+        'code' => 'LAR-LOG-003',
+        'name' => 'Active log archive failed',
+        'description' => 'Fallo al crear el registro de log archivado desde un log activo.',
+    ],
+    [
+        'application_id' => 4,
+        'code' => 'LAR-LOG-004',
+        'name' => 'Archived log not found',
+        'description' => 'No se encontró el log archivado solicitado por id.',
+    ],
 ];

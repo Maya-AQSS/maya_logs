@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
 >
 
@@ -18,6 +18,12 @@
             <directory>app</directory>
         </include>
     </source>
+    <coverage>
+        <report>
+            <text outputFile="coverage.txt" showOnlySummary="true"/>
+            <html outputDirectory="coverage-html"/>
+        </report>
+    </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
@@ -27,6 +33,8 @@
         <!-- BD: SQLite en memoria para desarrollo local. Ver phpunit-pgsql.xml para PostgreSQL. -->
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
+        <env name="LOG_CHANNEL" value="null"/>
+        <env name="MAYA_MESSAGING_APP" value="maya_logs"/>
         <env name="AUTH_EXTERNAL_URL" value="http://auth.example.com"/>
         <env name="AUTH_EXTERNAL_PUBLIC_URL" value="http://auth.example.com/login"/>
         <env name="MAIL_MAILER" value="array"/>

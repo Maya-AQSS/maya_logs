@@ -36,6 +36,7 @@
   },
   "actions": {
     "create": "Crear codi",
+    "new": "Nou codi",
     "save": "Guardar canvis",
     "delete": "Eliminar"
   }

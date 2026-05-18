@@ -4,9 +4,10 @@
  */
 import { createApiClient, ApiHttpError, type ApiFetchOptions } from '@maya/shared-auth-react'
 import { oidcAuthService } from '../auth/oidcAdapter'
+import { peerOrigin } from '../lib/peerService'
 
-const DEFAULT_BASE_URL = 'http://logs-api.localhost/api/v1'
-const baseUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? DEFAULT_BASE_URL
+const baseUrl = ((import.meta.env.VITE_API_URL as string | undefined)?.trim())
+  || `${peerOrigin('logs-api')}/api/v1`
 
 const client = createApiClient(oidcAuthService.keycloak, baseUrl)
 

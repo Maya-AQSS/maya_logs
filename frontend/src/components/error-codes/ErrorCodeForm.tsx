@@ -1,159 +1,128 @@
 import { useTranslation } from 'react-i18next';
+import { useFormContext } from 'react-hook-form';
+import { FieldLabel, Select, TextArea, TextInput } from '@maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
+import type { ErrorCodeFormInput } from '../../schemas/errorCode';
 
-export type ErrorCodeFormState = {
-  application_id: number | null;
-  code: string;
-  name: string;
-  file: string;
-  line: string;
-  description: string;
-};
-
-type ErrorCodeFormProps = {
-  value: ErrorCodeFormState;
+interface ErrorCodeFormProps {
   applications: ApplicationRef[];
   disabled?: boolean;
   codeReadOnly?: boolean;
   applicationReadOnly?: boolean;
-  onChange: (patch: Partial<ErrorCodeFormState>) => void;
-};
+}
 
+/**
+ * Presentational form for error code create/edit. Consumes the surrounding
+ * `<FormProvider>` for state + validation (see `errorCodeFormSchema`).
+ */
 export function ErrorCodeForm({
-  value,
   applications,
   disabled = false,
   codeReadOnly = false,
   applicationReadOnly = false,
-  onChange,
 }: ErrorCodeFormProps) {
   const { t } = useTranslation('errorCodes');
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<ErrorCodeFormInput>();
+
   const applicationLocked = applicationReadOnly || disabled;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label
-          htmlFor="error-code-name"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('form.name')} <span className="text-danger">*</span>
-        </label>
-        <input
+        <FieldLabel htmlFor="error-code-name" required>
+          {t('form.name')}
+        </FieldLabel>
+        <TextInput
           id="error-code-name"
-          type="text"
-          value={value.name}
-          onChange={(e) => onChange({ name: e.target.value })}
+          fieldSize="comfortable"
           disabled={disabled}
-          required
-          className="mt-1 w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
+          error={!!errors.name}
+          {...register('name')}
         />
+        {errors.name && <p className="mt-1 text-xs text-danger">{errors.name.message}</p>}
       </div>
 
       <div>
-        <label
-          htmlFor="error-code-code"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('form.code')} <span className="text-danger">*</span>
-        </label>
-        <input
+        <FieldLabel htmlFor="error-code-code" required>
+          {t('form.code')}
+        </FieldLabel>
+        <TextInput
           id="error-code-code"
-          type="text"
-          value={value.code}
-          onChange={(e) => onChange({ code: e.target.value })}
+          fieldSize="comfortable"
           disabled={disabled}
           readOnly={codeReadOnly}
-          required
-          className="mt-1 w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 font-mono text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60 read-only:bg-ui-card dark:read-only:bg-ui-dark-card"
+          className="font-mono"
+          error={!!errors.code}
+          {...register('code')}
         />
+        {errors.code && <p className="mt-1 text-xs text-danger">{errors.code.message}</p>}
       </div>
 
       <div>
-        <label
-          htmlFor="error-code-application"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
+        <FieldLabel htmlFor="error-code-application" required>
+          {t('form.application')}
+        </FieldLabel>
+        <Select
+          id="error-code-application"
+          fieldSize="comfortable"
+          disabled={applicationLocked}
+          error={!!errors.application_id}
+          {...register('application_id')}
         >
-          {t('form.application')} <span className="text-danger">*</span>
-        </label>
-        <div className="relative mt-1">
-          <select
-            id="error-code-application"
-            value={value.application_id ?? ''}
-            onChange={(e) => {
-              const v = e.target.value;
-              onChange({ application_id: v === '' ? null : Number(v) });
-            }}
-            disabled={applicationLocked}
-            required
-            className="w-full appearance-none rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 pr-10 text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="">{t('form.applicationPlaceholder')}</option>
-            {applications.map((app) => (
-              <option key={app.id} value={app.id}>
-                {app.name}
-              </option>
-            ))}
-          </select>
-          <span
-            className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-muted dark:text-text-dark-muted"
-            aria-hidden
-          >
-            ▾
-          </span>
-        </div>
+          <option value="">{t('form.applicationPlaceholder')}</option>
+          {applications.map((app) => (
+            <option key={app.id} value={app.id}>
+              {app.name}
+            </option>
+          ))}
+        </Select>
+        {errors.application_id && (
+          <p className="mt-1 text-xs text-danger">{errors.application_id.message}</p>
+        )}
       </div>
 
       <div>
-        <label
-          htmlFor="error-code-file"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('form.file')}
-        </label>
-        <input
+        <FieldLabel htmlFor="error-code-file">{t('form.file')}</FieldLabel>
+        <TextInput
           id="error-code-file"
-          type="text"
-          value={value.file}
-          onChange={(e) => onChange({ file: e.target.value })}
+          fieldSize="comfortable"
           disabled={disabled}
-          className="mt-1 w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 font-mono text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
+          className="font-mono"
+          error={!!errors.file}
+          {...register('file')}
         />
+        {errors.file && <p className="mt-1 text-xs text-danger">{errors.file.message}</p>}
       </div>
 
       <div>
-        <label
-          htmlFor="error-code-line"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('form.line')}
-        </label>
-        <input
+        <FieldLabel htmlFor="error-code-line">{t('form.line')}</FieldLabel>
+        <TextInput
           id="error-code-line"
           type="number"
+          fieldSize="comfortable"
           min={1}
-          value={value.line}
-          onChange={(e) => onChange({ line: e.target.value })}
           disabled={disabled}
-          className="mt-1 w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
+          error={!!errors.line}
+          {...register('line')}
         />
+        {errors.line && <p className="mt-1 text-xs text-danger">{errors.line.message}</p>}
       </div>
 
       <div className="md:col-span-2">
-        <label
-          htmlFor="error-code-description"
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('form.description')}
-        </label>
-        <textarea
+        <FieldLabel htmlFor="error-code-description">{t('form.description')}</FieldLabel>
+        <TextArea
           id="error-code-description"
-          value={value.description}
-          onChange={(e) => onChange({ description: e.target.value })}
-          disabled={disabled}
+          fieldSize="comfortable"
           rows={4}
-          className="mt-1 w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary shadow-inner focus:border-odoo-purple focus:outline-none dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={disabled}
+          {...register('description')}
         />
+        {errors.description && (
+          <p className="mt-1 text-xs text-danger">{errors.description.message}</p>
+        )}
       </div>
     </div>
   );

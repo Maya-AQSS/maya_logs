@@ -11,12 +11,16 @@ return new class extends Migration
         Schema::create('error_codes', function (Blueprint $table) {
             $table->id();
             $table->string('code');
-            $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
+            // application_id sin FK: 'applications' es una vista sobre FDW
+            $table->unsignedBigInteger('application_id');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('file')->nullable();
+            $table->integer('line')->nullable();
             $table->timestamps();
 
             $table->unique(['code', 'application_id']);
+            $table->index('application_id');
         });
     }
 

@@ -47,7 +47,7 @@ Projects identified:
 
 **Authentication**: All endpoints use X-App-Key header (machine-to-machine auth via middleware `verify.app.key`)
 
-**Base URL**: `http://maya_authorization_api.localhost/api/v1` (local via Traefik)
+**Base URL**: `https://authorization-api.maya.test/api/v1` (local via Traefik)
 
 ### Accessible to External Apps (M2M)
 

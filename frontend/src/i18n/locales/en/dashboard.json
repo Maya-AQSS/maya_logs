@@ -1,4 +1,5 @@
 {
+  "title": "Dashboard",
   "loading": "Loading dashboard…",
   "error": "Could not load dashboard",
   "unresolvedLabel": "Unresolved",
@@ -6,5 +7,30 @@
   "byApplication": "By application",
   "byApplicationHint": "Log volume in the system by service. Click a row to open the list filtered by that application.",
   "logsTotalLabel": "Logs in system",
-  "openFilteredLogs": "View logs filtered by {{app}}"
+  "openFilteredLogs": "View logs filtered by {{app}}",
+  "edit": {
+    "toggle": "Edit dashboard",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "removeWidget": "Remove widget"
+  },
+  "widgets": {
+    "empty": "No widgets on the dashboard. Reset to default to bring them back.",
+    "errorCount": {
+      "title": "Errors 24h",
+      "label": "Errors 24h"
+    },
+    "recentLogs": {
+      "title": "Recent logs",
+      "empty": "No recent logs"
+    },
+    "severityCards": {
+      "title": "By severity"
+    },
+    "applicationTotals": {
+      "title": "By application",
+      "empty": "No applications with logs"
+    }
+  }
 }

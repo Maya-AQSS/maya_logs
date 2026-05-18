@@ -1,4 +1,5 @@
-import esCommon from './locales/es/common.json';
+import { commonResources, COMMON_NAMESPACE } from '@maya/shared-i18n-react';
+
 import esDashboard from './locales/es/dashboard.json';
 import esLogs from './locales/es/logs.json';
 import esArchivedLogs from './locales/es/archivedLogs.json';
@@ -7,7 +8,6 @@ import esComments from './locales/es/comments.json';
 import esAuth from './locales/es/auth.json';
 import esNav from './locales/es/nav.json';
 
-import vaCommon from './locales/va/common.json';
 import vaDashboard from './locales/va/dashboard.json';
 import vaLogs from './locales/va/logs.json';
 import vaArchivedLogs from './locales/va/archivedLogs.json';
@@ -16,7 +16,6 @@ import vaComments from './locales/va/comments.json';
 import vaAuth from './locales/va/auth.json';
 import vaNav from './locales/va/nav.json';
 
-import enCommon from './locales/en/common.json';
 import enDashboard from './locales/en/dashboard.json';
 import enLogs from './locales/en/logs.json';
 import enArchivedLogs from './locales/en/archivedLogs.json';
@@ -31,7 +30,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: SupportedLocale = 'es';
 
 export const NAMESPACES = [
-  'common',
+  COMMON_NAMESPACE,
   'dashboard',
   'logs',
   'archivedLogs',
@@ -44,7 +43,7 @@ export type Namespace = (typeof NAMESPACES)[number];
 
 export const resources = {
   es: {
-    common: esCommon,
+    ...commonResources.es,
     dashboard: esDashboard,
     logs: esLogs,
     archivedLogs: esArchivedLogs,
@@ -54,7 +53,7 @@ export const resources = {
     nav: esNav,
   },
   va: {
-    common: vaCommon,
+    ...commonResources.va,
     dashboard: vaDashboard,
     logs: vaLogs,
     archivedLogs: vaArchivedLogs,
@@ -64,7 +63,7 @@ export const resources = {
     nav: vaNav,
   },
   en: {
-    common: enCommon,
+    ...commonResources.en,
     dashboard: enDashboard,
     logs: enLogs,
     archivedLogs: enArchivedLogs,

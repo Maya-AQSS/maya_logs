@@ -46,7 +46,7 @@
      ├─────────────────────┼───────────────────────────┤
      │ Traefik dashboard   │ http://localhost:8888     │
      ├─────────────────────┼───────────────────────────┤
-     │ Keycloak            │ http://keycloak.localhost │
+     │ Keycloak            │ https://keycloak.maya.test │
      ├─────────────────────┼───────────────────────────┤
      │ RabbitMQ management │ http://localhost:15672    │
      └─────────────────────┴───────────────────────────┘
@@ -58,7 +58,7 @@
      ├──────────────────────────┼──────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
      │ maya_authorization       │ http://maya.localhost (o http://localhost:5173)      │ http://api.localhost/api/v1 (o http://localhost:8000)          │
      ├──────────────────────────┼──────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
-     │ maya-dms                 │ http://maya-dms.localhost (o http://localhost:5174)  │ http://maya-dms-api.localhost/api/v1 (o http://localhost:8001) │
+     │ maya-dms                 │ https://dms.maya.test (o http://localhost:5174)  │ https://dms-api.maya.test/api/v1 (o http://localhost:8001) │
      ├──────────────────────────┼──────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
      │ maya-dashboard           │ http://dashboard.localhost (o http://localhost:5175) │ —                                                              │
      ├──────────────────────────┼──────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────┤
@@ -71,7 +71,7 @@
      Verificación
 
      1. Tras el arranque, visitar http://localhost:8888 (Traefik dashboard) para ver todos los servicios registrados
-     2. Comprobar http://keycloak.localhost que responde (health del IdP)
+     2. Comprobar https://keycloak.maya.test que responde (health del IdP)
      3. Visitar cada URL de aplicación y verificar que carga
      4. Para maya-dms y maya_authorization: verificar que el login/auth funciona via Keycloak
 

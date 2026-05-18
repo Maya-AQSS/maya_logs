@@ -1,4 +1,4 @@
-import type { ApiEnvelope, PaginatedResponse, SortDir } from '../types/api';
+import type { ApiEnvelope, PaginatedResponse, SortDir } from '@maya/shared-auth-react';
 import type { ArchivedLog } from '../types/logs';
 import { apiFetchJson, apiGetJson } from './http';
 

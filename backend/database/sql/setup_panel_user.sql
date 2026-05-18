@@ -33,14 +33,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON comments TO panel_user;
 -- error_codes: CRUD completo (ErrorCodeController::destroy)
 GRANT SELECT, INSERT, UPDATE, DELETE ON error_codes TO panel_user;
 
--- users: lectura e inserción
-GRANT SELECT, INSERT ON users TO panel_user;
+-- users: solo lectura (vista FDW sobre Odoo — no se puede insertar)
+GRANT SELECT ON users TO panel_user;
 
 -- Sequences necesarias para INSERT
 GRANT USAGE, SELECT ON SEQUENCE archived_logs_id_seq TO panel_user;
 GRANT USAGE, SELECT ON SEQUENCE comments_id_seq TO panel_user;
 GRANT USAGE, SELECT ON SEQUENCE error_codes_id_seq TO panel_user;
-GRANT USAGE, SELECT ON SEQUENCE users_id_seq TO panel_user;
 
 
 -- NOTA: el borrado de archived_logs usa soft delete (UPDATE deleted_at); no requiere

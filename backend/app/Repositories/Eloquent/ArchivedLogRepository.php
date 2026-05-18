@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories\Eloquent;
 
 use App\Models\ArchivedLog;
 use App\Models\Log;
+use App\Policies\ArchivedLogPolicy;
 use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -94,6 +97,8 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
 
     /**
      * @param  array<string, mixed>  $fields
+     *
+     * No valida actor; debe haberse pasado {@see ArchivedLogPolicy} (p. ej. vía `authorize` en el controlador).
      */
     public function updateArchivedFields(ArchivedLog $archivedLog, array $fields): void
     {
@@ -101,19 +106,19 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
     }
 
     /**
-     * Elimina un log archivado.
+     * Soft delete. La autorización la define {@see ArchivedLogPolicy}.
      */
-    public function delete(ArchivedLog $archivedLog): void
+    public function delete(ArchivedLog $archivedLog): bool
     {
-        $archivedLog->delete();
+        return (bool) $archivedLog->delete();
     }
 
     /**
      * Archiva un log por su id.
      */
-    public function archiveFromLogId(int $logId, int $archivedById): ArchivedLog
+    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLog
     {
-        return DB::transaction(function () use ($logId, $archivedById): ArchivedLog {
+        return DB::transaction(function () use ($logId, $archivedByUserId): ArchivedLog {
             $log = Log::query()
                 ->with(['errorCode'])
                 ->whereKey($logId)
@@ -134,7 +139,7 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
 
             $archivedLog = ArchivedLog::query()->create([
                 'application_id' => (int) $log->application_id,
-                'archived_by_id' => (int) $archivedById,
+                'archived_by_id' => $archivedByUserId,
                 'error_code_id' => $log->error_code_id,
                 'severity' => $log->severity,
                 'message' => $log->message,

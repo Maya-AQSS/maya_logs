@@ -35,7 +35,8 @@ return new class extends Migration
         Schema::create('logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('error_code_id')->nullable()->constrained('error_codes')->nullOnDelete();
-            $table->foreignId('application_id')->constrained('applications')->cascadeOnDelete();
+            // application_id sin FK: 'applications' es una vista sobre FDW
+            $table->unsignedBigInteger('application_id');
             $table->enum('severity', ['critical', 'high', 'medium', 'low', 'other']);
             $table->text('message');
             $table->string('file')->nullable();

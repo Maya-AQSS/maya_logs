@@ -11,9 +11,12 @@ return new class extends Migration
         Schema::create('comments', function (Blueprint $table) {
             $table->id();
             $table->morphs('commentable'); // archived_logs o error_codes
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            // user_id: UUID del usuario de Odoo vía FDW (varchar); sin FK (view)
+            $table->string('user_id', 255);
             $table->longText('content');
             $table->timestamps();
+
+            $table->index('user_id');
         });
     }
 
