@@ -5,68 +5,37 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\ErrorCode;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Maya\Messaging\Publishers\AuditPublisher;
+use Illuminate\Database\Eloquent\Model;
 
-/**
- * Observer CRUD para {@see ErrorCode}. Publica en `maya.audit` los verbos
- * `created`, `updated`, `deleted` siguiendo el patrón canónico de
- * `events.md` (Caso A — Observer solo). El guard `DB::afterCommit()` evita
- * publicaciones fantasma en transacciones revertidas.
- */
-final class ErrorCodeObserver
+final class ErrorCodeObserver extends AbstractAuditableModelObserver
 {
-    public function __construct(
-        private readonly AuditPublisher $publisher,
-    ) {}
+    protected function auditEntityType(): string
+    {
+        return 'error_code';
+    }
+
+    protected function auditTemporalKeys(): array
+    {
+        return self::AUDIT_ELOQUENT_TEMPORAL_KEYS;
+    }
+
+    protected function resolveAuditUserId(Model $model): string
+    {
+        return $this->jwtSubjectFromRequest();
+    }
 
     public function created(ErrorCode $errorCode): void
     {
-        DB::afterCommit(fn () => $this->publish(
-            'created',
-            $errorCode,
-            null,
-            $errorCode->getAttributes(),
-        ));
+        $this->auditAfterCreate('Creado un código de error', $errorCode);
     }
 
     public function updated(ErrorCode $errorCode): void
     {
-        $previous = array_intersect_key($errorCode->getOriginal(), $errorCode->getChanges());
-
-        DB::afterCommit(fn () => $this->publish(
-            'updated',
-            $errorCode,
-            $previous,
-            $errorCode->getChanges(),
-        ));
+        $this->auditAfterUpdate('Actualizado un código de error', $errorCode);
     }
 
     public function deleted(ErrorCode $errorCode): void
     {
-        DB::afterCommit(fn () => $this->publish(
-            'deleted',
-            $errorCode,
-            $errorCode->getAttributes(),
-            null,
-        ));
-    }
-
-    /**
-     * @param  array<string, mixed>|null  $previous
-     * @param  array<string, mixed>|null  $new
-     */
-    private function publish(string $action, ErrorCode $errorCode, ?array $previous, ?array $new): void
-    {
-        $this->publisher->publish(
-            applicationSlug: (string) config('messaging.app'),
-            entityType: 'error_code',
-            entityId: (string) $errorCode->getKey(),
-            action: $action,
-            userId: (string) (Auth::id() ?? 'system'),
-            previousValue: $previous,
-            newValue: $new,
-        );
+        $this->auditAfterDelete('Eliminado un código de error', $errorCode);
     }
 }
