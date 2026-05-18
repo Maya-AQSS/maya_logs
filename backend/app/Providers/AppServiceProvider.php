@@ -18,6 +18,7 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
+use Maya\Profile\Migrations as ProfileMigrations;
 use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
 use App\Services\ArchivedLogService;
@@ -75,6 +76,12 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment(['production', 'staging'])) {
             URL::forceScheme('https');
         }
+
+        // Migraciones académicas compartidas (teams, team_members,
+        // user_study_types, user_studies, user_course_modules) vienen del
+        // paquete `maya/shared-profile-laravel`. Carga opt-in: dms no las
+        // usa porque tiene su propia variante con FK al catálogo académico.
+        $this->loadMigrationsFrom(ProfileMigrations::academicViews());
 
         // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
         // que JwtMiddleware deposita en el request tras validar el token.
