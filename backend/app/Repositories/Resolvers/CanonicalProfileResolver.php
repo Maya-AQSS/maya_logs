@@ -12,9 +12,9 @@ use Maya\Profile\Repositories\Resolvers\JwtPassthroughResolver;
  * Resolver de perfil canónico para maya_logs.
  *
  * Parte del DTO que produce {@see JwtPassthroughResolver} y normaliza al
- * shape canónico cross-app (2026-05-18 — campos en español):
+ * shape canónico cross-app (snake_case en inglés):
  *
- *   `permisos`, `tipo_estudios`, `estudios`, `modulos`, `equipos`.
+ *   `permissions`, `study_type_ids`, `study_ids`, `module_ids`, `team_ids`.
  *
  * maya_logs NO tiene tablas locales de permisos ni de relaciones académicas
  * (la fuente de verdad de permisos está en `maya_authorization` y las
@@ -25,7 +25,8 @@ use Maya\Profile\Repositories\Resolvers\JwtPassthroughResolver;
  * payload de `/me`.
  *
  * Campos eliminados del passthrough JWT: `roles`, `departamento`,
- * `department`, `organizacion_id` (claims que no deben exponerse en /me).
+ * `department`, `organizacion_id`, `organization_id` (claims que no deben
+ * exponerse en /me).
  */
 final class CanonicalProfileResolver implements UserProfileResolverInterface
 {
@@ -40,11 +41,11 @@ final class CanonicalProfileResolver implements UserProfileResolverInterface
         $dto = $this->base->resolve($userId, $jwtProfile);
 
         $extra = array_diff_key($dto->extra, array_flip(self::EXTRA_DROP_KEYS));
-        $extra['permisos'] = [];
-        $extra['tipo_estudios'] = [];
-        $extra['estudios'] = [];
-        $extra['modulos'] = [];
-        $extra['equipos'] = [];
+        $extra['permissions'] = [];
+        $extra['study_type_ids'] = [];
+        $extra['study_ids'] = [];
+        $extra['module_ids'] = [];
+        $extra['team_ids'] = [];
 
         return new UserProfileDto(
             id: $dto->id,
