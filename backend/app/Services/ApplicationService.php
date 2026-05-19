@@ -20,7 +20,9 @@ class ApplicationService implements ApplicationServiceInterface
 
     public function pluckForFilter(ApplicationPluckScope $scope): Collection
     {
-        $key = 'applications:pluck_for_filter:'.$scope->value;
+        // v2: clave versionada. Si la firma del closure cambia (array ↔ Collection)
+        // bumpear el sufijo invalida implícitamente caché stale tras deploy/reset.
+        $key = 'applications:pluck_for_filter:v2:'.$scope->value;
 
         return Cache::remember(
             $key,
