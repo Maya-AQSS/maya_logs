@@ -55,7 +55,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-admin}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
-      MAYA_MESSAGING_APP: maya_logs
+      MAYA_MESSAGING_APP: maya-logs
       # ─── JWT / JWKS ───────────────────────────────────────────
       JWKS_URL: ${JWKS_URL:-http://maya_auth_keycloak:8080/realms/maya/protocol/openid-connect/certs}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-maya-logs}
@@ -112,7 +112,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-admin}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
-      MAYA_MESSAGING_APP: maya_logs
+      MAYA_MESSAGING_APP: maya-logs
       # ─── Logging ────────────────────────────────────────────────
       # IMPORTANTE: el worker NO debe publicar a 'rabbit' — consumiría sus
       # propios logs desde logs.ingest, generando un loop infinito.
