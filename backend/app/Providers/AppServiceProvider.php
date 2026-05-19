@@ -18,7 +18,8 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
-use App\Repositories\Resolvers\CanonicalProfileResolver;
+use Maya\Profile\Migrations as ProfileMigrations;
+use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
 use App\Services\ArchivedLogService;
 use App\Services\CommentContentSanitizer;
@@ -62,10 +63,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ErrorCodeRepositoryInterface::class, ErrorCodeRepository::class);
         $this->app->singleton(ErrorCodeServiceInterface::class, ErrorCodeService::class);
 
-        // Resolver de perfil canónico cross-app: el shared MeController consume
-        // este binding para devolver /me con permisos/tipo_estudios/estudios/
-        // modulos/equipos (vacíos en maya_logs — no tiene tablas locales).
-        $this->app->singleton(UserProfileResolverInterface::class, CanonicalProfileResolver::class);
+        // Resolver de perfil enriquecido cross-app: el shared MeController consume
+        // este binding para devolver /me con permissions/study_type_ids/study_ids/
+        // module_ids/team_ids/teams enriquecidos desde las FDW locales (mismas
+        // vistas que el resto de apps Maya proyectan localmente — sin
+        // dependencias cruzadas en runtime).
+        $this->app->singleton(UserProfileResolverInterface::class, FdwAcademicResolver::class);
     }
 
     public function boot(): void
@@ -73,6 +76,18 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment(['production', 'staging'])) {
             URL::forceScheme('https');
         }
+
+        // Migraciones FDW compartidas del paquete `maya/shared-profile-laravel`:
+        //   - academicAssignments: user_study_types, user_studies, user_course_modules
+        //   - teams: teams, team_members
+        //   - userPermissions: user_resolved_permissions (la vista remota se
+        //     configura por app en `database.fdw.user_permissions.remote_view`).
+        // dms carga solo los dos primeros grupos (tiene su propio modelo de
+        // permisos basado en `permission_code`).
+        $this->loadMigrationsFrom(ProfileMigrations::users());
+        $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
+        $this->loadMigrationsFrom(ProfileMigrations::teams());
+        $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
 
         // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
         // que JwtMiddleware deposita en el request tras validar el token.
