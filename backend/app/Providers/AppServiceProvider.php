@@ -84,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         //     configura por app en `database.fdw.user_permissions.remote_view`).
         // dms carga solo los dos primeros grupos (tiene su propio modelo de
         // permisos basado en `permission_code`).
+        $this->loadMigrationsFrom(ProfileMigrations::users());
         $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
         $this->loadMigrationsFrom(ProfileMigrations::teams());
         $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
