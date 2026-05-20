@@ -152,7 +152,7 @@ export function ErrorCodesPage() {
 
   const pagination = errorCodesQuery.data;
   const errorCodes = pagination?.data ?? [];
-  const meta = pagination?.meta;
+  const meta = pagination ? { current_page: pagination.current_page, last_page: pagination.last_page, from: pagination.from, to: pagination.to, total: pagination.total } : null;
   const startIndex = meta && meta.from != null ? meta.from : 0;
   const endIndex = meta && meta.to != null ? meta.to : 0;
   const total = meta?.total ?? 0;

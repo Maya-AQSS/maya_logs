@@ -12,6 +12,7 @@ use App\Services\Contracts\ArchivedLogServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maya\Http\Concerns\RespondsWithEnvelope;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
@@ -19,6 +20,7 @@ use Throwable;
 class LogController extends Controller
 {
     use ResolvesJwtUser;
+    use RespondsWithEnvelope;
 
     public function __construct(
         private LogServiceInterface $logService,
@@ -46,10 +48,7 @@ class LogController extends Controller
             perPage: $perPage > 0 ? $perPage : 25,
         );
 
-        return response()->json([
-            ...$page->jsonSerialize(),
-            'data' => LogResource::collection($page->items)->resolve($request),
-        ]);
+        return $this->paginated($page, LogResource::class, $request);
     }
 
     public function show(int $id): JsonResponse

@@ -12,9 +12,12 @@ use App\Models\ErrorCode;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maya\Http\Concerns\RespondsWithEnvelope;
 
 class ErrorCodeController extends Controller
 {
+    use RespondsWithEnvelope;
+
     public function __construct(
         private ErrorCodeServiceInterface $errorCodeService,
     ) {}
@@ -29,10 +32,7 @@ class ErrorCodeController extends Controller
             perPage: $perPage > 0 ? $perPage : 15,
         );
 
-        return response()->json([
-            ...$page->jsonSerialize(),
-            'data' => ErrorCodeResource::collection($page->items)->resolve($request),
-        ]);
+        return $this->paginated($page, ErrorCodeResource::class, $request);
     }
 
     public function show(int $id): JsonResponse
