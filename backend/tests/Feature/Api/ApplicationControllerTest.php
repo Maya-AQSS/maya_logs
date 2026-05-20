@@ -31,6 +31,8 @@ beforeEach(function () {
     $this->app['events']->listen(RouteMatched::class, function ($event) use ($userId) {
         $event->request->attributes->set('jwt_user', ['id' => $userId, 'sub' => $userId]);
     });
+
+    seedLogsLoginForTests();
 });
 
 function insertApplication(string $name): int

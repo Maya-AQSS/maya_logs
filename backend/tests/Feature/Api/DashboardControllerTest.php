@@ -29,6 +29,8 @@ beforeEach(function () {
     $this->app['events']->listen(RouteMatched::class, function ($event) use ($userId) {
         $event->request->attributes->set('jwt_user', ['id' => $userId, 'sub' => $userId]);
     });
+
+    seedLogsLoginForTests();
 });
 
 it('returns dashboard data with data key', function () {

@@ -12,8 +12,9 @@ use Illuminate\Http\Request;
 use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
 
 /**
- * Editar / borrar comentarios: solo el autor ({@code user_id}).
- * Borrar además exige el slug de módulo ({@code archived-logs.comment.delete}, etc.).
+ * Editar: solo el autor ({@code user_id}).
+ * Borrar: el autor del comentario o quien tenga el slug de módulo
+ * ({@code archived-logs.comment.delete}, {@code error-code.comment.delete}, etc.).
  */
 class CommentPolicy
 {
@@ -28,8 +29,8 @@ class CommentPolicy
 
     public function delete(User $user, Comment $comment): bool
     {
-        if ($user->id !== $comment->user_id) {
-            return false;
+        if ($user->id === $comment->user_id) {
+            return true;
         }
 
         return $this->userHasDeletePermission($comment);

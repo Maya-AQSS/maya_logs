@@ -38,6 +38,8 @@ beforeEach(function () {
         'is_active'  => true,
         'created_at' => now(),
     ]);
+
+    seedLogsLoginForTests();
 });
 
 function makeArchivedLog(int $appId, string $archivedById, array $overrides = []): int
@@ -104,7 +106,8 @@ it('returns 404 for non-existent archived log', function () {
 
 // ─── update ──────────────────────────────────────────────────────────────────
 
-it('allows update when jwt subject matches archived_by_id', function () {
+it('allows update when user has archived-logs.update', function () {
+    grantLogsPermission('archived-logs.update');
     $id = makeArchivedLog($this->appId, $this->userId);
 
     $response = $this->patchJson("/api/v1/archived-logs/{$id}", [
@@ -115,9 +118,8 @@ it('allows update when jwt subject matches archived_by_id', function () {
     expect($response->json('data.description'))->toBe('Updated description');
 });
 
-it('returns 403 when trying to update archived log owned by another user', function () {
-    $otherId = (string) Str::uuid();
-    $id = makeArchivedLog($this->appId, $otherId); // archived by different user
+it('returns 403 when user lacks archived-logs.update', function () {
+    $id = makeArchivedLog($this->appId, $this->userId);
 
     $response = $this->patchJson("/api/v1/archived-logs/{$id}", [
         'description' => 'Should fail',
@@ -128,7 +130,8 @@ it('returns 403 when trying to update archived log owned by another user', funct
 
 // ─── destroy ─────────────────────────────────────────────────────────────────
 
-it('allows delete when jwt subject matches archived_by_id', function () {
+it('allows delete when user has archived-logs.delete', function () {
+    grantLogsPermission('archived-logs.delete');
     $id = makeArchivedLog($this->appId, $this->userId);
 
     $response = $this->deleteJson("/api/v1/archived-logs/{$id}");
@@ -137,9 +140,8 @@ it('allows delete when jwt subject matches archived_by_id', function () {
     $this->assertDatabaseMissing('archived_logs', ['id' => $id, 'deleted_at' => null]);
 });
 
-it('returns 403 when trying to delete archived log owned by another user', function () {
-    $otherId = (string) Str::uuid();
-    $id = makeArchivedLog($this->appId, $otherId);
+it('returns 403 when user lacks archived-logs.delete', function () {
+    $id = makeArchivedLog($this->appId, $this->userId);
 
     $response = $this->deleteJson("/api/v1/archived-logs/{$id}");
 

@@ -33,7 +33,7 @@ function makeArchivedLogProfile(array $permissions): UserProfileDto
         id: 'user-1',
         email: 'a@maya.local',
         name: 'Test',
-        locale: Locale::Es,
+        locale: Locale::Spanish,
         extra: ['permissions' => $permissions],
     );
 }

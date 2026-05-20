@@ -33,6 +33,8 @@ beforeEach(function () {
             'sub' => $userId,
         ]);
     });
+
+    grantLogsControllerPermissions();
 });
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\ArchivedLog;
 use App\Models\Comment;
+use App\Models\ErrorCode;
 use App\Models\User;
 use App\Policies\CommentPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,15 +37,27 @@ function makeCommentProfile(array $permissions): UserProfileDto
         id: 'user-1',
         email: 'c@maya.local',
         name: 'Comment User',
-        locale: Locale::Es,
+        locale: Locale::Spanish,
         extra: ['permissions' => $permissions],
     );
 }
 
-it('allows delete when author and has archived-logs.comment.delete', function () {
+it('allows delete when user is comment author without delete slug', function () {
     $user = User::factory()->create(['id' => 'user-1']);
     $comment = new Comment([
         'user_id' => 'user-1',
+        'commentable_type' => ArchivedLog::class,
+    ]);
+
+    $policy = makeCommentPolicy(['id' => 'user-1']);
+
+    expect($policy->delete($user, $comment))->toBeTrue();
+});
+
+it('allows delete when user has archived-logs.comment.delete but is not author', function () {
+    $user = User::factory()->create(['id' => 'user-1']);
+    $comment = new Comment([
+        'user_id' => 'other-user',
         'commentable_type' => ArchivedLog::class,
     ]);
 
@@ -57,28 +70,32 @@ it('allows delete when author and has archived-logs.comment.delete', function ()
     expect($policy->delete($user, $comment))->toBeTrue();
 });
 
-it('denies delete when author but missing archived-logs.comment.delete', function () {
+it('allows delete when user has error-code.comment.delete but is not author', function () {
     $user = User::factory()->create(['id' => 'user-1']);
     $comment = new Comment([
-        'user_id' => 'user-1',
+        'user_id' => 'other-user',
+        'commentable_type' => ErrorCode::class,
+    ]);
+
+    test()->profileService->shouldReceive('getProfile')->once()->andReturn(
+        makeCommentProfile(['error-code.comment.delete']),
+    );
+
+    $policy = makeCommentPolicy(['id' => 'user-1']);
+
+    expect($policy->delete($user, $comment))->toBeTrue();
+});
+
+it('denies delete when not author and missing delete slug', function () {
+    $user = User::factory()->create(['id' => 'user-1']);
+    $comment = new Comment([
+        'user_id' => 'other-user',
         'commentable_type' => ArchivedLog::class,
     ]);
 
     test()->profileService->shouldReceive('getProfile')->once()->andReturn(
         makeCommentProfile([]),
     );
-
-    $policy = makeCommentPolicy(['id' => 'user-1']);
-
-    expect($policy->delete($user, $comment))->toBeFalse();
-});
-
-it('denies delete when has permission but not author', function () {
-    $user = User::factory()->create(['id' => 'user-1']);
-    $comment = new Comment([
-        'user_id' => 'other-user',
-        'commentable_type' => ArchivedLog::class,
-    ]);
 
     $policy = makeCommentPolicy(['id' => 'user-1']);
 
