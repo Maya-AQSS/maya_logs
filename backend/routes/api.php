@@ -27,11 +27,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/health/live', [HealthCheckController::class, 'live']);
         Route::get('/health/ready', [HealthCheckController::class, 'ready']);
 
+        // Perfil: solo JWT (sin logs.login). El front necesita /me para saber permisos.
+        Route::middleware(['jwt'])->group(function () {
+                MeRoutes::register();
+        });
+
         // ── Rutas protegidas por JWT + permiso de acceso a la app ──
         Route::middleware(['jwt', 'permission:logs.login'])->group(function () {
-
-                // Perfil del usuario autenticado — endpoints en maya/shared-profile-laravel.
-                MeRoutes::register();
 
                 // Dashboard (BFF): cards de severidad + totales por aplicación
                 Route::get('/dashboard', [DashboardController::class, 'index']);

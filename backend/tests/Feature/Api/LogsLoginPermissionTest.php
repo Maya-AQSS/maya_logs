@@ -54,3 +54,21 @@ it('does not require logs.login for health endpoints', function () {
 
     $response->assertOk();
 });
+
+it('allows GET me without logs.login so the frontend can resolve permissions', function () {
+    DB::table('user_resolved_permissions')->insert([
+        'user_id'         => $this->userId,
+        'permission_slug' => 'logs.index',
+    ]);
+
+    $response = $this->getJson('/api/v1/me');
+
+    $response->assertOk();
+    expect($response->json('data.permissions'))->toContain('logs.index');
+});
+
+it('denies GET me when jwt is missing', function () {
+    $this->withMiddleware([JwtMiddleware::class]);
+
+    $this->getJson('/api/v1/me')->assertUnauthorized();
+});
