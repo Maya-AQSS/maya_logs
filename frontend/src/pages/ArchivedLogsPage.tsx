@@ -22,7 +22,10 @@ import {
   type ArchivedLogsSortBy,
 } from '../api/archivedLogs';
 import type { ArchivedLogsFiltersState } from '../components/archived-logs';
+import { PermissionGate } from '../components/layout/PermissionGate';
 import { SeverityBadge, severityLabel } from '../components/severity';
+import { useUserProfile } from '../features/user-profile';
+import { LOGS_PERMISSIONS } from '../permissions';
 import { createDataHook, type PaginatedResponse, type SortDir } from '@maya/shared-auth-react';
 import type { ApplicationRef, ArchivedLog } from '../types/logs';
 import { LOG_SEVERITY_KEYS } from '../types/logs';
@@ -155,7 +158,10 @@ function countActiveFilters(f: ArchivedLogsFiltersState): number {
 export function ArchivedLogsPage() {
   const { t } = useTranslation('archivedLogs');
   const { t: tCommon } = useTranslation('common');
+  const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
+  const canIndex = hasPermission(LOGS_PERMISSIONS.archivedLogsIndex);
+  const canShow = hasPermission(LOGS_PERMISSIONS.archivedLogsShow);
   const [searchParams, setSearchParams] = useSearchParams();
   const { hiddenIds, toggleHidden, pageSize, setPageSize } = useTablePreferences({
     storageKey: 'maya:logs:archived-logs-table',
@@ -171,6 +177,7 @@ export function ArchivedLogsPage() {
 
   const archivedLogsQuery = useArchivedLogsListQuery(
     toApiFilters(filters, sortBy, sortDir, page, pageSize),
+    { enabled: canIndex },
   );
 
   const updateFilters = useCallback(
@@ -306,6 +313,7 @@ export function ArchivedLogsPage() {
   );
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsIndex}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle title={t('title')} />
 
@@ -343,7 +351,7 @@ export function ArchivedLogsPage() {
                 setPageSize(size)
                 setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
               }}
-              onRowClick={(l) => navigate(`/archived-logs/${l.id}`)}
+              onRowClick={canShow ? (l) => navigate(`/archived-logs/${l.id}`) : undefined}
               emptyMessage={t('columns.emptyText')}
             />
           </div>
@@ -363,5 +371,6 @@ export function ArchivedLogsPage() {
         </>
       )}
     </div>
+    </PermissionGate>
   );
 }

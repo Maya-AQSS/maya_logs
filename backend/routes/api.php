@@ -40,21 +40,21 @@ Route::prefix('v1')->group(function () {
                 Route::get('/applications', [ApplicationController::class, 'index']);
 
                 // Logs
-                Route::get('/logs', [LogController::class, 'index']);
-                Route::get('/logs/stream', [LogController::class, 'stream']);
-                Route::get('/logs/{id}', [LogController::class, 'show'])->whereNumber('id');
-                Route::post('/logs/{id}/archive', [LogController::class, 'archive'])->whereNumber('id');
-                Route::patch('/logs/{id}/resolve', [LogController::class, 'resolve'])->whereNumber('id');
+                Route::get('/logs', [LogController::class, 'index'])->middleware('permission:logs.index');
+                Route::get('/logs/stream', [LogController::class, 'stream'])->middleware('permission:logs.index');
+                Route::get('/logs/{id}', [LogController::class, 'show'])->whereNumber('id')->middleware('permission:logs.show');
+                Route::post('/logs/{id}/archive', [LogController::class, 'archive'])->whereNumber('id')->middleware('permission:archived-logs.create');
+                Route::patch('/logs/{id}/resolve', [LogController::class, 'resolve'])->whereNumber('id')->middleware('permission:logs.update');
 
                 // Archived logs
-                Route::get('/archived-logs', [ArchivedLogController::class, 'index']);
-                Route::get('/archived-logs/{id}', [ArchivedLogController::class, 'show'])->whereNumber('id');
-                Route::match(['put', 'patch'], '/archived-logs/{id}', [ArchivedLogController::class, 'update'])->whereNumber('id')->middleware('permission:logs.update');
-                Route::delete('/archived-logs/{id}', [ArchivedLogController::class, 'destroy'])->whereNumber('id')->middleware('permission:logs.delete');
+                Route::get('/archived-logs', [ArchivedLogController::class, 'index'])->middleware('permission:archived-logs.index');
+                Route::get('/archived-logs/{id}', [ArchivedLogController::class, 'show'])->whereNumber('id')->middleware('permission:archived-logs.show');
+                Route::match(['put', 'patch'], '/archived-logs/{id}', [ArchivedLogController::class, 'update'])->whereNumber('id')->middleware('permission:archived-logs.update');
+                Route::delete('/archived-logs/{id}', [ArchivedLogController::class, 'destroy'])->whereNumber('id')->middleware('permission:archived-logs.delete');
 
                 // Comments sobre ArchivedLogs
-                Route::get('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'index'])->whereNumber('id');
-                Route::post('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'store'])->whereNumber('id');
+                Route::get('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'index'])->whereNumber('id')->middleware('permission:archived-logs.show');
+                Route::post('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'store'])->whereNumber('id')->middleware('permission:archived-logs.comment.create');
 
                 // Error codes
                 Route::get('/error-codes', [ErrorCodeController::class, 'index']);

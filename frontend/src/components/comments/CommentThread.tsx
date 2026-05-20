@@ -10,6 +10,8 @@ import {
   type CommentableKind,
 } from '../../api/comments';
 import type { Comment } from '../../types/logs';
+import { useUserProfile } from '../../features/user-profile';
+import { LOGS_PERMISSIONS } from '../../permissions';
 import { ConfirmDialog } from '@maya/shared-ui-react';
 import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
 
@@ -67,6 +69,12 @@ function plainTextToHtml(text: string): string {
 
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
   const { t } = useTranslation('comments');
+  const { hasPermission } = useUserProfile();
+
+  const canCreate =
+    commentableType === 'archived-logs'
+      ? hasPermission(LOGS_PERMISSIONS.archivedLogsCommentCreate)
+      : false;
 
   const commentsQuery = useCommentsQuery({ type: commentableType, id: commentableId });
   const createMutation = useCreateComment();
@@ -171,6 +179,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
   return (
     <div className="space-y-4">
+      {canCreate && (
       <div className="space-y-3 rounded-xl border border-ui-border bg-ui-card p-4 shadow-sm dark:border-ui-dark-border dark:bg-ui-dark-card">
         <label
           htmlFor={`new-comment-${commentableType}-${commentableId}`}
@@ -201,6 +210,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
           </Button>
         </div>
       </div>
+      )}
 
       {loadErrorMessage && (
         <Alert tone="danger" className="mt-4">{t('listLoadError', { message: loadErrorMessage })}

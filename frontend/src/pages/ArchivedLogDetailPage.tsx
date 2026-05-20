@@ -18,7 +18,10 @@ import {
   updateArchivedLog,
 } from '../api/archivedLogs';
 import { ArchivedLogDetailView } from '../components/archived-logs';
+import { PermissionGate } from '../components/layout/PermissionGate';
 import { CommentThread } from '../components/comments';
+import { useUserProfile } from '../features/user-profile';
+import { LOGS_PERMISSIONS } from '../permissions';
 import {
   archivedLogEditSchema,
   emptyArchivedLogEdit,
@@ -55,8 +58,12 @@ function toEditForm(log: ArchivedLog): ArchivedLogEditInput {
 
 export function ArchivedLogDetailPage() {
   const { t } = useTranslation('archivedLogs');
+  const { hasPermission } = useUserProfile();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const canShow = hasPermission(LOGS_PERMISSIONS.archivedLogsShow);
+  const canUpdate = hasPermission(LOGS_PERMISSIONS.archivedLogsUpdate);
+  const canDelete = hasPermission(LOGS_PERMISSIONS.archivedLogsDelete);
 
   const logId = id ? Number(id) : NaN;
   const validId = Number.isFinite(logId) && logId > 0;
@@ -77,7 +84,7 @@ export function ArchivedLogDetailPage() {
     defaultValues: emptyArchivedLogEdit,
   });
 
-  const logQuery = useArchivedLogDetailQuery(logId, { enabled: validId });
+  const logQuery = useArchivedLogDetailQuery(logId, { enabled: validId && canShow });
   const updateMutation = useUpdateArchivedLog();
   const deleteMutation = useDeleteArchivedLog();
 
@@ -137,16 +144,19 @@ export function ArchivedLogDetailPage() {
 
   if (notFound) {
     return (
-      <div className="px-4 py-6 sm:px-6 lg:px-8">
-        <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
-        <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('detail.notFound')}
+      <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
+        <div className="px-4 py-6 sm:px-6 lg:px-8">
+          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
+          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+            {t('detail.notFound')}
+          </div>
         </div>
-      </div>
+      </PermissionGate>
     );
   }
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
@@ -155,12 +165,16 @@ export function ArchivedLogDetailPage() {
         actions={
           log && !editing ? (
             <>
-              <Button variant="outline" size="sm" onClick={onStartEdit}>
-                {t('detail.edit')}
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                {t('detail.delete')}
-              </Button>
+              {canUpdate && (
+                <Button variant="outline" size="sm" onClick={onStartEdit}>
+                  {t('detail.edit')}
+                </Button>
+              )}
+              {canDelete && (
+                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                  {t('detail.delete')}
+                </Button>
+              )}
             </>
           ) : undefined
         }
@@ -301,5 +315,6 @@ export function ArchivedLogDetailPage() {
         onCancel={() => !deleting && setConfirmDelete(false)}
       />
     </div>
+    </PermissionGate>
   );
 }
