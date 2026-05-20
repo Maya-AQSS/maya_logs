@@ -6,6 +6,7 @@ import { NotificationsBell, SidebarFavorites } from '@maya/shared-sidebar-react'
 import { PlaceholderPage, SkeletonPage } from '@maya/shared-ui-react';
 import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
 import { useOidcSession } from '@maya/shared-auth-react';
+import { useLogoutWithoutLoginPermission } from '@maya/shared-profile-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
 import { resolveServiceUrl } from './lib/peerService';
@@ -104,10 +105,39 @@ function AppWithLayout() {
   );
 }
 
+function AuthLoadingScreen({ message }: { message: string }) {
+  return (
+    <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
+      {message}
+    </div>
+  );
+}
+
+/** Requiere logs.login en /me; si falta, cierra sesión SSO. */
+function AppAfterProfile() {
+  const { t } = useTranslation('auth');
+  const { profileLoading, lacksLoginPermission } = useLogoutWithoutLoginPermission(
+    LOGS_PERMISSIONS.login,
+  );
+
+  if (profileLoading) {
+    return <AuthLoadingScreen message={t('initializing')} />;
+  }
+
+  if (lacksLoginPermission) {
+    return (
+      <AuthLoadingScreen
+        message={t('signingOutNoPermission')}
+      />
+    );
+  }
+
+  return <AppWithLayout />;
+}
+
 export default function App() {
   const { t } = useTranslation('auth');
   const { isOidcLoading, isOidcSignedIn, beginSignIn } = useOidcSession();
-  const { hasPermission, loading: profileLoading } = useUserProfile();
 
   useEffect(() => {
     if (!isOidcLoading && !isOidcSignedIn) {
@@ -115,37 +145,13 @@ export default function App() {
     }
   }, [isOidcLoading, isOidcSignedIn, beginSignIn]);
 
-  if (isOidcLoading || (isOidcSignedIn && profileLoading)) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
-        {t('initializing')}
-      </div>
-    );
+  if (isOidcLoading) {
+    return <AuthLoadingScreen message={t('initializing')} />;
   }
 
   if (!isOidcSignedIn) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
-        {t('redirecting')}
-      </div>
-    );
+    return <AuthLoadingScreen message={t('redirecting')} />;
   }
 
-  if (!hasPermission(LOGS_PERMISSIONS.login)) {
-    return (
-      <div
-        role="alert"
-        className="flex flex-col items-center justify-center gap-3 h-screen bg-ui-body dark:bg-ui-dark-bg text-text-primary dark:text-text-dark-primary font-sans px-6 text-center"
-      >
-        <p className="text-lg font-medium">{t('unauthorized')}</p>
-        <p className="text-sm text-text-muted dark:text-text-dark-muted max-w-md">
-          {t('unauthorizedHint', {
-            defaultValue: 'Necesitas el permiso logs.login para acceder a TraCEED.',
-          })}
-        </p>
-      </div>
-    );
-  }
-
-  return <AppWithLayout />;
+  return <AppAfterProfile />;
 }
