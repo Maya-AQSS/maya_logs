@@ -5,8 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createDataHook, type PaginatedResponse } from '@maya/shared-auth-react';
 import { fetchLogs } from '../../../api/logs';
 import { SeverityBadge } from '../../../components/severity';
+import { useUserProfile } from '../../user-profile';
 import type { Log } from '../../../types/logs';
 import { useLogStream } from '../../../hooks';
+import { LOGS_PERMISSIONS } from '../../../permissions';
 
 const PAGE_SIZE = 5;
 
@@ -40,9 +42,12 @@ function formatRelative(iso: string | null, locale: string): string {
 function RecentLogsWidget() {
   const { t, i18n } = useTranslation('dashboard');
   const queryClient = useQueryClient();
+  const { hasPermission } = useUserProfile();
+  const canIndex = hasPermission(LOGS_PERMISSIONS.index);
+  const canShow = hasPermission(LOGS_PERMISSIONS.show);
 
-  const { payload: streamPayload } = useLogStream({ intervalMs: 5000 });
-  const recentQuery = useRecentLogsQuery();
+  const { payload: streamPayload } = useLogStream({ intervalMs: 5000, enabled: canIndex });
+  const recentQuery = useRecentLogsQuery(undefined, { enabled: canIndex });
 
   useEffect(() => {
     if (streamPayload == null) return;
@@ -50,6 +55,16 @@ function RecentLogsWidget() {
   }, [streamPayload, queryClient]);
 
   const logs = recentQuery.data?.data ?? [];
+
+  if (!canIndex) {
+    return (
+      <p className="text-sm text-text-secondary dark:text-text-dark-secondary text-center py-4">
+        {t('widgets.recentLogs.noPermission', {
+          defaultValue: 'Sin permiso para listar logs.',
+        })}
+      </p>
+    );
+  }
 
   if (recentQuery.isLoading && logs.length === 0) {
     return (
@@ -84,23 +99,40 @@ function RecentLogsWidget() {
     <ul className="flex flex-col gap-2 overflow-auto h-full" role="list">
       {logs.map((log) => (
         <li key={log.id}>
-          <Link
-            to={`/logs/${log.id}`}
-            className="flex items-start gap-2 px-2 py-2 rounded-md hover:bg-ui-body dark:hover:bg-ui-dark-bg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-odoo-purple"
-          >
-            <span className="shrink-0 mt-0.5">
-              <SeverityBadge severity={log.severity} />
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-sm text-text-primary dark:text-text-dark-primary truncate">
-                {log.message}
+          {canShow ? (
+            <Link
+              to={`/logs/${log.id}`}
+              className="flex items-start gap-2 px-2 py-2 rounded-md hover:bg-ui-body dark:hover:bg-ui-dark-bg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-odoo-purple"
+            >
+              <span className="shrink-0 mt-0.5">
+                <SeverityBadge severity={log.severity} />
               </span>
-              <span className="block text-xs text-text-muted dark:text-text-dark-muted">
-                {log.application?.name ? `${log.application.name} · ` : ''}
-                {formatRelative(log.created_at, i18n.language || 'es')}
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm text-text-primary dark:text-text-dark-primary truncate">
+                  {log.message}
+                </span>
+                <span className="block text-xs text-text-muted dark:text-text-dark-muted">
+                  {log.application?.name ? `${log.application.name} · ` : ''}
+                  {formatRelative(log.created_at, i18n.language || 'es')}
+                </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+          ) : (
+            <div className="flex items-start gap-2 px-2 py-2">
+              <span className="shrink-0 mt-0.5">
+                <SeverityBadge severity={log.severity} />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm text-text-primary dark:text-text-dark-primary truncate">
+                  {log.message}
+                </span>
+                <span className="block text-xs text-text-muted dark:text-text-dark-muted">
+                  {log.application?.name ? `${log.application.name} · ` : ''}
+                  {formatRelative(log.created_at, i18n.language || 'es')}
+                </span>
+              </span>
+            </div>
+          )}
         </li>
       ))}
     </ul>

@@ -8,9 +8,8 @@ import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
 import { useOidcSession } from '@maya/shared-auth-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
-
-const LOGS_LOGIN_PERMISSION = 'logs.login';
 import { resolveServiceUrl } from './lib/peerService';
+import { LOGS_PERMISSIONS } from './permissions';
 
 // Code-splitting route-level: cada página carga en chunk separado bajo demanda.
 const ArchivedLogDetailPage = lazy(() =>
@@ -132,7 +131,7 @@ export default function App() {
     );
   }
 
-  if (!hasPermission(LOGS_LOGIN_PERMISSION)) {
+  if (!hasPermission(LOGS_PERMISSIONS.login)) {
     return (
       <div
         role="alert"

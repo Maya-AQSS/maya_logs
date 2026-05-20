@@ -11,10 +11,10 @@ import {
   type SkeletonBlock,
 } from '@maya/shared-dashboard-react';
 import { useUserProfile } from '../../user-profile';
+import { LOGS_PERMISSIONS } from '../../../permissions';
 import { DEFAULT_LAYOUT, WIDGET_REGISTRY } from '../widgets/registry';
 
 const STORAGE_KEY = 'maya:logs:dashboard-layout';
-const LOGS_DASHBOARD_UPDATE_PERMISSION = 'logs.dashboard.update';
 
 const SKELETON_BLOCKS: SkeletonBlock[] = [
   { colSpanClasses: 'col-span-12 sm:col-span-4', heightClass: 'h-32' },
@@ -30,7 +30,7 @@ const SKELETON_BLOCKS: SkeletonBlock[] = [
 export function DashboardPage() {
   const { t } = useTranslation('dashboard');
   const { hasPermission } = useUserProfile();
-  const canEditDashboard = hasPermission(LOGS_DASHBOARD_UPDATE_PERMISSION);
+  const canEditDashboard = hasPermission(LOGS_PERMISSIONS.dashboardUpdate);
   const { layout, loading, saveLayout, resetToDefault } = useDashboardLayoutLocal({
     storageKey: STORAGE_KEY,
     defaultLayout: DEFAULT_LAYOUT,

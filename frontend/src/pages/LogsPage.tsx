@@ -19,8 +19,11 @@ import { useSearchParams } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { fetchLogs, type LogsFilters as ApiLogsFilters, type LogsSortBy } from '../api/logs';
 import type { LogsFiltersState } from '../components/logs';
+import { PermissionGate } from '../components/layout/PermissionGate';
 import { SeverityBadge, severityLabel } from '../components/severity';
+import { useUserProfile } from '../features/user-profile';
 import { useLogStream } from '../hooks';
+import { LOGS_PERMISSIONS } from '../permissions';
 import { createDataHook, type PaginatedResponse, type SortDir } from '@maya/shared-auth-react';
 import type { ApplicationRef, Log } from '../types/logs';
 import { LOG_SEVERITY_KEYS } from '../types/logs';
@@ -158,7 +161,9 @@ function countActiveFilters(f: LogsFiltersState): number {
 export function LogsPage() {
   const { t } = useTranslation('logs');
   const { t: tCommon } = useTranslation('common');
+  const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
+  const canOpenDetail = hasPermission(LOGS_PERMISSIONS.show);
   const [searchParams, setSearchParams] = useSearchParams();
   const { hiddenIds, toggleHidden, pageSize, setPageSize } = useTablePreferences({
     storageKey: 'maya:logs:logs-table',
@@ -175,10 +180,16 @@ export function LogsPage() {
   const applications = applicationsQuery.data ?? [];
 
   // Listado paginado de logs.
-  const logsQuery = useLogsListQuery(toApiFilters(filters, sortBy, sortDir, page, pageSize));
+  const canIndex = hasPermission(LOGS_PERMISSIONS.index);
+  const logsQuery = useLogsListQuery(toApiFilters(filters, sortBy, sortDir, page, pageSize), {
+    enabled: canIndex,
+  });
 
   // Refresh por log stream: cuando llega un id nuevo, invalidamos la query.
-  const { payload: streamPayload } = useLogStream({ intervalMs: 5000 });
+  const { payload: streamPayload } = useLogStream({
+    intervalMs: 5000,
+    enabled: canIndex,
+  });
 
   useEffect(() => {
     if (!streamPayload || streamPayload.length === 0) return;
@@ -368,6 +379,7 @@ export function LogsPage() {
   );
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.index}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle title={t('title')} />
 
@@ -397,7 +409,7 @@ export function LogsPage() {
             setPageSize(size)
             setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
           }}
-          onRowClick={(l) => navigate(`/logs/${l.id}`)}
+          onRowClick={canOpenDetail ? (l) => navigate(`/logs/${l.id}`) : undefined}
           emptyMessage={t('table.emptyText')}
         />
       </div>
@@ -415,5 +427,6 @@ export function LogsPage() {
         </div>
       )}
     </div>
+    </PermissionGate>
   );
 }
