@@ -6,7 +6,7 @@ import { NotificationsBell, SidebarFavorites } from '@maya/shared-sidebar-react'
 import { PlaceholderPage, SkeletonPage } from '@maya/shared-ui-react';
 import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
 import { useOidcSession } from '@maya/shared-auth-react';
-import { useLogoutWithoutLoginPermission } from '@maya/shared-profile-react';
+import { useRequireAppAccess } from '@maya/shared-profile-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
 import { resolveServiceUrl } from './lib/peerService';
@@ -113,11 +113,20 @@ function AuthLoadingScreen({ message }: { message: string }) {
   );
 }
 
-/** Requiere logs.login en /me; si falta, cierra sesión SSO. */
+/**
+ * Requiere `logs.login` en /me. Si falta:
+ *  - Si el usuario tiene `dashboard.login`, redirige al portal (preserva SSO).
+ *  - Si no, cierra sesión SSO.
+ */
 function AppAfterProfile() {
   const { t } = useTranslation('auth');
-  const { profileLoading, lacksLoginPermission } = useLogoutWithoutLoginPermission(
+  const dashboardOrigin = resolveServiceUrl(
+    import.meta.env.VITE_DASHBOARD_URL as string | undefined,
+    'dashboard',
+  );
+  const { profileLoading, lacksLoginPermission } = useRequireAppAccess(
     LOGS_PERMISSIONS.login,
+    { portalLoginSlug: 'dashboard.login', portalUrl: dashboardOrigin },
   );
 
   if (profileLoading) {

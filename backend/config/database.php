@@ -158,9 +158,9 @@ return [
     */
 
     'fdw' => [
-        // Vista de permisos resueltos por maya_authorization (resolución de
-        // roles + overrides). Cada app declara su vista específica
-        // (`v_audit_user_permissions`, `v_logs_user_permissions`, …).
+        // Vista de permisos resueltos por maya_authorization. Todas las apps
+        // consumen `v_portal_user_permissions` (cross-app: incluye todos los
+        // slugs `*.login` para decidir acceso/redirect al portal).
         'user_permissions' => [
             'host'        => env('FDW_USER_PERMISSIONS_HOST', 'maya_infra_postgres'),
             'port'        => env('FDW_USER_PERMISSIONS_PORT', '5432'),
@@ -168,7 +168,7 @@ return [
             'username'    => env('FDW_USER_PERMISSIONS_USERNAME', 'maya'),
             'password'    => env('FDW_USER_PERMISSIONS_PASSWORD', 'secret'),
             'schema'      => env('FDW_USER_PERMISSIONS_SCHEMA', 'public'),
-            'remote_view' => env('FDW_USER_PERMISSIONS_REMOTE_VIEW', 'v_logs_user_permissions'),
+            'remote_view' => env('FDW_USER_PERMISSIONS_REMOTE_VIEW', 'v_portal_user_permissions'),
         ],
     ],
 
