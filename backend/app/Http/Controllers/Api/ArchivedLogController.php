@@ -11,10 +11,12 @@ use App\Http\Requests\Api\UpdateArchivedLogRequest;
 use App\Http\Resources\ArchivedLogResource;
 use App\Services\Contracts\ArchivedLogServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Maya\Http\Concerns\RespondsWithEnvelope;
 
 class ArchivedLogController extends Controller
 {
     use ResolvesJwtUser;
+    use RespondsWithEnvelope;
 
     public function __construct(
         private ArchivedLogServiceInterface $archivedLogService,
@@ -38,10 +40,7 @@ class ArchivedLogController extends Controller
             perPage: $perPage > 0 ? $perPage : 15,
         );
 
-        return response()->json([
-            ...$page->jsonSerialize(),
-            'data' => ArchivedLogResource::collection($page->items)->resolve($request),
-        ]);
+        return $this->paginated($page, ArchivedLogResource::class, $request);
     }
 
     public function show(int $id): JsonResponse
