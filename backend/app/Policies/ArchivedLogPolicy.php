@@ -4,65 +4,65 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Http\Controllers\Api\LogController;
 use App\Models\ArchivedLog;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Http\Request;
+use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
 
 /**
- * Mutaciones sobre un log archivado: solo el subject JWT que coincide con
- * `archived_logs.archived_by_id` (mismo criterio que POST /logs/{id}/archive).
- * No consulta la vista FDW `users`.
+ * Mutaciones sobre logs archivados: permisos desde {@code GET /me}
+ * ({@code extra.permissions}), coherente con middleware de rutas.
  */
 class ArchivedLogPolicy
 {
+    public const UPDATE_PERMISSION_CODE = 'archived-logs.update';
+
+    public const DELETE_PERMISSION_CODE = 'archived-logs.delete';
+
     public function __construct(
         private readonly Request $request,
+        private readonly UserProfileServiceInterface $profileService,
     ) {}
 
-    /**
-     * Verifica si el usuario puede actualizar el log archivado.
-     */
     public function update(?User $user, ArchivedLog $archivedLog): Response
     {
-        return $this->archiverResponse($archivedLog);
+        return $this->responseForSlug(self::UPDATE_PERMISSION_CODE);
     }
 
-    /**
-     * Verifica si el usuario puede eliminar el log archivado.
-     */
     public function delete(?User $user, ArchivedLog $archivedLog): Response
     {
-        return $this->archiverResponse($archivedLog);
+        return $this->responseForSlug(self::DELETE_PERMISSION_CODE);
+    }
+
+    private function responseForSlug(string $permissionSlug): Response
+    {
+        [$userId, $jwtProfile] = $this->jwtContext();
+        if ($userId === '') {
+            return Response::deny(__('api.error_codes.forbidden'), 'archived_logs_permission_denied')->withStatus(403);
+        }
+
+        $profile = $this->profileService->getProfile($userId, $jwtProfile);
+        $permissions = $profile->extra['permissions'] ?? null;
+        if (! is_array($permissions)) {
+            return Response::deny(__('api.error_codes.forbidden'), 'archived_logs_permission_denied')->withStatus(403);
+        }
+
+        if (in_array($permissionSlug, $permissions, true)) {
+            return Response::allow();
+        }
+
+        return Response::deny(__('api.error_codes.forbidden'), 'archived_logs_permission_denied')->withStatus(403);
     }
 
     /**
-     * Verifica si el usuario puede realizar la acción solicitada sobre el log archivado.
+     * @return array{0: string, 1: array<string, mixed>}
      */
-    private function archiverResponse(ArchivedLog $archivedLog): Response
+    private function jwtContext(): array
     {
-        $subject = $this->jwtSubject();
-        if ($subject === null) {
-            return Response::deny(__('logs.actor_missing'), 'actor_missing')->withStatus(403);
-        }
+        $jwtProfile = (array) $this->request->attributes->get('jwt_user', []);
+        $userId = (string) ($jwtProfile['id'] ?? '');
 
-        if ($subject !== (string) $archivedLog->archived_by_id) {
-            return Response::deny(__('logs.archived_log_forbidden'), 'archived_log_forbidden')->withStatus(403);
-        }
-
-        return Response::allow();
-    }
-
-    /**
-     * Identificador de actor del token (misma clave que en {@see LogController::archive}).
-     */
-    private function jwtSubject(): ?string
-    {
-        /** @var array<string, mixed>|null $jwtUser */
-        $jwtUser = $this->request->attributes->get('jwt_user');
-        $id = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
-
-        return is_string($id) && $id !== '' ? $id : null;
+        return [$userId, $jwtProfile];
     }
 }

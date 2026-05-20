@@ -27,11 +27,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/health/live', [HealthCheckController::class, 'live']);
         Route::get('/health/ready', [HealthCheckController::class, 'ready']);
 
-        // ── Rutas protegidas por JWT ───────────────────────────────
-        Route::middleware('jwt')->group(function () {
-
-                // Perfil del usuario autenticado — endpoints en maya/shared-profile-laravel.
+        // Perfil: solo JWT (sin logs.login). El front necesita /me para saber permisos.
+        Route::middleware(['jwt'])->group(function () {
                 MeRoutes::register();
+        });
+
+        // ── Rutas protegidas por JWT + permiso de acceso a la app ──
+        Route::middleware(['jwt', 'permission:logs.login'])->group(function () {
 
                 // Dashboard (BFF): cards de severidad + totales por aplicación
                 Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -40,32 +42,32 @@ Route::prefix('v1')->group(function () {
                 Route::get('/applications', [ApplicationController::class, 'index']);
 
                 // Logs
-                Route::get('/logs', [LogController::class, 'index']);
-                Route::get('/logs/stream', [LogController::class, 'stream']);
-                Route::get('/logs/{id}', [LogController::class, 'show'])->whereNumber('id');
-                Route::post('/logs/{id}/archive', [LogController::class, 'archive'])->whereNumber('id');
-                Route::patch('/logs/{id}/resolve', [LogController::class, 'resolve'])->whereNumber('id');
+                Route::get('/logs', [LogController::class, 'index'])->middleware('permission:logs.index');
+                Route::get('/logs/stream', [LogController::class, 'stream'])->middleware('permission:logs.index');
+                Route::get('/logs/{id}', [LogController::class, 'show'])->whereNumber('id')->middleware('permission:logs.show');
+                Route::post('/logs/{id}/archive', [LogController::class, 'archive'])->whereNumber('id')->middleware('permission:archived-logs.create');
+                Route::patch('/logs/{id}/resolve', [LogController::class, 'resolve'])->whereNumber('id')->middleware('permission:logs.update');
 
                 // Archived logs
-                Route::get('/archived-logs', [ArchivedLogController::class, 'index']);
-                Route::get('/archived-logs/{id}', [ArchivedLogController::class, 'show'])->whereNumber('id');
-                Route::match(['put', 'patch'], '/archived-logs/{id}', [ArchivedLogController::class, 'update'])->whereNumber('id')->middleware('permission:logs.update');
-                Route::delete('/archived-logs/{id}', [ArchivedLogController::class, 'destroy'])->whereNumber('id')->middleware('permission:logs.delete');
+                Route::get('/archived-logs', [ArchivedLogController::class, 'index'])->middleware('permission:archived-logs.index');
+                Route::get('/archived-logs/{id}', [ArchivedLogController::class, 'show'])->whereNumber('id')->middleware('permission:archived-logs.show');
+                Route::match(['put', 'patch'], '/archived-logs/{id}', [ArchivedLogController::class, 'update'])->whereNumber('id')->middleware('permission:archived-logs.update');
+                Route::delete('/archived-logs/{id}', [ArchivedLogController::class, 'destroy'])->whereNumber('id')->middleware('permission:archived-logs.delete');
 
                 // Comments sobre ArchivedLogs
-                Route::get('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'index'])->whereNumber('id');
-                Route::post('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'store'])->whereNumber('id');
+                Route::get('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'index'])->whereNumber('id')->middleware('permission:archived-logs.show');
+                Route::post('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'store'])->whereNumber('id')->middleware('permission:archived-logs.comment.create');
 
                 // Error codes
-                Route::get('/error-codes', [ErrorCodeController::class, 'index']);
-                Route::post('/error-codes', [ErrorCodeController::class, 'store']);
-                Route::get('/error-codes/{id}', [ErrorCodeController::class, 'show'])->whereNumber('id');
-                Route::match(['put', 'patch'], '/error-codes/{id}', [ErrorCodeController::class, 'update'])->whereNumber('id')->middleware('permission:logs.update');
-                Route::delete('/error-codes/{id}', [ErrorCodeController::class, 'destroy'])->whereNumber('id')->middleware('permission:logs.delete');
+                Route::get('/error-codes', [ErrorCodeController::class, 'index'])->middleware('permission:error-code.index');
+                Route::post('/error-codes', [ErrorCodeController::class, 'store'])->middleware('permission:error-code.create');
+                Route::get('/error-codes/{id}', [ErrorCodeController::class, 'show'])->whereNumber('id')->middleware('permission:error-code.show');
+                Route::match(['put', 'patch'], '/error-codes/{id}', [ErrorCodeController::class, 'update'])->whereNumber('id')->middleware('permission:error-code.update');
+                Route::delete('/error-codes/{id}', [ErrorCodeController::class, 'destroy'])->whereNumber('id')->middleware('permission:error-code.delete');
 
                 // Comments sobre ErrorCodes
-                Route::get('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'index'])->whereNumber('id');
-                Route::post('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'store'])->whereNumber('id');
+                Route::get('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'index'])->whereNumber('id')->middleware('permission:error-code.show');
+                Route::post('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'store'])->whereNumber('id')->middleware('permission:error-code.comment.create');
 
                 // Comments (shallow): update / delete por id
                 Route::match(['put', 'patch'], '/comments/{id}', [CommentController::class, 'update'])->whereNumber('id');

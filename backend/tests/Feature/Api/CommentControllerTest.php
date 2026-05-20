@@ -48,6 +48,8 @@ beforeEach(function () {
         'original_created_at' => now(),
         'updated_at'          => now(),
     ]);
+
+    seedLogsLoginForTests();
 });
 
 function makeComment(int $archivedLogId, string $userId, string $content = 'Original comment'): int
@@ -116,8 +118,28 @@ it('returns 422 when update comment content is missing', function () {
 
 // ─── destroy ─────────────────────────────────────────────────────────────────
 
-it('allows owner to delete their comment', function () {
+it('allows owner to delete their comment without delete slug', function () {
     $commentId = makeComment($this->archivedLogId, $this->userId);
+
+    $response = $this->deleteJson("/api/v1/comments/{$commentId}");
+
+    $response->assertNoContent();
+    $this->assertDatabaseMissing('comments', ['id' => $commentId]);
+});
+
+it('allows delete when user has archived-logs.comment.delete but is not the author', function () {
+    grantLogsPermission('archived-logs.comment.delete');
+    $otherId = (string) Str::uuid();
+    User::forceCreate([
+        'id'         => $otherId,
+        'email'      => 'other-author@maya.localhost',
+        'name'       => 'Other Author',
+        'first_name' => 'Other',
+        'last_name'  => 'Author',
+        'username'   => 'otherauthor',
+        'is_active'  => true,
+    ]);
+    $commentId = makeComment($this->archivedLogId, $otherId);
 
     $response = $this->deleteJson("/api/v1/comments/{$commentId}");
 

@@ -8,7 +8,6 @@ use App\Models\ErrorCode;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Http\Request;
-use Maya\Profile\Controllers\MeController;
 use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
 
 /**
@@ -16,16 +15,16 @@ use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
  * que {@code GET /me} — {@see UserProfileServiceInterface::getProfile()}
  * (resolver FDW + {@code extra.permissions}), no desde claims arbitrarios del JWT.
  *
- * Coherente con middleware en rutas API: mutación {@see self::MUTATE_PERMISSION_CODE},
- * baja {@see self::DELETE_PERMISSION_CODE}.
+ * Coherente con middleware en rutas API ({@see self::CREATE_PERMISSION_CODE},
+ * {@see self::UPDATE_PERMISSION_CODE}, {@see self::DELETE_PERMISSION_CODE}).
  */
 class ErrorCodePolicy
 {
-    /** POST y PUT/PATCH de error codes (ruta PUT usa middleware con este slug). */
-    public const MUTATE_PERMISSION_CODE = 'logs.update';
+    public const CREATE_PERMISSION_CODE = 'error-code.create';
 
-    /** DELETE de error codes. */
-    public const DELETE_PERMISSION_CODE = 'logs.delete';
+    public const UPDATE_PERMISSION_CODE = 'error-code.update';
+
+    public const DELETE_PERMISSION_CODE = 'error-code.delete';
 
     public function __construct(
         private readonly Request $request,
@@ -34,12 +33,12 @@ class ErrorCodePolicy
 
     public function create(?User $user): Response
     {
-        return $this->responseForSlug(self::MUTATE_PERMISSION_CODE);
+        return $this->responseForSlug(self::CREATE_PERMISSION_CODE);
     }
 
     public function update(?User $user, ErrorCode $errorCode): Response
     {
-        return $this->responseForSlug(self::MUTATE_PERMISSION_CODE);
+        return $this->responseForSlug(self::UPDATE_PERMISSION_CODE);
     }
 
     public function delete(?User $user, ErrorCode $errorCode): Response
@@ -68,7 +67,7 @@ class ErrorCodePolicy
     }
 
     /**
-     * Mismo criterio que {@see MeController::jwtContext()}.
+     * Mismo criterio que el contexto JWT del request.
      *
      * @return array{0: string, 1: array<string, mixed>}
      */

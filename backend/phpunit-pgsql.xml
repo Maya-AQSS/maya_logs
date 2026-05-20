@@ -23,11 +23,13 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <!-- Motor de BD: PostgreSQL 18 (refleja el entorno de producción) -->
-        <env name="DB_CONNECTION" value="pgsql"/>
+        <!-- PostgreSQL aislado (CI: testing; Docker: maya_logs_test vía env del workflow/compose).
+             force en connection/database/url evita escribir en log_mgmt_db_maya por accidente. -->
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="5432"/>
-        <env name="DB_DATABASE" value="testing"/>
+        <env name="DB_DATABASE" value="testing" force="true"/>
         <env name="DB_USERNAME" value="postgres"/>
         <env name="DB_PASSWORD" value="password"/>
         <env name="AUTH_EXTERNAL_URL" value="http://auth.example.com"/>

@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { archiveLog, fetchLog, resolveLog, type LogDetailResponse } from '../api/logs';
 import { LogDetailView } from '../components/logs';
+import { PermissionGate } from '../components/layout/PermissionGate';
+import { useUserProfile } from '../features/user-profile';
+import { LOGS_PERMISSIONS } from '../permissions';
 import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
 
 const useLogDetailQuery = createDataHook<number, LogDetailResponse>({
@@ -25,8 +28,11 @@ type Dialog = 'none' | 'archive' | 'resolve';
 
 export function LogDetailPage() {
   const { t } = useTranslation('logs');
+  const { hasPermission } = useUserProfile();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const canResolve = hasPermission(LOGS_PERMISSIONS.update);
+  const canArchive = hasPermission(LOGS_PERMISSIONS.archivedLogsCreate);
 
   const logId = id ? Number(id) : NaN;
   const validId = Number.isFinite(logId) && logId > 0;
@@ -34,7 +40,8 @@ export function LogDetailPage() {
   const [dialog, setDialog] = useState<Dialog>('none');
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const logQuery = useLogDetailQuery(logId, { enabled: validId });
+  const canShow = hasPermission(LOGS_PERMISSIONS.show);
+  const logQuery = useLogDetailQuery(logId, { enabled: validId && canShow });
   const archiveMutation = useArchiveLog();
   const resolveMutation = useResolveLog();
 
@@ -77,12 +84,14 @@ export function LogDetailPage() {
 
   if (notFound) {
     return (
-      <div className="px-4 py-6 sm:px-6 lg:px-8">
-        <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
-        <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('detail.notFound')}
+      <PermissionGate permission={LOGS_PERMISSIONS.show}>
+        <div className="px-4 py-6 sm:px-6 lg:px-8">
+          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
+          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+            {t('detail.notFound')}
+          </div>
         </div>
-      </div>
+      </PermissionGate>
     );
   }
 
@@ -90,6 +99,7 @@ export function LogDetailPage() {
   const archivedLogId = logQuery.data?.meta.archived_log_id ?? null;
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.show}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
@@ -97,12 +107,12 @@ export function LogDetailPage() {
         backLabel={t('detail.back')}
         actions={
           <>
-            {log && archivedLogId === null && (
+            {log && archivedLogId === null && canArchive && (
               <Button variant="primary" size="sm" onClick={() => setDialog('archive')}>
                 {t('actions.archive')}
               </Button>
             )}
-            {log && !log.resolved && (
+            {log && !log.resolved && canResolve && (
               <Button variant="teal" size="sm" onClick={() => setDialog('resolve')}>
                 {t('actions.resolve')}
               </Button>
@@ -147,5 +157,6 @@ export function LogDetailPage() {
         onCancel={() => !busy && setDialog('none')}
       />
     </div>
+    </PermissionGate>
   );
 }

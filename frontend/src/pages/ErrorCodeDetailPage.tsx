@@ -11,6 +11,9 @@ import {
   type ErrorCodePayload,
 } from '../api/errorCodes';
 import { CommentThread } from '../components/comments';
+import { PermissionGate } from '../components/layout/PermissionGate';
+import { useUserProfile } from '../features/user-profile';
+import { LOGS_PERMISSIONS } from '../permissions';
 import { ErrorCodeForm } from '../components/error-codes';
 import type { ApplicationRef, ErrorCode } from '../types/logs';
 import {
@@ -51,6 +54,9 @@ function toPayload(form: ErrorCodeFormInput): Partial<ErrorCodePayload> {
 export function ErrorCodeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasPermission } = useUserProfile();
+  const canUpdate = hasPermission(LOGS_PERMISSIONS.errorCodeUpdate);
+  const canDelete = hasPermission(LOGS_PERMISSIONS.errorCodeDelete);
 
   const errorCodeId = id ? Number(id) : NaN;
   const validId = Number.isFinite(errorCodeId) && errorCodeId > 0;
@@ -163,18 +169,21 @@ export function ErrorCodeDetailPage() {
 
   if (state.status === 'not-found') {
     return (
-      <div className="px-4 py-6 sm:px-6 lg:px-8">
-        <PageTitle title="Código de error" onBack={() => navigate(-1)} backLabel="Volver" />
-        <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          No se encontró el código de error solicitado.
+      <PermissionGate permission={LOGS_PERMISSIONS.errorCodeShow}>
+        <div className="px-4 py-6 sm:px-6 lg:px-8">
+          <PageTitle title="Código de error" onBack={() => navigate(-1)} backLabel="Volver" />
+          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+            No se encontró el código de error solicitado.
+          </div>
         </div>
-      </div>
+      </PermissionGate>
     );
   }
 
   const saving = methods.formState.isSubmitting;
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.errorCodeShow}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={ec ? `Código de error: ${ec.code}` : 'Código de error'}
@@ -183,12 +192,16 @@ export function ErrorCodeDetailPage() {
         actions={
           ec && !editing ? (
             <>
-              <Button variant="outline" size="sm" onClick={onStartEdit}>
-                Editar
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                Eliminar
-              </Button>
+              {canUpdate && (
+                <Button variant="outline" size="sm" onClick={onStartEdit}>
+                  Editar
+                </Button>
+              )}
+              {canDelete && (
+                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                  Eliminar
+                </Button>
+              )}
             </>
           ) : undefined
         }
@@ -283,5 +296,6 @@ export function ErrorCodeDetailPage() {
         onCancel={() => !deleting && setConfirmDelete(false)}
       />
     </div>
+    </PermissionGate>
   );
 }

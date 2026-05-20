@@ -1,0 +1,22 @@
+/** Slugs de permisos de TraCEED (maya-logs), alineados con maya_authorization. */
+export const LOGS_PERMISSIONS = {
+  login: 'logs.login',
+  index: 'logs.index',
+  show: 'logs.show',
+  update: 'logs.update',
+  dashboardUpdate: 'logs.dashboard.update',
+  archivedLogsIndex: 'archived-logs.index',
+  archivedLogsShow: 'archived-logs.show',
+  archivedLogsCreate: 'archived-logs.create',
+  archivedLogsUpdate: 'archived-logs.update',
+  archivedLogsDelete: 'archived-logs.delete',
+  archivedLogsCommentCreate: 'archived-logs.comment.create',
+  archivedLogsCommentDelete: 'archived-logs.comment.delete',
+  errorCodeIndex: 'error-code.index',
+  errorCodeShow: 'error-code.show',
+  errorCodeCreate: 'error-code.create',
+  errorCodeUpdate: 'error-code.update',
+  errorCodeDelete: 'error-code.delete',
+  errorCodeCommentCreate: 'error-code.comment.create',
+  errorCodeCommentDelete: 'error-code.comment.delete',
+} as const;
