@@ -27,8 +27,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/health/live', [HealthCheckController::class, 'live']);
         Route::get('/health/ready', [HealthCheckController::class, 'ready']);
 
-        // ── Rutas protegidas por JWT ───────────────────────────────
-        Route::middleware('jwt')->group(function () {
+        // ── Rutas protegidas por JWT + permiso de acceso a la app ──
+        Route::middleware(['jwt', 'permission:logs.login'])->group(function () {
 
                 // Perfil del usuario autenticado — endpoints en maya/shared-profile-laravel.
                 MeRoutes::register();

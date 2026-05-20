@@ -8,6 +8,8 @@ import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
 import { useOidcSession } from '@maya/shared-auth-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
+
+const LOGS_LOGIN_PERMISSION = 'logs.login';
 import { resolveServiceUrl } from './lib/peerService';
 
 // Code-splitting route-level: cada página carga en chunk separado bajo demanda.
@@ -106,6 +108,7 @@ function AppWithLayout() {
 export default function App() {
   const { t } = useTranslation('auth');
   const { isOidcLoading, isOidcSignedIn, beginSignIn } = useOidcSession();
+  const { hasPermission, loading: profileLoading } = useUserProfile();
 
   useEffect(() => {
     if (!isOidcLoading && !isOidcSignedIn) {
@@ -113,7 +116,7 @@ export default function App() {
     }
   }, [isOidcLoading, isOidcSignedIn, beginSignIn]);
 
-  if (isOidcLoading) {
+  if (isOidcLoading || (isOidcSignedIn && profileLoading)) {
     return (
       <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
         {t('initializing')}
@@ -125,6 +128,22 @@ export default function App() {
     return (
       <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
         {t('redirecting')}
+      </div>
+    );
+  }
+
+  if (!hasPermission(LOGS_LOGIN_PERMISSION)) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-col items-center justify-center gap-3 h-screen bg-ui-body dark:bg-ui-dark-bg text-text-primary dark:text-text-dark-primary font-sans px-6 text-center"
+      >
+        <p className="text-lg font-medium">{t('unauthorized')}</p>
+        <p className="text-sm text-text-muted dark:text-text-dark-muted max-w-md">
+          {t('unauthorizedHint', {
+            defaultValue: 'Necesitas el permiso logs.login para acceder a TraCEED.',
+          })}
+        </p>
       </div>
     );
   }

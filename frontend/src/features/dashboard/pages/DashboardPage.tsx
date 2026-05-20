@@ -10,9 +10,11 @@ import {
   type LayoutItem,
   type SkeletonBlock,
 } from '@maya/shared-dashboard-react';
+import { useUserProfile } from '../../user-profile';
 import { DEFAULT_LAYOUT, WIDGET_REGISTRY } from '../widgets/registry';
 
 const STORAGE_KEY = 'maya:logs:dashboard-layout';
+const LOGS_DASHBOARD_UPDATE_PERMISSION = 'logs.dashboard.update';
 
 const SKELETON_BLOCKS: SkeletonBlock[] = [
   { colSpanClasses: 'col-span-12 sm:col-span-4', heightClass: 'h-32' },
@@ -27,6 +29,8 @@ const SKELETON_BLOCKS: SkeletonBlock[] = [
  */
 export function DashboardPage() {
   const { t } = useTranslation('dashboard');
+  const { hasPermission } = useUserProfile();
+  const canEditDashboard = hasPermission(LOGS_DASHBOARD_UPDATE_PERMISSION);
   const { layout, loading, saveLayout, resetToDefault } = useDashboardLayoutLocal({
     storageKey: STORAGE_KEY,
     defaultLayout: DEFAULT_LAYOUT,
@@ -38,6 +42,7 @@ export function DashboardPage() {
   const activeLayout = editable ? (draftLayout ?? layout) : layout;
 
   const handleToggleEdit = useCallback(() => {
+    if (!canEditDashboard) return;
     setEditable((prev) => {
       if (prev) {
         setDraftLayout(null);
@@ -47,7 +52,7 @@ export function DashboardPage() {
       setDraftLayout(layout);
       return true;
     });
-  }, [layout]);
+  }, [canEditDashboard, layout]);
 
   const handleSave = useCallback(async () => {
     await saveLayout(draftLayout ?? layout);
@@ -112,7 +117,7 @@ export function DashboardPage() {
       <PageTitle
         title={t('title')}
         actions={
-          editable ? (
+          canEditDashboard && editable ? (
             <DashboardEditToolbar
               layout={activeLayout}
               registry={WIDGET_REGISTRY}
@@ -128,13 +133,13 @@ export function DashboardPage() {
                 addWidget: t('edit.addWidget', { defaultValue: 'Añadir widget' }),
               }}
             />
-          ) : (
+          ) : canEditDashboard ? (
             <DashboardEditToggleButton
               editable={editable}
               onToggle={handleToggleEdit}
               editLabel={t('edit.toggle')}
             />
-          )
+          ) : null
         }
       />
 
