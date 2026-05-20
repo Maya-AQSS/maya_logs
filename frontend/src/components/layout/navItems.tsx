@@ -29,6 +29,9 @@ export function useNavItems(): NavItem[] {
       if (item.id === 'archived-logs') {
         return hasPermission(LOGS_PERMISSIONS.archivedLogsIndex);
       }
+      if (item.id === 'error-codes') {
+        return hasPermission(LOGS_PERMISSIONS.errorCodeIndex);
+      }
       return true;
     });
   }, [hasPermission, t]);

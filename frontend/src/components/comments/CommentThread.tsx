@@ -74,7 +74,9 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
   const canCreate =
     commentableType === 'archived-logs'
       ? hasPermission(LOGS_PERMISSIONS.archivedLogsCommentCreate)
-      : false;
+      : commentableType === 'error-codes'
+        ? hasPermission(LOGS_PERMISSIONS.errorCodeCommentCreate)
+        : false;
 
   const commentsQuery = useCommentsQuery({ type: commentableType, id: commentableId });
   const createMutation = useCreateComment();

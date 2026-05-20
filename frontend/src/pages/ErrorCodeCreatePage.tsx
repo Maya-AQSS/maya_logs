@@ -13,6 +13,8 @@ import {
   type ErrorCodeFormInput,
 } from '../schemas/errorCode';
 import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
+import { PermissionGate } from '../components/layout/PermissionGate';
+import { LOGS_PERMISSIONS } from '../permissions';
 
 const useApplicationsQuery = createDataHook<ApplicationScope, ApplicationRef[]>({
   queryKey: (scope) => ['applications', scope],
@@ -62,6 +64,7 @@ export function ErrorCodeCreatePage() {
   const saving = createMutation.isPending || methods.formState.isSubmitting;
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.errorCodeCreate}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle title="Nuevo código de error" onBack={() => navigate(-1)} backLabel="Volver" />
 
@@ -96,5 +99,6 @@ export function ErrorCodeCreatePage() {
         </FormProvider>
       </div>
     </div>
+    </PermissionGate>
   );
 }

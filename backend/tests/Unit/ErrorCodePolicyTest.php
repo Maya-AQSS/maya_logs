@@ -39,10 +39,10 @@ function makeProfileWithPermissions(array $permissions): UserProfileDto
     );
 }
 
-it('allows create when user has logs.update permission', function () {
+it('allows create when user has error-code.create permission', function () {
     $userId = 'user-uuid';
     $jwtUser = ['id' => $userId];
-    $profile = makeProfileWithPermissions(['logs.update']);
+    $profile = makeProfileWithPermissions(['error-code.create']);
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
 
     $policy = makeErrorCodePolicy($jwtUser, $this->profileService);
@@ -50,10 +50,10 @@ it('allows create when user has logs.update permission', function () {
     expect($policy->create(null)->allowed())->toBeTrue();
 });
 
-it('denies create when user lacks logs.update permission', function () {
+it('denies create when user lacks error-code.create permission', function () {
     $userId = 'user-uuid';
     $jwtUser = ['id' => $userId];
-    $profile = makeProfileWithPermissions(['logs.read']);
+    $profile = makeProfileWithPermissions(['error-code.index']);
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
 
     $policy = makeErrorCodePolicy($jwtUser, $this->profileService);
@@ -62,10 +62,10 @@ it('denies create when user lacks logs.update permission', function () {
         ->and($policy->create(null)->status())->toBe(403);
 });
 
-it('allows update when user has logs.update permission', function () {
+it('allows update when user has error-code.update permission', function () {
     $userId = 'user-uuid';
     $jwtUser = ['id' => $userId];
-    $profile = makeProfileWithPermissions(['logs.update', 'logs.delete']);
+    $profile = makeProfileWithPermissions(['error-code.update']);
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
     $errorCode = new ErrorCode();
 
@@ -74,10 +74,10 @@ it('allows update when user has logs.update permission', function () {
     expect($policy->update(null, $errorCode)->allowed())->toBeTrue();
 });
 
-it('allows delete when user has logs.delete permission', function () {
+it('allows delete when user has error-code.delete permission', function () {
     $userId = 'user-uuid';
     $jwtUser = ['id' => $userId];
-    $profile = makeProfileWithPermissions(['logs.delete']);
+    $profile = makeProfileWithPermissions(['error-code.delete']);
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
     $errorCode = new ErrorCode();
 
@@ -86,10 +86,10 @@ it('allows delete when user has logs.delete permission', function () {
     expect($policy->delete(null, $errorCode)->allowed())->toBeTrue();
 });
 
-it('denies delete when user only has logs.update but not logs.delete', function () {
+it('denies delete when user only has error-code.update but not error-code.delete', function () {
     $userId = 'user-uuid';
     $jwtUser = ['id' => $userId];
-    $profile = makeProfileWithPermissions(['logs.update']);
+    $profile = makeProfileWithPermissions(['error-code.update']);
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
     $errorCode = new ErrorCode();
 
@@ -114,7 +114,7 @@ it('denies when permissions array is null in profile', function () {
         email: 'test@example.com',
         name: 'Test',
         locale: Locale::Spanish,
-        extra: [], // no permissions key
+        extra: [],
     );
     $this->profileService->shouldReceive('getProfile')->andReturn($profile);
 

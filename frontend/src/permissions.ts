@@ -12,4 +12,11 @@ export const LOGS_PERMISSIONS = {
   archivedLogsDelete: 'archived-logs.delete',
   archivedLogsCommentCreate: 'archived-logs.comment.create',
   archivedLogsCommentDelete: 'archived-logs.comment.delete',
+  errorCodeIndex: 'error-code.index',
+  errorCodeShow: 'error-code.show',
+  errorCodeCreate: 'error-code.create',
+  errorCodeUpdate: 'error-code.update',
+  errorCodeDelete: 'error-code.delete',
+  errorCodeCommentCreate: 'error-code.comment.create',
+  errorCodeCommentDelete: 'error-code.comment.delete',
 } as const;

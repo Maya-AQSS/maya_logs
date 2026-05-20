@@ -12,6 +12,9 @@ import {
 } from '@maya/shared-ui-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { PermissionGate } from '../components/layout/PermissionGate';
+import { useUserProfile } from '../features/user-profile';
+import { LOGS_PERMISSIONS } from '../permissions';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { fetchErrorCodes, type ErrorCodesFilters as ApiErrorCodesFilters } from '../api/errorCodes';
 import type { ErrorCodesFiltersState } from '../components/error-codes';
@@ -81,6 +84,8 @@ function countActiveFilters(f: ErrorCodesFiltersState): number {
 export function ErrorCodesPage() {
   const { t } = useTranslation('errorCodes');
   const { t: tCommon } = useTranslation('common');
+  const { hasPermission } = useUserProfile();
+  const canCreate = hasPermission(LOGS_PERMISSIONS.errorCodeCreate);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { hiddenIds, toggleHidden, pageSize, setPageSize } = useTablePreferences({
@@ -193,16 +198,19 @@ export function ErrorCodesPage() {
   );
 
   return (
+    <PermissionGate permission={LOGS_PERMISSIONS.errorCodeIndex}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={t('title')}
         actions={
-          <Link
-            to="/error-codes/create"
-            className="inline-flex items-center bg-odoo-purple dark:bg-odoo-dark-purple text-text-inverse border-odoo-purple dark:border-odoo-dark-purple hover:bg-odoo-purple-d dark:hover:bg-odoo-dark-purple-d hover:border-odoo-purple-d dark:hover:border-odoo-dark-purple-d px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border shadow-sm"
-          >
-            {t('actions.new')}
-          </Link>
+          canCreate ? (
+            <Link
+              to="/error-codes/create"
+              className="inline-flex items-center bg-odoo-purple dark:bg-odoo-dark-purple text-text-inverse border-odoo-purple dark:border-odoo-dark-purple hover:bg-odoo-purple-d dark:hover:bg-odoo-dark-purple-d hover:border-odoo-purple-d dark:hover:border-odoo-dark-purple-d px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border shadow-sm"
+            >
+              {t('actions.new')}
+            </Link>
+          ) : undefined
         }
       />
 
@@ -258,5 +266,6 @@ export function ErrorCodesPage() {
         </>
       )}
     </div>
+    </PermissionGate>
   );
 }

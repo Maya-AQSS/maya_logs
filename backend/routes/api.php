@@ -57,15 +57,15 @@ Route::prefix('v1')->group(function () {
                 Route::post('/archived-logs/{id}/comments', [ArchivedLogCommentController::class, 'store'])->whereNumber('id')->middleware('permission:archived-logs.comment.create');
 
                 // Error codes
-                Route::get('/error-codes', [ErrorCodeController::class, 'index']);
-                Route::post('/error-codes', [ErrorCodeController::class, 'store']);
-                Route::get('/error-codes/{id}', [ErrorCodeController::class, 'show'])->whereNumber('id');
-                Route::match(['put', 'patch'], '/error-codes/{id}', [ErrorCodeController::class, 'update'])->whereNumber('id')->middleware('permission:logs.update');
-                Route::delete('/error-codes/{id}', [ErrorCodeController::class, 'destroy'])->whereNumber('id')->middleware('permission:logs.delete');
+                Route::get('/error-codes', [ErrorCodeController::class, 'index'])->middleware('permission:error-code.index');
+                Route::post('/error-codes', [ErrorCodeController::class, 'store'])->middleware('permission:error-code.create');
+                Route::get('/error-codes/{id}', [ErrorCodeController::class, 'show'])->whereNumber('id')->middleware('permission:error-code.show');
+                Route::match(['put', 'patch'], '/error-codes/{id}', [ErrorCodeController::class, 'update'])->whereNumber('id')->middleware('permission:error-code.update');
+                Route::delete('/error-codes/{id}', [ErrorCodeController::class, 'destroy'])->whereNumber('id')->middleware('permission:error-code.delete');
 
                 // Comments sobre ErrorCodes
-                Route::get('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'index'])->whereNumber('id');
-                Route::post('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'store'])->whereNumber('id');
+                Route::get('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'index'])->whereNumber('id')->middleware('permission:error-code.show');
+                Route::post('/error-codes/{id}/comments', [ErrorCodeCommentController::class, 'store'])->whereNumber('id')->middleware('permission:error-code.comment.create');
 
                 // Comments (shallow): update / delete por id
                 Route::match(['put', 'patch'], '/comments/{id}', [CommentController::class, 'update'])->whereNumber('id');
