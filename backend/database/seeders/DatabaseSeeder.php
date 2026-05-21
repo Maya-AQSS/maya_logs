@@ -22,9 +22,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             ErrorCodeSeeder::class,
-            LogSeeder::class,
-            ArchivedLogSeeder::class,
-            CommentSeeder::class,
         ]);
     }
 }
