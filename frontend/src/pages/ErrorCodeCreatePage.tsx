@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, PageTitle } from '@maya/shared-ui-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { createErrorCode, type ErrorCodePayload } from '../api/errorCodes';
@@ -74,7 +74,7 @@ export function ErrorCodeCreatePage() {
         backLabel={t('common:actions.back')}
       />
 
-      <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
+      <Card padding="md" radius="xl" className="mt-4">
         <FormProvider {...methods}>
           <form
             onSubmit={(e) => {
@@ -103,7 +103,7 @@ export function ErrorCodeCreatePage() {
             </div>
           </form>
         </FormProvider>
-      </div>
+      </Card>
     </div>
     </PermissionGate>
   );

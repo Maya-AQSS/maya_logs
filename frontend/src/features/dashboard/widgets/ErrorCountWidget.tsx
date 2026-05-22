@@ -64,7 +64,7 @@ function ErrorCountWidget() {
     >
       <div className="h-full flex flex-col items-center justify-center text-center px-2">
         <span
-          className="text-5xl sm:text-6xl font-extrabold leading-none bg-clip-text text-transparent bg-gradient-to-br from-danger to-warning-dark"
+          className="text-5xl sm:text-6xl font-extrabold leading-none text-gradient-danger"
         >
           {data ?? 0}
         </span>

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import DOMPurify from 'dompurify';
-import { Alert, Button } from '@maya/shared-ui-react';
+import { Alert, Button, Card } from '@maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -182,7 +182,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
   return (
     <div className="space-y-4">
       {canCreate && (
-      <div className="space-y-3 rounded-xl border border-ui-border bg-ui-card p-4 shadow-sm dark:border-ui-dark-border dark:bg-ui-dark-card">
+      <Card padding="md" radius="xl" className="space-y-3">
         <label
           htmlFor={`new-comment-${commentableType}-${commentableId}`}
           className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
@@ -211,7 +211,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
             {creating ? t('busy') : t('actions.save')}
           </Button>
         </div>
-      </div>
+      </Card>
       )}
 
       {loadErrorMessage && (
@@ -225,24 +225,22 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
       <div className="space-y-3">
         {commentsQuery.isLoading && (
-          <p className="rounded-xl border border-dashed border-ui-border bg-ui-card px-4 py-6 text-center text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary">
+          <Card padding="lg" radius="xl" className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary">
             {t('status.loading')}
-          </p>
+          </Card>
         )}
 
         {!commentsQuery.isLoading && comments.length === 0 && (
-          <p className="rounded-xl border border-dashed border-ui-border bg-ui-card px-4 py-6 text-center text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary">
+          <Card padding="lg" radius="xl" className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary">
             {t('empty')}
-          </p>
+          </Card>
         )}
 
         {comments.map((comment) => {
           const isEditing = editingId === comment.id;
           return (
-            <article
-              key={comment.id}
-              className="rounded-xl border border-ui-border bg-ui-card p-4 shadow-sm dark:border-ui-dark-border dark:bg-ui-dark-card"
-            >
+            <Card key={comment.id} padding="md" radius="xl" asChild>
+              <article>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-text-primary dark:text-text-dark-primary">
@@ -306,7 +304,8 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                   dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content) }}
                 />
               )}
-            </article>
+              </article>
+            </Card>
           );
         })}
       </div>

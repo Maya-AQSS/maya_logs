@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DatePicker } from '@maya/shared-ui-react';
+import { Button, Card, DatePicker } from '@maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
-import { Button } from '@maya/shared-ui-react';
 import { ApplicationSelect, SeverityFilterCheckboxes } from '../filters';
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
@@ -52,7 +51,7 @@ export function ArchivedLogsFilters({
     value.severity.length > 0 || value.applicationId !== null || value.dateFrom || value.dateTo;
 
   return (
-    <div className="bg-ui-card dark:bg-ui-dark-card border border-ui-border dark:border-ui-dark-border rounded-lg mb-6 shadow-sm">
+    <Card className="mb-6">
       {/* Toggle visible solo en móvil */}
       <Button
         variant="unstyled"
@@ -117,6 +116,6 @@ export function ArchivedLogsFilters({
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

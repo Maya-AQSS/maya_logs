@@ -12,6 +12,7 @@ export const WIDGET_REGISTRY: WidgetRegistry = {
   'error-count': {
     id: 'error-count',
     titleKey: 'widgets.errorCount.title',
+    highlight: true,
     defaultSize: { w: 4, h: 2 },
     minSize: { w: 3, h: 2 },
     component: ErrorCountWidget,

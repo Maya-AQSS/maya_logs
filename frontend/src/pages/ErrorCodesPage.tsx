@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import {
   Alert,
+  Card,
   DataTable,
   FilterField,
   PageTitle,
@@ -220,9 +221,9 @@ export function ErrorCodesPage() {
       )}
 
       {errorCodesQuery.isLoading && !pagination && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
           {t('status.loading')}
-        </div>
+        </Card>
       )}
 
       {pagination && (

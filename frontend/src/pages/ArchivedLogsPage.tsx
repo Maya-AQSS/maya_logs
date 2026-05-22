@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
+  Card,
   DataTable,
   DatePicker,
   FilterField,
@@ -323,9 +324,9 @@ export function ArchivedLogsPage() {
       )}
 
       {archivedLogsQuery.isLoading && !pagination && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
           {t('status.loading')}
-        </div>
+        </Card>
       )}
 
       {pagination && (

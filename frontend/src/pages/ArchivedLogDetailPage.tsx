@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   Alert,
   Button,
+  Card,
   ConfirmDialog,
   FieldLabel,
   PageTitle,
@@ -147,9 +148,9 @@ export function ArchivedLogDetailPage() {
       <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
           <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
-          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+          <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
             {t('detail.notFound')}
-          </div>
+          </Card>
         </div>
       </PermissionGate>
     );
@@ -190,16 +191,16 @@ export function ArchivedLogDetailPage() {
       )}
 
       {logQuery.isLoading && !log && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
           {t('status.loading')}
-        </div>
+        </Card>
       )}
 
       {log && (
         <div className="mt-4 space-y-4">
           <ArchivedLogDetailView log={log} />
 
-          <div className="rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
+          <Card padding="md">
             <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
               {t('detail.editableInfo')}
             </h2>
@@ -291,16 +292,16 @@ export function ArchivedLogDetailPage() {
                 </div>
               </dl>
             )}
-          </div>
+          </Card>
 
-          <div className="rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
+          <Card padding="md">
             <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
               {t('detail.comments')}
             </h2>
             <div className="mt-3">
               <CommentThread commentableType="archived-logs" commentableId={log.id} />
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
