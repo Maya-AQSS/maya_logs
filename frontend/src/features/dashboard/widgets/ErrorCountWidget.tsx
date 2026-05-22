@@ -68,7 +68,7 @@ function ErrorCountWidget() {
         >
           {data ?? 0}
         </span>
-        <span className="mt-2 text-xs uppercase tracking-wide font-medium text-text-secondary dark:text-text-dark-secondary">
+        <span className="mt-2 text-xs uppercase tracking-wider font-semibold text-text-secondary dark:text-text-dark-secondary">
           {t('widgets.errorCount.label')}
         </span>
       </div>
