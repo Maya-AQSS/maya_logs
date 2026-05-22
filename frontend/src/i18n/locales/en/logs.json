@@ -1,57 +1,37 @@
 {
   "title": "Logs",
-  "loading": "Loading…",
   "loadError": "Could not load logs: {{message}}",
   "empty": "No logs match the current filters.",
   "columns": {
-    "application": "Application",
-    "severity": "Severity",
     "message": "Message",
-    "errorCode": "Error code",
-    "createdAt": "Date",
-    "resolved": "Status"
+    "errorCode": "Error code"
   },
   "filters": {
     "title": "Filters",
-    "search": "Search",
     "searchPlaceholder": "Search by message, code…",
-    "severity": "Severity",
-    "application": "Application",
-    "applicationAll": "All applications",
-    "dateFrom": "From",
-    "dateTo": "To",
-    "resolved": "Status",
     "reset": "Clear filters"
   },
   "actions": {
     "viewDetail": "View detail",
-    "archive": "Archive",
     "resolve": "Mark resolved",
     "alreadyArchived": "Already archived"
   },
   "table": {
     "sortTitle": "Sort",
     "resolvedBadge": "Resolved",
-    "emptyText": "No records match the filters."
+    "emptyText": "No records match the filters.",
+    "activeTitle": "Active logs"
   },
   "detail": {
     "title": "Log detail",
     "titleWithId": "Log detail #{{id}}",
-    "back": "Back",
     "notFound": "The requested log was not found.",
-    "loading": "Loading…",
     "loadError": "Could not load the log: {{message}}",
     "archivedNotice": "This log matches a previously archived record.",
     "viewArchived": "View archived",
     "fields": {
-      "id": "ID",
-      "application": "Application",
-      "severity": "Severity",
-      "status": "Status",
       "resolved": "Resolved",
-      "unresolved": "Unresolved",
       "errorCode": "Error code",
-      "createdAt": "Date",
       "file": "File",
       "line": "Line",
       "message": "Message",
@@ -62,8 +42,7 @@
   "confirmations": {
     "archive": {
       "title": "Archive log",
-      "message": "Are you sure you want to archive this log?",
-      "confirmLabel": "Archive"
+      "message": "Are you sure you want to archive this log?"
     },
     "resolve": {
       "title": "Mark as resolved",

@@ -4,38 +4,24 @@
   "loadError": "No s'han pogut carregar els logs arxivats",
   "listLoadError": "No s'han pogut carregar els logs arxivats: {{message}}",
   "empty": "No hi ha logs arxivats amb els filtres actuals.",
-  "restoreAction": "Restaurar",
   "restoredAt": "Arxivat el {{date}}",
   "filters": {
-    "title": "Filtres",
-    "applicationAll": "Totes les aplicacions",
-    "reset": "Netejar"
+    "title": "Filtres"
   },
   "columns": {
-    "application": "Aplicació",
-    "severity": "Severitat",
     "message": "Missatge",
-    "archived": "Arxivat",
     "sortTitle": "Ordenar",
     "emptyText": "No hi ha logs arxivats que coincidisquen amb els filtres."
   },
   "detail": {
     "title": "Detall del log arxivat",
     "titleWithId": "Detall del log arxivat #{{id}}",
-    "back": "Tornar",
     "notFound": "No s'ha trobat el log arxivat sol·licitat.",
-    "loading": "Carregant…",
     "loadError": "No s'ha pogut carregar el log arxivat: {{message}}",
     "listLoadError": "No s'han pogut carregar els logs arxivats: {{message}}",
-    "edit": "Editar",
-    "delete": "Eliminar",
-    "cancel": "Cancel·lar",
-    "save": "Guardar",
     "editableInfo": "Informació editable",
     "comments": "Comentaris",
     "fields": {
-      "application": "Aplicació",
-      "severity": "Severitat",
       "errorCode": "Codi d'error",
       "archivedBy": "Arxivat per",
       "archivedAt": "Arxivat el",
@@ -43,7 +29,6 @@
       "message": "Missatge",
       "metadata": "Metadades",
       "noMetadata": "Sense metadades",
-      "description": "Descripció",
       "urlTutorial": "URL de tutorial",
       "noDescription": "Sense descripció",
       "noUrl": "Sense URL"
@@ -52,8 +37,10 @@
   "confirmations": {
     "delete": {
       "title": "Eliminar log arxivat",
-      "message": "Confirmes que vols eliminar este log arxivat? Esta acció no es pot desfer.",
-      "confirmLabel": "Eliminar"
+      "message": "Confirmes que vols eliminar este log arxivat? Esta acció no es pot desfer."
     }
+  },
+  "table": {
+    "title": "Logs arxivats"
   }
 }

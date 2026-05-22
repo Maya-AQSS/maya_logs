@@ -208,7 +208,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
         )}
         <div className="flex justify-end">
           <Button variant="primary" size="sm" onClick={onCreate} disabled={creating} loading={creating}>
-            {creating ? t('busy') : t('save')}
+            {creating ? t('busy') : t('actions.save')}
           </Button>
         </div>
       </div>
@@ -226,7 +226,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
       <div className="space-y-3">
         {commentsQuery.isLoading && (
           <p className="rounded-xl border border-dashed border-ui-border bg-ui-card px-4 py-6 text-center text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary">
-            {t('loading')}
+            {t('status.loading')}
           </p>
         )}
 
@@ -256,12 +256,12 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                   <div className="flex gap-2">
                     {comment.can_edit && (
                       <Button variant="ghost" size="xs" onClick={() => onStartEdit(comment)}>
-                        {t('edit')}
+                        {t('actions.edit')}
                       </Button>
                     )}
                     {comment.can_delete && (
                       <Button variant="danger" size="xs" onClick={() => setDeleteTargetId(comment.id)}>
-                        {t('delete')}
+                        {t('actions.delete')}
                       </Button>
                     )}
                   </div>
@@ -293,10 +293,10 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                       disabled={editingBusy}
                       loading={editingBusy}
                     >
-                      {editingBusy ? t('busy') : t('update')}
+                      {editingBusy ? t('busy') : t('actions.refresh')}
                     </Button>
                     <Button variant="secondary" size="sm" onClick={onCancelEdit} disabled={editingBusy}>
-                      {t('cancel')}
+                      {t('actions.cancel')}
                     </Button>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
         open={deleteTargetId !== null}
         title={t('confirmDelete.title')}
         description={t('confirmDelete.message')}
-        confirmLabel={t('confirmDelete.confirmLabel')}
+        confirmLabel={t('actions.delete')}
         variant="danger"
         loading={deleteBusy}
         onConfirm={onConfirmDelete}

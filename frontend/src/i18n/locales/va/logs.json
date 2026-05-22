@@ -1,57 +1,37 @@
 {
   "title": "Logs",
-  "loading": "Carregant…",
   "loadError": "No s'han pogut carregar els logs: {{message}}",
   "empty": "Sense logs que coincidisquen amb els filtres actuals.",
   "columns": {
-    "application": "Aplicació",
-    "severity": "Severitat",
     "message": "Missatge",
-    "errorCode": "Codi d'error",
-    "createdAt": "Data",
-    "resolved": "Estat"
+    "errorCode": "Codi d'error"
   },
   "filters": {
     "title": "Filtres",
-    "search": "Cercar",
     "searchPlaceholder": "Cerca per missatge, codi…",
-    "severity": "Severitat",
-    "application": "Aplicació",
-    "applicationAll": "Totes les aplicacions",
-    "dateFrom": "Des de",
-    "dateTo": "Fins a",
-    "resolved": "Estat",
     "reset": "Netejar filtres"
   },
   "actions": {
     "viewDetail": "Veure detall",
-    "archive": "Arxivar",
     "resolve": "Marcar resolt",
     "alreadyArchived": "Ja arxivat"
   },
   "table": {
     "sortTitle": "Ordenar",
     "resolvedBadge": "Resolt",
-    "emptyText": "No hi ha registres que coincidisquen amb els filtres."
+    "emptyText": "No hi ha registres que coincidisquen amb els filtres.",
+    "activeTitle": "Logs actius"
   },
   "detail": {
     "title": "Detall del log",
     "titleWithId": "Detall del log #{{id}}",
-    "back": "Tornar",
     "notFound": "No s'ha trobat el log sol·licitat.",
-    "loading": "Carregant…",
     "loadError": "No s'ha pogut carregar el log: {{message}}",
     "archivedNotice": "Este log coincidix amb un registre arxivat prèviament.",
     "viewArchived": "Veure arxivat",
     "fields": {
-      "id": "ID",
-      "application": "Aplicació",
-      "severity": "Severitat",
-      "status": "Estat",
       "resolved": "Resolt",
-      "unresolved": "Sense resoldre",
       "errorCode": "Codi d'error",
-      "createdAt": "Data",
       "file": "Arxiu",
       "line": "Línia",
       "message": "Missatge",
@@ -62,8 +42,7 @@
   "confirmations": {
     "archive": {
       "title": "Arxivar log",
-      "message": "Confirmes que vols arxivar este log?",
-      "confirmLabel": "Arxivar"
+      "message": "Confirmes que vols arxivar este log?"
     },
     "resolve": {
       "title": "Marcar com a resolt",

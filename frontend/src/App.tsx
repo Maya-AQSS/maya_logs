@@ -130,7 +130,7 @@ function AppAfterProfile() {
   );
 
   if (profileLoading) {
-    return <AuthLoadingScreen message={t('initializing')} />;
+    return <AuthLoadingScreen message={t('auth.initializing')} />;
   }
 
   if (lacksLoginPermission) {
@@ -155,11 +155,11 @@ export default function App() {
   }, [isOidcLoading, isOidcSignedIn, beginSignIn]);
 
   if (isOidcLoading) {
-    return <AuthLoadingScreen message={t('initializing')} />;
+    return <AuthLoadingScreen message={t('auth.initializing')} />;
   }
 
   if (!isOidcSignedIn) {
-    return <AuthLoadingScreen message={t('redirecting')} />;
+    return <AuthLoadingScreen message={t('auth.redirecting')} />;
   }
 
   return <AppAfterProfile />;

@@ -1,57 +1,37 @@
 {
   "title": "Logs",
-  "loading": "Cargando…",
   "loadError": "No se pudieron cargar los logs: {{message}}",
   "empty": "Sin logs que coincidan con los filtros actuales.",
   "columns": {
-    "application": "Aplicación",
-    "severity": "Severidad",
     "message": "Mensaje",
-    "errorCode": "Código error",
-    "createdAt": "Fecha",
-    "resolved": "Estado"
+    "errorCode": "Código error"
   },
   "filters": {
     "title": "Filtros",
-    "search": "Buscar",
     "searchPlaceholder": "Buscar por mensaje, código…",
-    "severity": "Severidad",
-    "application": "Aplicación",
-    "applicationAll": "Todas las aplicaciones",
-    "dateFrom": "Desde",
-    "dateTo": "Hasta",
-    "resolved": "Estado",
     "reset": "Limpiar filtros"
   },
   "actions": {
     "viewDetail": "Ver detalle",
-    "archive": "Archivar",
     "resolve": "Marcar resuelto",
     "alreadyArchived": "Ya archivado"
   },
   "table": {
     "sortTitle": "Ordenar",
     "resolvedBadge": "Resuelto",
-    "emptyText": "No hay registros que coincidan con los filtros."
+    "emptyText": "No hay registros que coincidan con los filtros.",
+    "activeTitle": "Logs activos"
   },
   "detail": {
     "title": "Detalle del log",
     "titleWithId": "Detalle del log #{{id}}",
-    "back": "Volver",
     "notFound": "No se encontró el log solicitado.",
-    "loading": "Cargando…",
     "loadError": "No se pudo cargar el log: {{message}}",
     "archivedNotice": "Este log coincide con un registro archivado previamente.",
     "viewArchived": "Ver archivado",
     "fields": {
-      "id": "ID",
-      "application": "Aplicación",
-      "severity": "Severidad",
-      "status": "Estado",
       "resolved": "Resuelto",
-      "unresolved": "Sin resolver",
       "errorCode": "Código de error",
-      "createdAt": "Fecha",
       "file": "Archivo",
       "line": "Línea",
       "message": "Mensaje",
@@ -62,8 +42,7 @@
   "confirmations": {
     "archive": {
       "title": "Archivar log",
-      "message": "¿Confirmas que quieres archivar este log?",
-      "confirmLabel": "Archivar"
+      "message": "¿Confirmas que quieres archivar este log?"
     },
     "resolve": {
       "title": "Marcar como resuelto",

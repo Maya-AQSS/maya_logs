@@ -115,7 +115,7 @@ export function DashboardPage() {
   return (
     <>
       <PageTitle
-        title={t('title')}
+        title={t('nav.dashboard')}
         actions={
           canEditDashboard && editable ? (
             <DashboardEditToolbar
@@ -127,17 +127,17 @@ export function DashboardPage() {
               onReset={handleReset}
               onAddWidget={handleAddWidget}
               labels={{
-                save: t('edit.save'),
-                cancel: t('edit.cancel'),
-                reset: t('edit.reset'),
-                addWidget: t('edit.addWidget', { defaultValue: 'Añadir widget' }),
+                save: t('actions.save'),
+                cancel: t('actions.cancel'),
+                reset: t('actions.restore'),
+                addWidget: t('dashboard.addWidget'),
               }}
             />
           ) : canEditDashboard ? (
             <DashboardEditToggleButton
               editable={editable}
               onToggle={handleToggleEdit}
-              editLabel={t('edit.toggle')}
+              editLabel={t('actions.edit')}
             />
           ) : null
         }
@@ -151,7 +151,7 @@ export function DashboardPage() {
         onRemoveWidget={handleRemoveWidget}
         t={t}
         emptyKey="widgets.empty"
-        removeAriaLabel={t('edit.removeWidget')}
+        removeAriaLabel={t('dashboard.removeWidget')}
       />
     </>
   );

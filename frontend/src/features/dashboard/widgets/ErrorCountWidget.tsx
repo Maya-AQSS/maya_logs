@@ -51,7 +51,7 @@ function ErrorCountWidget() {
   if (error) {
     return (
       <p className="text-sm text-danger-dark dark:text-danger text-center py-4">
-        {t('error')}
+        {t('dashboard.loadError')}
       </p>
     );
   }

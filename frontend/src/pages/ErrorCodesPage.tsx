@@ -131,12 +131,12 @@ export function ErrorCodesPage() {
       },
       {
         id: 'application',
-        header: t('columns.application'),
+        header: t('filters.applicationLabel'),
         cell: (ec) => ec.application?.name ?? '-',
       },
       {
         id: 'name',
-        header: t('columns.name'),
+        header: t('tables.name'),
         cell: (ec) => <span className="break-words">{ec.name}</span>,
       },
       {
@@ -201,7 +201,7 @@ export function ErrorCodesPage() {
     <PermissionGate permission={LOGS_PERMISSIONS.errorCodeIndex}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
-        title={t('title')}
+        title={t('nav.dashboard')}
         actions={
           canCreate ? (
             <Link
@@ -221,7 +221,7 @@ export function ErrorCodesPage() {
 
       {errorCodesQuery.isLoading && !pagination && (
         <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('loading')}
+          {t('status.loading')}
         </div>
       )}
 
@@ -229,7 +229,7 @@ export function ErrorCodesPage() {
         <>
           <div className="mt-3">
             <DataTable
-              title={t('title')}
+              title={t('nav.dashboard')}
               columns={columns}
               rows={errorCodes}
               rowKey={(ec) => ec.id}

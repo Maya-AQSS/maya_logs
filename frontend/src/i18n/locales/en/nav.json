@@ -1,11 +1,5 @@
 {
-  "dashboard": "Dashboard",
   "logs": "Logs",
   "archivedLogs": "Archived",
-  "errorCodes": "Error codes",
-  "applications": "Applications",
-  "settings": "Settings",
-  "profile": "Profile",
-  "notifications": "Notifications",
-  "favorites": "Favorites"
+  "errorCodes": "Error codes"
 }

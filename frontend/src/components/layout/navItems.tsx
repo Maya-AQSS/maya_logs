@@ -16,7 +16,7 @@ export function useNavItems(): NavItem[] {
 
   return useMemo<NavItem[]>(() => {
     const items: NavItem[] = [
-      { id: 'dashboard', label: t('dashboard'), icon: HomeIcon, path: '/dashboard' },
+      { id: 'dashboard', label: t('nav.dashboard'), icon: HomeIcon, path: '/dashboard' },
       { id: 'logs', label: t('logs'), icon: SearchIcon, path: '/logs' },
       { id: 'archived-logs', label: t('archivedLogs'), icon: FolderIcon, path: '/archived-logs' },
       { id: 'error-codes', label: t('errorCodes'), icon: AppsIcon, path: '/error-codes' },

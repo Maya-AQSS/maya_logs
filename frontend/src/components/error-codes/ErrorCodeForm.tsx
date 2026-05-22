@@ -33,7 +33,7 @@ export function ErrorCodeForm({
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
         <FieldLabel htmlFor="error-code-name" required>
-          {t('form.name')}
+          {t('tables.name')}
         </FieldLabel>
         <TextInput
           id="error-code-name"
@@ -63,7 +63,7 @@ export function ErrorCodeForm({
 
       <div>
         <FieldLabel htmlFor="error-code-application" required>
-          {t('form.application')}
+          {t('filters.applicationLabel')}
         </FieldLabel>
         <Select
           id="error-code-application"
@@ -112,7 +112,7 @@ export function ErrorCodeForm({
       </div>
 
       <div className="md:col-span-2">
-        <FieldLabel htmlFor="error-code-description">{t('form.description')}</FieldLabel>
+        <FieldLabel htmlFor="error-code-description">{t('tables.description')}</FieldLabel>
         <TextArea
           id="error-code-description"
           fieldSize="comfortable"

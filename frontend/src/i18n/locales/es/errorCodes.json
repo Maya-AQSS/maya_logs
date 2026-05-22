@@ -1,43 +1,38 @@
 {
   "title": "Códigos de error",
+  "detailTitle": "Código de error",
+  "detailTitleWithCode": "Código de error: {{code}}",
+  "notFound": "No se encontró el código de error solicitado.",
   "loading": "Cargando códigos…",
   "loadError": "No se pudieron cargar los códigos de error",
+  "loadErrorDetail": "No se pudo cargar el código de error: {{error}}",
   "createTitle": "Nuevo código de error",
   "editTitle": "Editar código de error",
+  "deleteTitle": "Eliminar código de error",
+  "deleteConfirmDescription": "¿Confirmas que quieres eliminar este código de error? Esta acción no se puede deshacer.",
   "empty": "No hay códigos de error.",
   "emptyFiltered": "No hay códigos de error que coincidan con los filtros.",
   "filters": {
     "title": "Filtros",
-    "searchPlaceholder": "Código, nombre, fichero…",
-    "applicationAll": "Todas las aplicaciones",
-    "reset": "Limpiar"
+    "searchPlaceholder": "Código, nombre, fichero…"
   },
   "columns": {
     "code": "Código",
-    "application": "Aplicación",
-    "name": "Nombre",
     "file": "Fichero",
     "line": "Línea"
   },
   "fields": {
-    "code": "Código",
-    "description": "Descripción",
-    "severity": "Severidad",
-    "application": "Aplicación"
+    "code": "Código"
   },
   "form": {
-    "name": "Nombre",
     "code": "Código",
-    "application": "Aplicación",
     "applicationPlaceholder": "Selecciona una aplicación",
     "file": "Fichero",
-    "line": "Línea",
-    "description": "Descripción"
+    "line": "Línea"
   },
   "actions": {
     "create": "Crear código",
     "new": "Nuevo código",
-    "save": "Guardar cambios",
-    "delete": "Eliminar"
+    "save": "Guardar cambios"
   }
 }

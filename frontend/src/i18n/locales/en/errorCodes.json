@@ -1,43 +1,38 @@
 {
   "title": "Error codes",
+  "detailTitle": "Error code",
+  "detailTitleWithCode": "Error code: {{code}}",
+  "notFound": "Error code not found.",
   "loading": "Loading codes…",
   "loadError": "Could not load error codes",
+  "loadErrorDetail": "Could not load error code: {{error}}",
   "createTitle": "New error code",
   "editTitle": "Edit error code",
+  "deleteTitle": "Delete error code",
+  "deleteConfirmDescription": "Confirm you want to delete this error code? This action cannot be undone.",
   "empty": "No error codes.",
   "emptyFiltered": "No error codes match the filters.",
   "filters": {
     "title": "Filters",
-    "searchPlaceholder": "Code, name, file…",
-    "applicationAll": "All applications",
-    "reset": "Clear"
+    "searchPlaceholder": "Code, name, file…"
   },
   "columns": {
     "code": "Code",
-    "application": "Application",
-    "name": "Name",
     "file": "File",
     "line": "Line"
   },
   "fields": {
-    "code": "Code",
-    "description": "Description",
-    "severity": "Severity",
-    "application": "Application"
+    "code": "Code"
   },
   "form": {
-    "name": "Name",
     "code": "Code",
-    "application": "Application",
     "applicationPlaceholder": "Select an application",
     "file": "File",
-    "line": "Line",
-    "description": "Description"
+    "line": "Line"
   },
   "actions": {
     "create": "Create code",
     "new": "New code",
-    "save": "Save changes",
-    "delete": "Delete"
+    "save": "Save changes"
   }
 }

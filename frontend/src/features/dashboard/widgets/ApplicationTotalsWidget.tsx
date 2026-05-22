@@ -32,7 +32,7 @@ function ApplicationTotalsWidget() {
   if (status === 'error' || !data) {
     return (
       <p className="text-sm text-danger-dark dark:text-danger text-center py-4">
-        {t('error')}
+        {t('dashboard.loadError')}
       </p>
     );
   }
