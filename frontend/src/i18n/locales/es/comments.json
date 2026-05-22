@@ -8,17 +8,11 @@
   "listLoadError": "No se pudieron cargar los comentarios: {{message}}",
   "postError": "No se pudo publicar el comentario",
   "newComment": "Nuevo comentario",
-  "save": "Guardar",
-  "update": "Actualizar",
-  "cancel": "Cancelar",
-  "edit": "Editar",
-  "delete": "Eliminar",
   "unknownUser": "Usuario desconocido",
   "busy": "…",
   "minLength": "El comentario debe tener al menos 3 caracteres.",
   "confirmDelete": {
     "title": "Eliminar comentario",
-    "message": "¿Confirmas que quieres eliminar este comentario? Esta acción no se puede deshacer.",
-    "confirmLabel": "Eliminar"
+    "message": "¿Confirmas que quieres eliminar este comentario? Esta acción no se puede deshacer."
   }
 }

@@ -4,38 +4,24 @@
   "loadError": "No se pudieron cargar los logs archivados",
   "listLoadError": "No se pudieron cargar los logs archivados: {{message}}",
   "empty": "No hay logs archivados con los filtros actuales.",
-  "restoreAction": "Restaurar",
   "restoredAt": "Archivado el {{date}}",
   "filters": {
-    "title": "Filtros",
-    "applicationAll": "Todas las aplicaciones",
-    "reset": "Limpiar"
+    "title": "Filtros"
   },
   "columns": {
-    "application": "Aplicación",
-    "severity": "Severidad",
     "message": "Mensaje",
-    "archived": "Archivado",
     "sortTitle": "Ordenar",
     "emptyText": "No hay logs archivados que coincidan con los filtros."
   },
   "detail": {
     "title": "Detalle del log archivado",
     "titleWithId": "Detalle del log archivado #{{id}}",
-    "back": "Volver",
     "notFound": "No se encontró el log archivado solicitado.",
-    "loading": "Cargando…",
     "loadError": "No se pudo cargar el log archivado: {{message}}",
     "listLoadError": "No se pudieron cargar los logs archivados: {{message}}",
-    "edit": "Editar",
-    "delete": "Eliminar",
-    "cancel": "Cancelar",
-    "save": "Guardar",
     "editableInfo": "Información editable",
     "comments": "Comentarios",
     "fields": {
-      "application": "Aplicación",
-      "severity": "Severidad",
       "errorCode": "Código de error",
       "archivedBy": "Archivado por",
       "archivedAt": "Archivado el",
@@ -43,7 +29,6 @@
       "message": "Mensaje",
       "metadata": "Metadatos",
       "noMetadata": "Sin metadatos",
-      "description": "Descripción",
       "urlTutorial": "URL de tutorial",
       "noDescription": "Sin descripción",
       "noUrl": "Sin URL"
@@ -52,8 +37,10 @@
   "confirmations": {
     "delete": {
       "title": "Eliminar log archivado",
-      "message": "¿Confirmas que quieres eliminar este log archivado? Esta acción no se puede deshacer.",
-      "confirmLabel": "Eliminar"
+      "message": "¿Confirmas que quieres eliminar este log archivado? Esta acción no se puede deshacer."
     }
+  },
+  "table": {
+    "title": "Logs archivados"
   }
 }

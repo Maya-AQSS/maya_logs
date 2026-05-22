@@ -1,43 +1,38 @@
 {
   "title": "Codis d'error",
+  "detailTitle": "Codi d'error",
+  "detailTitleWithCode": "Codi d'error: {{code}}",
+  "notFound": "No s'ha trobat el codi d'error sol·licitat.",
   "loading": "Carregant codis…",
   "loadError": "No s'han pogut carregar els codis d'error",
+  "loadErrorDetail": "No s'ha pogut carregar el codi d'error: {{error}}",
   "createTitle": "Nou codi d'error",
   "editTitle": "Editar codi d'error",
+  "deleteTitle": "Eliminar codi d'error",
+  "deleteConfirmDescription": "Confirmes que vols eliminar aquest codi d'error? Aquesta acció no es pot desfer.",
   "empty": "No hi ha codis d'error.",
   "emptyFiltered": "No hi ha codis d'error que coincidisquen amb els filtres.",
   "filters": {
     "title": "Filtres",
-    "searchPlaceholder": "Codi, nom, arxiu…",
-    "applicationAll": "Totes les aplicacions",
-    "reset": "Netejar"
+    "searchPlaceholder": "Codi, nom, arxiu…"
   },
   "columns": {
     "code": "Codi",
-    "application": "Aplicació",
-    "name": "Nom",
     "file": "Arxiu",
     "line": "Línia"
   },
   "fields": {
-    "code": "Codi",
-    "description": "Descripció",
-    "severity": "Severitat",
-    "application": "Aplicació"
+    "code": "Codi"
   },
   "form": {
-    "name": "Nom",
     "code": "Codi",
-    "application": "Aplicació",
     "applicationPlaceholder": "Selecciona una aplicació",
     "file": "Arxiu",
-    "line": "Línia",
-    "description": "Descripció"
+    "line": "Línia"
   },
   "actions": {
     "create": "Crear codi",
     "new": "Nou codi",
-    "save": "Guardar canvis",
-    "delete": "Eliminar"
+    "save": "Guardar canvis"
   }
 }

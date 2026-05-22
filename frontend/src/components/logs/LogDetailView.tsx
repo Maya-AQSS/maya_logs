@@ -32,13 +32,13 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
 
   return (
     <div className="mt-4 grid grid-cols-1 gap-3 text-base md:grid-cols-2">
-      <Field label={t('detail.fields.id')}>{String(log.id)}</Field>
+      <Field label={t('tables.id')}>{String(log.id)}</Field>
 
-      <Field label={t('detail.fields.application')}>{log.application?.name ?? '—'}</Field>
+      <Field label={t('filters.applicationLabel')}>{log.application?.name ?? '—'}</Field>
 
       <div>
         <div className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-          {t('detail.fields.severity')}
+          {t('filters.severityLabel')}
         </div>
         <div className="mt-1 flex min-h-[2.75rem] items-center rounded-lg border border-ui-border bg-ui-body px-3 py-2 shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg">
           <SeverityBadge severity={log.severity} />
@@ -47,7 +47,7 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
 
       <div>
         <div className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-          {t('detail.fields.status')}
+          {t('filters.resolvedLabel')}
         </div>
         <div className="mt-1 flex min-h-[2.75rem] items-center rounded-lg border border-ui-border bg-ui-body px-3 py-2 shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg">
           <span
@@ -57,14 +57,14 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
                 : 'inline-flex items-center rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning-dark ring-1 ring-inset ring-warning/20'
             }
           >
-            {log.resolved ? t('detail.fields.resolved') : t('detail.fields.unresolved')}
+            {log.resolved ? t('detail.fields.resolved') : t('resolved.unresolved')}
           </span>
         </div>
       </div>
 
       <Field label={t('detail.fields.errorCode')}>{log.error_code?.code ?? '—'}</Field>
 
-      <Field label={t('detail.fields.createdAt')}>{formatDateTime(log.created_at)}</Field>
+      <Field label={t('tables.date')}>{formatDateTime(log.created_at)}</Field>
 
       {log.file !== null && (
         <Field label={t('detail.fields.file')}>{log.file}</Field>

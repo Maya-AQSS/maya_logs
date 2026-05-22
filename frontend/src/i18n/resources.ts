@@ -1,4 +1,4 @@
-import { commonResources, COMMON_NAMESPACE } from '@maya/shared-i18n-react';
+import { commonResources, COMMON_NAMESPACE, deepMerge } from '@maya/shared-i18n-react';
 
 import esDashboard from './locales/es/dashboard.json';
 import esLogs from './locales/es/logs.json';
@@ -41,35 +41,41 @@ export const NAMESPACES = [
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
+// Cada namespace fusiona el canon shared con sus strings locales. Local
+// siempre gana en colisión gracias al orden del spread.
+const baseEs = commonResources.es.common;
+const baseVa = commonResources.va.common;
+const baseEn = commonResources.en.common;
+
 export const resources = {
   es: {
-    ...commonResources.es,
-    dashboard: esDashboard,
-    logs: esLogs,
-    archivedLogs: esArchivedLogs,
-    errorCodes: esErrorCodes,
-    comments: esComments,
-    auth: esAuth,
-    nav: esNav,
+    common: baseEs,
+    dashboard: deepMerge(baseEs, esDashboard),
+    logs: deepMerge(baseEs, esLogs),
+    archivedLogs: deepMerge(baseEs, esArchivedLogs),
+    errorCodes: deepMerge(baseEs, esErrorCodes),
+    comments: deepMerge(baseEs, esComments),
+    auth: deepMerge(baseEs, esAuth),
+    nav: deepMerge(baseEs, esNav),
   },
   va: {
-    ...commonResources.va,
-    dashboard: vaDashboard,
-    logs: vaLogs,
-    archivedLogs: vaArchivedLogs,
-    errorCodes: vaErrorCodes,
-    comments: vaComments,
-    auth: vaAuth,
-    nav: vaNav,
+    common: baseVa,
+    dashboard: deepMerge(baseVa, vaDashboard),
+    logs: deepMerge(baseVa, vaLogs),
+    archivedLogs: deepMerge(baseVa, vaArchivedLogs),
+    errorCodes: deepMerge(baseVa, vaErrorCodes),
+    comments: deepMerge(baseVa, vaComments),
+    auth: deepMerge(baseVa, vaAuth),
+    nav: deepMerge(baseVa, vaNav),
   },
   en: {
-    ...commonResources.en,
-    dashboard: enDashboard,
-    logs: enLogs,
-    archivedLogs: enArchivedLogs,
-    errorCodes: enErrorCodes,
-    comments: enComments,
-    auth: enAuth,
-    nav: enNav,
+    common: baseEn,
+    dashboard: deepMerge(baseEn, enDashboard),
+    logs: deepMerge(baseEn, enLogs),
+    archivedLogs: deepMerge(baseEn, enArchivedLogs),
+    errorCodes: deepMerge(baseEn, enErrorCodes),
+    comments: deepMerge(baseEn, enComments),
+    auth: deepMerge(baseEn, enAuth),
+    nav: deepMerge(baseEn, enNav),
   },
 } as const;

@@ -1,11 +1,5 @@
 {
-  "dashboard": "Panell",
   "logs": "Logs",
   "archivedLogs": "Arxivats",
-  "errorCodes": "Codis d'error",
-  "applications": "Aplicacions",
-  "settings": "Ajustos",
-  "profile": "Perfil",
-  "notifications": "Notificacions",
-  "favorites": "Preferits"
+  "errorCodes": "Codis d'error"
 }

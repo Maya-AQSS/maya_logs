@@ -1,11 +1,5 @@
 {
-  "dashboard": "Panel",
   "logs": "Logs",
   "archivedLogs": "Archivados",
-  "errorCodes": "Códigos de error",
-  "applications": "Aplicaciones",
-  "settings": "Ajustes",
-  "profile": "Perfil",
-  "notifications": "Notificaciones",
-  "favorites": "Favoritos"
+  "errorCodes": "Códigos de error"
 }

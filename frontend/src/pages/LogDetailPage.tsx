@@ -86,7 +86,7 @@ export function LogDetailPage() {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.show}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
+          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
           <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
             {t('detail.notFound')}
           </div>
@@ -104,7 +104,7 @@ export function LogDetailPage() {
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
         onBack={() => navigate(-1)}
-        backLabel={t('detail.back')}
+        backLabel={t('actions.back')}
         actions={
           <>
             {log && archivedLogId === null && canArchive && (
@@ -132,7 +132,7 @@ export function LogDetailPage() {
 
       {logQuery.isLoading && !log && (
         <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('detail.loading')}
+          {t('status.loading')}
         </div>
       )}
 
@@ -142,7 +142,7 @@ export function LogDetailPage() {
         open={dialog === 'archive'}
         title={t('confirmations.archive.title')}
         description={t('confirmations.archive.message')}
-        confirmLabel={t('confirmations.archive.confirmLabel')}
+        confirmLabel={t('actions.archive')}
         loading={busy}
         onConfirm={onArchive}
         onCancel={() => !busy && setDialog('none')}

@@ -1,29 +1,17 @@
 {
-  "title": "Panel",
-  "loading": "Cargando panel…",
-  "error": "No se pudo cargar el panel",
-  "unresolvedLabel": "Sin resolver",
-  "resolvedLabel": "Resueltos",
   "byApplication": "Por aplicación",
   "byApplicationHint": "Volumen de logs en el sistema por servicio. Pulsa una fila para abrir el listado filtrado por esa aplicación.",
   "logsTotalLabel": "Logs en el sistema",
   "openFilteredLogs": "Ver logs filtrados por {{app}}",
-  "edit": {
-    "toggle": "Editar",
-    "save": "Guardar",
-    "cancel": "Cancelar",
-    "reset": "Restaurar",
-    "removeWidget": "Eliminar widget"
-  },
   "widgets": {
-    "empty": "No hay widgets en el panel. Restaura el diseño por defecto para volver a verlos.",
     "errorCount": {
       "title": "Errores 24h",
       "label": "Errores 24h"
     },
     "recentLogs": {
       "title": "Logs recientes",
-      "empty": "Sin logs recientes"
+      "empty": "Sin logs recientes",
+      "noPermission": "Sin permiso para listar logs."
     },
     "severityCards": {
       "title": "Por severidad"

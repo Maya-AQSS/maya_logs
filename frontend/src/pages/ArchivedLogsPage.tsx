@@ -223,13 +223,13 @@ export function ArchivedLogsPage() {
     () => [
       {
         id: 'application',
-        header: t('columns.application'),
+        header: t('filters.applicationLabel'),
         cell: (l) => l.application?.name ?? '-',
         sortable: true,
       },
       {
         id: 'severity',
-        header: t('columns.severity'),
+        header: t('filters.severityLabel'),
         cell: (l) => <SeverityBadge severity={l.severity} />,
         sortable: true,
       },
@@ -242,7 +242,7 @@ export function ArchivedLogsPage() {
       },
       {
         id: 'archived_at',
-        header: t('columns.archived'),
+        header: t('states.archived'),
         cell: (l) => formatDateTime(l.archived_at),
         sortable: true,
       },
@@ -305,7 +305,7 @@ export function ArchivedLogsPage() {
           options={LOG_SEVERITY_KEYS.map((key) => ({ value: key, label: severityLabel(key) }))}
           value={filters.severity}
           onChange={(next) => updateFilters({ severity: next })}
-          placeholder={t('filters.severityAll', { defaultValue: 'Todas' })}
+          placeholder={tCommon('severity.all')}
           ariaLabel={tCommon('filters.severityLabel')}
         />
       </FilterField>
@@ -315,7 +315,7 @@ export function ArchivedLogsPage() {
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsIndex}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle title={t('title')} />
+      <PageTitle title={t('nav.dashboard')} />
 
       {archivedLogsQuery.isError && errorMessage && (
         <Alert tone="danger" className="mt-4">{t('listLoadError', { message: errorMessage })}
@@ -324,7 +324,7 @@ export function ArchivedLogsPage() {
 
       {archivedLogsQuery.isLoading && !pagination && (
         <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('detail.loading')}
+          {t('status.loading')}
         </div>
       )}
 

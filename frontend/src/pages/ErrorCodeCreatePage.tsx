@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 import { Alert, Button, PageTitle } from '@maya/shared-ui-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
@@ -41,6 +42,7 @@ function toPayload(form: ErrorCodeFormInput): ErrorCodePayload {
 
 export function ErrorCodeCreatePage() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['errorCodes', 'common']);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const methods = useForm<ErrorCodeFormInput>({
@@ -66,7 +68,11 @@ export function ErrorCodeCreatePage() {
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.errorCodeCreate}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle title="Nuevo código de error" onBack={() => navigate(-1)} backLabel="Volver" />
+      <PageTitle
+        title={t('errorCodes:createTitle')}
+        onBack={() => navigate(-1)}
+        backLabel={t('common:actions.back')}
+      />
 
       <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
         <FormProvider {...methods}>
@@ -89,10 +95,10 @@ export function ErrorCodeCreatePage() {
                 to="/error-codes"
                 className="inline-flex items-center bg-transparent text-text-secondary dark:text-text-dark-secondary border border-ui-border dark:border-ui-dark-border hover:text-text-primary dark:hover:text-text-dark-primary hover:border-text-secondary dark:hover:border-text-dark-secondary px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer"
               >
-                Cancelar
+                {t('common:actions.cancel')}
               </Link>
               <Button type="submit" variant="primary" size="sm" disabled={saving} loading={saving}>
-                {saving ? '…' : 'Crear'}
+                {saving ? '…' : t('common:actions.create')}
               </Button>
             </div>
           </form>

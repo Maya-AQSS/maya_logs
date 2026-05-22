@@ -30,11 +30,11 @@ export function ArchivedLogDetailView({ log }: ArchivedLogDetailViewProps) {
 
   return (
     <div className="grid grid-cols-1 gap-3 text-base md:grid-cols-2">
-      <Field label={t('detail.fields.application')}>{log.application?.name ?? '—'}</Field>
+      <Field label={t('filters.applicationLabel')}>{log.application?.name ?? '—'}</Field>
 
       <div>
         <div className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-          {t('detail.fields.severity')}
+          {t('filters.severityLabel')}
         </div>
         <div className="mt-1 flex min-h-[2.75rem] items-center rounded-lg border border-ui-border bg-ui-body px-3 py-2 shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg">
           <SeverityBadge severity={log.severity} />

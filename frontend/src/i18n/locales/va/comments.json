@@ -8,17 +8,11 @@
   "listLoadError": "No s'han pogut carregar els comentaris: {{message}}",
   "postError": "No s'ha pogut publicar el comentari",
   "newComment": "Nou comentari",
-  "save": "Guardar",
-  "update": "Actualitzar",
-  "cancel": "Cancel·lar",
-  "edit": "Editar",
-  "delete": "Eliminar",
   "unknownUser": "Usuari desconegut",
   "busy": "…",
   "minLength": "El comentari ha de tindre com a mínim 3 caràcters.",
   "confirmDelete": {
     "title": "Eliminar comentari",
-    "message": "Confirmes que vols eliminar este comentari? Esta acció no es pot desfer.",
-    "confirmLabel": "Eliminar"
+    "message": "Confirmes que vols eliminar este comentari? Esta acció no es pot desfer."
   }
 }

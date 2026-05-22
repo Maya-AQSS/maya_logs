@@ -146,7 +146,7 @@ export function ArchivedLogDetailPage() {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('detail.back')} />
+          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
           <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
             {t('detail.notFound')}
           </div>
@@ -161,18 +161,18 @@ export function ArchivedLogDetailPage() {
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
         onBack={() => navigate(-1)}
-        backLabel={t('detail.back')}
+        backLabel={t('actions.back')}
         actions={
           log && !editing ? (
             <>
               {canUpdate && (
                 <Button variant="outline" size="sm" onClick={onStartEdit}>
-                  {t('detail.edit')}
+                  {t('actions.edit')}
                 </Button>
               )}
               {canDelete && (
                 <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                  {t('detail.delete')}
+                  {t('actions.delete')}
                 </Button>
               )}
             </>
@@ -191,7 +191,7 @@ export function ArchivedLogDetailPage() {
 
       {logQuery.isLoading && !log && (
         <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          {t('detail.loading')}
+          {t('status.loading')}
         </div>
       )}
 
@@ -208,7 +208,7 @@ export function ArchivedLogDetailPage() {
               <form className="mt-3 space-y-4" onSubmit={onSubmit} noValidate>
                 <div>
                   <FieldLabel htmlFor="archived-log-description">
-                    {t('detail.fields.description')}
+                    {t('tables.description')}
                   </FieldLabel>
                   <TextArea
                     id="archived-log-description"
@@ -245,10 +245,10 @@ export function ArchivedLogDetailPage() {
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="secondary" size="sm" onClick={onCancelEdit} disabled={saving}>
-                    {t('detail.cancel')}
+                    {t('actions.cancel')}
                   </Button>
                   <Button type="submit" variant="primary" size="sm" disabled={saving} loading={saving}>
-                    {saving ? '…' : t('detail.save')}
+                    {saving ? '…' : t('actions.save')}
                   </Button>
                 </div>
               </form>
@@ -256,7 +256,7 @@ export function ArchivedLogDetailPage() {
               <dl className="mt-3 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                 <div>
                   <dt className="text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-                    {t('detail.fields.description')}
+                    {t('tables.description')}
                   </dt>
                   <dd className="mt-1 rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary whitespace-pre-wrap break-words shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary">
                     {log.description && log.description.trim() !== '' ? (
@@ -308,7 +308,7 @@ export function ArchivedLogDetailPage() {
         open={confirmDelete}
         title={t('confirmations.delete.title')}
         description={t('confirmations.delete.message')}
-        confirmLabel={t('confirmations.delete.confirmLabel')}
+        confirmLabel={t('actions.delete')}
         variant="danger"
         loading={deleting}
         onConfirm={onDelete}

@@ -87,7 +87,7 @@ export function ErrorCodesFilters({
         </div>
         <div className="shrink-0">
           <Button type="button" variant="secondary" size="sm" onClick={onReset}>
-            {t('filters.reset')}
+            {t('actions.clear')}
           </Button>
         </div>
       </div>

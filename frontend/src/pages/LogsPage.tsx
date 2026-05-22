@@ -249,13 +249,13 @@ export function LogsPage() {
     () => [
       {
         id: 'application',
-        header: t('columns.application'),
+        header: t('filters.applicationLabel'),
         cell: (l) => l.application?.name ?? '-',
         sortable: true,
       },
       {
         id: 'severity',
-        header: t('columns.severity'),
+        header: t('filters.severityLabel'),
         cell: (l) => <SeverityBadge severity={l.severity} />,
         sortable: true,
       },
@@ -273,13 +273,13 @@ export function LogsPage() {
       },
       {
         id: 'created_at',
-        header: t('columns.createdAt'),
+        header: t('tables.date'),
         cell: (l) => formatDateTime(l.created_at),
         sortable: true,
       },
       {
         id: 'resolved',
-        header: t('columns.resolved'),
+        header: t('filters.resolvedLabel'),
         cell: (l) => (
           <span
             className={
@@ -288,7 +288,7 @@ export function LogsPage() {
                 : 'inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning-dark ring-1 ring-inset ring-warning/20'
             }
           >
-            {l.resolved ? t('detail.fields.resolved') : t('detail.fields.unresolved')}
+            {l.resolved ? t('detail.fields.resolved') : t('resolved.unresolved')}
           </span>
         ),
       },
@@ -353,7 +353,7 @@ export function LogsPage() {
           ))}
         </Select>
       </FilterField>
-      <FilterField label={t('filters.resolved')} htmlFor="logs-filter-resolved">
+      <FilterField label={t('filters.resolvedLabel')} htmlFor="logs-filter-resolved">
         <Select
           id="logs-filter-resolved"
           value={filters.resolved}
@@ -371,7 +371,7 @@ export function LogsPage() {
           options={LOG_SEVERITY_KEYS.map((key) => ({ value: key, label: severityLabel(key) }))}
           value={filters.severity}
           onChange={(next) => updateFilters({ severity: next })}
-          placeholder={t('filters.severityAll', { defaultValue: 'Todas' })}
+          placeholder={tCommon('severity.all')}
           ariaLabel={tCommon('filters.severityLabel')}
         />
       </FilterField>
@@ -381,7 +381,7 @@ export function LogsPage() {
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.index}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle title={t('title')} />
+      <PageTitle title={t('nav.dashboard')} />
 
       {logsQuery.isError && errorMessage && (
         <Alert tone="danger" className="mt-4">{t('loadError', { message: errorMessage })}

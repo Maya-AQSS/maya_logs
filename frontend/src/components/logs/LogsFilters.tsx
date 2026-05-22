@@ -122,7 +122,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
           <div className="flex-1 min-w-[130px]">
             <ResolvedFilter
               value={value.resolved}
-              label={t('filters.resolved')}
+              label={t('filters.resolvedLabel')}
               onChange={(resolved) => onChange({ resolved })}
             />
           </div>
@@ -135,7 +135,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
             onChange={(severity) => onChange({ severity })}
           />
           <Button type="button" variant="secondary" size="sm" onClick={onReset}>
-            {t('filters.reset')}
+            {t('actions.clear')}
           </Button>
         </div>
       </div>

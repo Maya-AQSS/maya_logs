@@ -34,7 +34,7 @@ function SeverityCardsWidget() {
   if (status === 'error' || !data) {
     return (
       <p className="text-sm text-danger-dark dark:text-danger text-center py-4">
-        {t('error')}
+        {t('dashboard.loadError')}
       </p>
     );
   }
@@ -49,8 +49,8 @@ function SeverityCardsWidget() {
           severityKey={card.key}
           unresolvedCount={card.unresolvedCount}
           resolvedCount={card.resolvedCount}
-          unresolvedLabel={t('unresolvedLabel')}
-          resolvedLabel={t('resolvedLabel')}
+          unresolvedLabel={t('resolved.unresolved')}
+          resolvedLabel={t('resolved.only')}
         />
       ))}
     </div>

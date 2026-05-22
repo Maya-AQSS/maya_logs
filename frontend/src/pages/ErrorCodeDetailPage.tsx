@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 import { Alert, Button, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchApplications } from '../api/applications';
@@ -54,6 +55,7 @@ function toPayload(form: ErrorCodeFormInput): Partial<ErrorCodePayload> {
 export function ErrorCodeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation(['errorCodes', 'common', 'comments']);
   const { hasPermission } = useUserProfile();
   const canUpdate = hasPermission(LOGS_PERMISSIONS.errorCodeUpdate);
   const canDelete = hasPermission(LOGS_PERMISSIONS.errorCodeDelete);
@@ -171,9 +173,13 @@ export function ErrorCodeDetailPage() {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.errorCodeShow}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title="Código de error" onBack={() => navigate(-1)} backLabel="Volver" />
+          <PageTitle
+            title={t('errorCodes:detailTitle')}
+            onBack={() => navigate(-1)}
+            backLabel={t('common:actions.back')}
+          />
           <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-            No se encontró el código de error solicitado.
+            {t('errorCodes:notFound')}
           </div>
         </div>
       </PermissionGate>
@@ -186,20 +192,20 @@ export function ErrorCodeDetailPage() {
     <PermissionGate permission={LOGS_PERMISSIONS.errorCodeShow}>
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
-        title={ec ? `Código de error: ${ec.code}` : 'Código de error'}
+        title={ec ? t('errorCodes:detailTitleWithCode', { code: ec.code }) : t('errorCodes:detailTitle')}
         onBack={() => navigate(-1)}
-        backLabel="Volver"
+        backLabel={t('common:actions.back')}
         actions={
           ec && !editing ? (
             <>
               {canUpdate && (
                 <Button variant="outline" size="sm" onClick={onStartEdit}>
-                  Editar
+                  {t('common:actions.edit')}
                 </Button>
               )}
               {canDelete && (
                 <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                  Eliminar
+                  {t('common:actions.delete')}
                 </Button>
               )}
             </>
@@ -215,13 +221,13 @@ export function ErrorCodeDetailPage() {
 
       {state.status === 'error' && (
         <Alert tone="danger" className="mt-4">
-          No se pudo cargar el código de error: {state.error}
+          {t('errorCodes:loadErrorDetail', { error: state.error })}
         </Alert>
       )}
 
       {state.status === 'loading' && !ec && (
         <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
-          Cargando…
+          {t('common:status.loading')}
         </div>
       )}
 
@@ -257,7 +263,7 @@ export function ErrorCodeDetailPage() {
                       onClick={onCancelEdit}
                       disabled={saving}
                     >
-                      Cancelar
+                      {t('common:actions.cancel')}
                     </Button>
                     <Button
                       type="submit"
@@ -266,7 +272,7 @@ export function ErrorCodeDetailPage() {
                       disabled={saving}
                       loading={saving}
                     >
-                      {saving ? '…' : 'Guardar'}
+                      {saving ? '…' : t('common:actions.save')}
                     </Button>
                   </div>
                 )}
@@ -276,7 +282,7 @@ export function ErrorCodeDetailPage() {
 
           <div className="rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
             <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
-              Comentarios
+              {t('comments:title')}
             </h2>
             <div className="mt-3">
               <CommentThread commentableType="error-codes" commentableId={ec.id} />
@@ -287,9 +293,9 @@ export function ErrorCodeDetailPage() {
 
       <ConfirmDialog
         open={confirmDelete}
-        title="Eliminar código de error"
-        description="¿Confirmas que quieres eliminar este código de error? Esta acción no se puede deshacer."
-        confirmLabel="Eliminar"
+        title={t('errorCodes:deleteTitle')}
+        description={t('errorCodes:deleteConfirmDescription')}
+        confirmLabel={t('common:actions.delete')}
         variant="danger"
         loading={deleting}
         onConfirm={onDelete}
