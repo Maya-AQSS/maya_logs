@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Button, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { archiveLog, fetchLog, resolveLog, type LogDetailResponse } from '../api/logs';
@@ -87,9 +87,9 @@ export function LogDetailPage() {
       <PermissionGate permission={LOGS_PERMISSIONS.show}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
           <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
-          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+          <Card padding="lg" radius="xl" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
             {t('detail.notFound')}
-          </div>
+          </Card>
         </div>
       </PermissionGate>
     );
@@ -131,9 +131,9 @@ export function LogDetailPage() {
       )}
 
       {logQuery.isLoading && !log && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+        <Card padding="lg" radius="xl" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
           {t('status.loading')}
-        </div>
+        </Card>
       )}
 
       {log && <LogDetailView log={log} archivedLogId={archivedLogId} />}

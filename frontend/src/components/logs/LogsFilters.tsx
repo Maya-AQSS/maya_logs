@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DatePicker } from '@maya/shared-ui-react';
+import { Button, Card, DatePicker } from '@maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
-import { Button } from '@maya/shared-ui-react';
 import {
   ApplicationSelect,
   ResolvedFilter,
@@ -59,7 +58,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
     value.resolved !== 'all';
 
   return (
-    <div className="bg-ui-card dark:bg-ui-dark-card border border-ui-border dark:border-ui-dark-border rounded-lg mb-6 shadow-sm">
+    <Card className="mb-6">
       {/* Toggle visible solo en móvil */}
       <Button
         variant="unstyled"
@@ -139,6 +138,6 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

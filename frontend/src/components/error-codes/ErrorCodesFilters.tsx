@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button, Card } from '@maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
-import { Button } from '@maya/shared-ui-react';
 import { ApplicationSelect, SearchInput } from '../filters';
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
@@ -44,7 +44,7 @@ export function ErrorCodesFilters({
   const hasActiveFilters = value.search || value.applicationId !== null;
 
   return (
-    <div className="bg-ui-card dark:bg-ui-dark-card border border-ui-border dark:border-ui-dark-border rounded-lg mb-6 shadow-sm">
+    <Card className="mb-6">
       {/* Toggle visible solo en móvil */}
       <Button
         variant="unstyled"
@@ -91,6 +91,6 @@ export function ErrorCodesFilters({
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

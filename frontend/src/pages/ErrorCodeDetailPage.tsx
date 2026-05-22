@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchApplications } from '../api/applications';
 import {
@@ -178,9 +178,9 @@ export function ErrorCodeDetailPage() {
             onBack={() => navigate(-1)}
             backLabel={t('common:actions.back')}
           />
-          <div className="mt-4 rounded-lg border border-dashed border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+          <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
             {t('errorCodes:notFound')}
-          </div>
+          </Card>
         </div>
       </PermissionGate>
     );
@@ -226,14 +226,14 @@ export function ErrorCodeDetailPage() {
       )}
 
       {state.status === 'loading' && !ec && (
-        <div className="mt-4 rounded-lg border border-ui-border bg-ui-card p-6 text-center text-sm text-text-muted dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-muted">
+        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
           {t('common:status.loading')}
-        </div>
+        </Card>
       )}
 
       {ec && (
         <div className="mt-4 space-y-4">
-          <div className="rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
+          <Card padding="md">
             <FormProvider {...methods}>
               <form
                 onSubmit={(e) => {
@@ -278,16 +278,16 @@ export function ErrorCodeDetailPage() {
                 )}
               </form>
             </FormProvider>
-          </div>
+          </Card>
 
-          <div className="rounded-lg border border-ui-border bg-ui-card p-4 dark:border-ui-dark-border dark:bg-ui-dark-card">
+          <Card padding="md">
             <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
               {t('comments:title')}
             </h2>
             <div className="mt-3">
               <CommentThread commentableType="error-codes" commentableId={ec.id} />
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
