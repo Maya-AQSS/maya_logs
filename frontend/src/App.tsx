@@ -89,7 +89,7 @@ function AppWithLayout() {
   return (
     <AppLayout
       navItems={navItems}
-      brandName="LogCEED"
+      brandName="TraCEED"
       brandVersion="v1.0"
       brandLogoUrl="/favicon.png"
       userName={userName}
