@@ -18,7 +18,8 @@ class LogIngestionService
 
     private const MAX_ERROR_CODE_CACHE = 10_000;
 
-    private const DEFAULT_BATCH_SIZE = 100;
+    // Option 1 (requested): persist each consumed message immediately.
+    private const DEFAULT_BATCH_SIZE = 1;
 
     public function __construct(
         private readonly LogIngestionRepositoryInterface $repository,
