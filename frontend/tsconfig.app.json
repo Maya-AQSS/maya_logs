@@ -1,4 +1,31 @@
 {
   "extends": "../../maya_infra/configs/tsconfig/tsconfig.app.base.json",
-  "include": ["src"]
+  "compilerOptions": {
+    "paths": {
+      "@maya/shared-auth-react": [
+        "./node_modules/@maya/shared-auth-react/src/index.ts"
+      ],
+      "@maya/shared-dashboard-react": [
+        "./node_modules/@maya/shared-dashboard-react/src/index.ts"
+      ],
+      "@maya/shared-i18n-react": [
+        "./node_modules/@maya/shared-i18n-react/src/index.ts"
+      ],
+      "@maya/shared-layout-react": [
+        "./node_modules/@maya/shared-layout-react/src/index.ts"
+      ],
+      "@maya/shared-profile-react": [
+        "./node_modules/@maya/shared-profile-react/src/index.ts"
+      ],
+      "@maya/shared-sidebar-react": [
+        "./node_modules/@maya/shared-sidebar-react/src/index.ts"
+      ],
+      "@maya/shared-ui-react": [
+        "./node_modules/@maya/shared-ui-react/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
 }

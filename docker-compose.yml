@@ -64,7 +64,6 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
     volumes:
       - ./backend:/var/www/html
-      - ../maya_infra/packages:/var/maya_infra/packages
       - /var/www/html/node_modules
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health/live || exit 1"]
@@ -130,7 +129,6 @@ services:
     command: []
     volumes:
       - ./backend:/var/www/html
-      - ../maya_infra/packages:/var/maya_infra/packages
       - /var/www/html/node_modules
       - ../maya_infra/scripts:/maya_infra/scripts:ro
     networks:
@@ -152,7 +150,6 @@ services:
       VITE_DASHBOARD_API_URL: ${VITE_DASHBOARD_API_URL}
     volumes:
       - ./frontend:/app
-      - ../maya_infra/packages:/maya_infra/packages
       - ../maya_infra/configs:/maya_infra/configs:ro
       - /app/node_modules
     ports:
