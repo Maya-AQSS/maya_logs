@@ -6,7 +6,8 @@
   "widgets": {
     "errorCount": {
       "title": "Errores 24h",
-      "label": "Errores 24h"
+      "label": "Errores 24h",
+      "subtitle": "Errores distintos en 24H"
     },
     "recentLogs": {
       "title": "Logs recientes",
