@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import DOMPurify from 'dompurify';
-import { Alert, Button, Card } from '@maya/shared-ui-react';
+import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -12,8 +12,8 @@ import {
 import type { Comment } from '../../types/logs';
 import { useUserProfile } from '../../features/user-profile';
 import { LOGS_PERMISSIONS } from '../../permissions';
-import { ConfirmDialog } from '@maya/shared-ui-react';
-import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
+import { ConfirmDialog } from '@ceedcv-maya/shared-ui-react';
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
 
 type CommentThreadProps = {
   commentableType: CommentableKind;

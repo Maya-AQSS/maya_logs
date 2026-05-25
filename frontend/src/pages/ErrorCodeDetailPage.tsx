@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@ceedcv-maya/shared-ui-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchApplications } from '../api/applications';
 import {

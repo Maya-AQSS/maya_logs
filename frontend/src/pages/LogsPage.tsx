@@ -13,7 +13,7 @@ import {
   useTablePreferences,
   type ColumnDef,
   type SortState,
-} from '@maya/shared-ui-react';
+} from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
@@ -24,10 +24,10 @@ import { SeverityBadge, severityLabel } from '../components/severity';
 import { useUserProfile } from '../features/user-profile';
 import { useLogStream } from '../hooks';
 import { LOGS_PERMISSIONS } from '../permissions';
-import { createDataHook, type PaginatedResponse, type SortDir } from '@maya/shared-auth-react';
+import { createDataHook, type PaginatedResponse, type SortDir } from '@ceedcv-maya/shared-auth-react';
 import type { ApplicationRef, Log } from '../types/logs';
 import { LOG_SEVERITY_KEYS } from '../types/logs';
-import { formatDateTime } from '@maya/shared-ui-react';
+import { formatDateTime } from '@ceedcv-maya/shared-ui-react';
 
 export type LogsSortKey = 'application' | 'severity' | 'created_at';
 

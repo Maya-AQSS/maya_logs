@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PageTitle } from '@maya/shared-ui-react';
+import { PageTitle } from '@ceedcv-maya/shared-ui-react';
 import {
   DashboardEditToggleButton,
   DashboardEditToolbar,
@@ -9,7 +9,7 @@ import {
   useDashboardLayoutLocal,
   type LayoutItem,
   type SkeletonBlock,
-} from '@maya/shared-dashboard-react';
+} from '@ceedcv-maya/shared-dashboard-react';
 import { useUserProfile } from '../../user-profile';
 import { LOGS_PERMISSIONS } from '../../../permissions';
 import { DEFAULT_LAYOUT, WIDGET_REGISTRY } from '../widgets/registry';

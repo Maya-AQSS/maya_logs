@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Mockeamos `./http` (wrapper local sobre `createApiClient` de
- * `@maya/shared-auth-react`). La auth Bearer la inyecta el cliente real;
+ * `@ceedcv-maya/shared-auth-react`). La auth Bearer la inyecta el cliente real;
  * estos tests verifican que `logs.ts` construye URLs correctas y delega
  * al fetcher esperado.
  */

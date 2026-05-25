@@ -1,4 +1,4 @@
-import type { ApiEnvelope, PaginatedResponse } from '@maya/shared-auth-react';
+import type { ApiEnvelope, PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
 import type { ErrorCode } from '../types/logs';
 import { apiFetchJson, apiGetJson } from './http';
 

@@ -10,7 +10,7 @@ import {
   TextInput,
   useTablePreferences,
   type ColumnDef,
-} from '@maya/shared-ui-react';
+} from '@ceedcv-maya/shared-ui-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PermissionGate } from '../components/layout/PermissionGate';
@@ -19,7 +19,7 @@ import { LOGS_PERMISSIONS } from '../permissions';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { fetchErrorCodes, type ErrorCodesFilters as ApiErrorCodesFilters } from '../api/errorCodes';
 import type { ErrorCodesFiltersState } from '../components/error-codes';
-import { createDataHook, type PaginatedResponse } from '@maya/shared-auth-react';
+import { createDataHook, type PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
 import type { ApplicationRef, ErrorCode } from '../types/logs';
 
 const useApplicationsQuery = createDataHook<ApplicationScope, ApplicationRef[]>({

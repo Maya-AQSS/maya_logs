@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SkeletonPage } from '@maya/shared-ui-react';
+import { SkeletonPage } from '@ceedcv-maya/shared-ui-react';
 import { useUserProfile } from '../../features/user-profile';
 
 type PermissionGateProps = {

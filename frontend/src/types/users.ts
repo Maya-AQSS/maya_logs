@@ -1,4 +1,4 @@
-import type { BaseMeProfile } from '@maya/shared-profile-react';
+import type { BaseMeProfile } from '@ceedcv-maya/shared-profile-react';
 
 /**
  * Shape del perfil devuelto por `GET /api/v1/me` de maya_logs.

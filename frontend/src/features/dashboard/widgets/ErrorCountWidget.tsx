@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
-import { createDataHook } from '@maya/shared-auth-react';
+import { createDataHook } from '@ceedcv-maya/shared-auth-react';
 import { fetchLogs } from '../../../api/logs';
 import { useLogStream } from '../../../hooks';
 import { resolveUniqueErrorCount } from './errorCount';

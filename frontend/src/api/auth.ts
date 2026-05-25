@@ -1,4 +1,4 @@
-import { createProfileApi } from '@maya/shared-profile-react';
+import { createProfileApi } from '@ceedcv-maya/shared-profile-react';
 import { apiFetchJson, apiGetJson } from './http';
 import type { MeProfile } from '../types/users';
 

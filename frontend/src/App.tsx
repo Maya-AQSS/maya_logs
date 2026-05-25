@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AppLayout } from '@maya/shared-layout-react';
-import { NotificationsBell, SidebarFavorites } from '@maya/shared-sidebar-react';
-import { PlaceholderPage, SkeletonPage } from '@maya/shared-ui-react';
-import { useKeycloakLocaleSync } from '@maya/shared-i18n-react';
-import { useOidcSession } from '@maya/shared-auth-react';
-import { useRequireAppAccess } from '@maya/shared-profile-react';
+import { AppLayout } from '@ceedcv-maya/shared-layout-react';
+import { NotificationsBell, SidebarFavorites } from '@ceedcv-maya/shared-sidebar-react';
+import { PlaceholderPage, SkeletonPage } from '@ceedcv-maya/shared-ui-react';
+import { useKeycloakLocaleSync } from '@ceedcv-maya/shared-i18n-react';
+import { useOidcSession } from '@ceedcv-maya/shared-auth-react';
+import { useRequireAppAccess } from '@ceedcv-maya/shared-profile-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
 import { resolveServiceUrl } from './lib/peerService';

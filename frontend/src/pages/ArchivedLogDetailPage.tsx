@@ -8,7 +8,7 @@ import {
   PageTitle,
   TextArea,
   TextInput,
-} from '@maya/shared-ui-react';
+} from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -29,7 +29,7 @@ import {
   type ArchivedLogEditInput,
 } from '../schemas/archivedLog';
 import type { ArchivedLog } from '../types/logs';
-import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
 
 const useArchivedLogDetailQuery = createDataHook<number, ArchivedLog>({
   queryKey: (id) => ['archived-log', id],

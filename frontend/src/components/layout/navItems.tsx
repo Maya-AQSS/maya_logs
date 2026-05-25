@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { NavItem } from '@maya/shared-layout-react';
+import type { NavItem } from '@ceedcv-maya/shared-layout-react';
 import {
   AppsIcon,
   FolderIcon,
   HomeIcon,
   SearchIcon,
-} from '@maya/shared-layout-react';
+} from '@ceedcv-maya/shared-layout-react';
 import { useUserProfile } from '../../features/user-profile';
 import { LOGS_PERMISSIONS } from '../../permissions';
 
