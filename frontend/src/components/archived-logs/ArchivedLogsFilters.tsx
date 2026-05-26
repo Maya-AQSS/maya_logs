@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, DatePicker } from '@maya/shared-ui-react';
+import { Button, Card, DatePicker } from '@ceedcv-maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
 import { ApplicationSelect, SeverityFilterCheckboxes } from '../filters';
 

@@ -29,3 +29,4 @@ Thumbs.db
 coverage.txt
 coverage-html/
 .phpunit.cache/
+composer.local.json

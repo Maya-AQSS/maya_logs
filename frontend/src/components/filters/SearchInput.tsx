@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { SearchInput as SharedSearchInput } from '@maya/shared-ui-react';
+import { SearchInput as SharedSearchInput } from '@ceedcv-maya/shared-ui-react';
 
 type SearchInputProps = {
   value: string;
@@ -11,7 +11,7 @@ type SearchInputProps = {
 };
 
 /**
- * Wrapper sobre `@maya/shared-ui-react` que rellena los textos por defecto
+ * Wrapper sobre `@ceedcv-maya/shared-ui-react` que rellena los textos por defecto
  * desde `common.filters.search*` cuando no se pasan por props.
  */
 export function SearchInput({

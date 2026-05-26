@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useFormContext } from 'react-hook-form';
-import { FieldLabel, Select, TextArea, TextInput } from '@maya/shared-ui-react';
+import { FieldLabel, Select, TextArea, TextInput } from '@ceedcv-maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
 import type { ErrorCodeFormInput } from '../../schemas/errorCode';
 

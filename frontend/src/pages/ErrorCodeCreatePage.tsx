@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Card, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, PageTitle } from '@ceedcv-maya/shared-ui-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { createErrorCode, type ErrorCodePayload } from '../api/errorCodes';
@@ -13,7 +13,7 @@ import {
   emptyErrorCodeForm,
   type ErrorCodeFormInput,
 } from '../schemas/errorCode';
-import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
 import { PermissionGate } from '../components/layout/PermissionGate';
 import { LOGS_PERMISSIONS } from '../permissions';
 

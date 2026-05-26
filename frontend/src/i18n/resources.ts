@@ -1,4 +1,4 @@
-import { commonResources, COMMON_NAMESPACE, deepMerge } from '@maya/shared-i18n-react';
+import { commonResources, COMMON_NAMESPACE, deepMerge } from '@ceedcv-maya/shared-i18n-react';
 
 import esDashboard from './locales/es/dashboard.json';
 import esLogs from './locales/es/logs.json';

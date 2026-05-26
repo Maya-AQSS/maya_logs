@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@maya/shared-ui-react';
+import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { archiveLog, fetchLog, resolveLog, type LogDetailResponse } from '../api/logs';
@@ -7,7 +7,7 @@ import { LogDetailView } from '../components/logs';
 import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
-import { createDataHook, createMutationHook } from '@maya/shared-auth-react';
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
 
 const useLogDetailQuery = createDataHook<number, LogDetailResponse>({
   queryKey: (id) => ['log', id],

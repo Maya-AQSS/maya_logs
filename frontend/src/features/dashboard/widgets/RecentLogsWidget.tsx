@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { createDataHook, type PaginatedResponse } from '@maya/shared-auth-react';
+import { createDataHook, type PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
 import { fetchLogs } from '../../../api/logs';
 import { SeverityBadge } from '../../../components/severity';
 import { useUserProfile } from '../../user-profile';
