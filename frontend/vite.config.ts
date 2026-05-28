@@ -30,7 +30,9 @@ export default defineConfig({
       '@ceedcv-maya/shared-auth-react',
       '@ceedcv-maya/shared-i18n-react',
       '@ceedcv-maya/shared-layout-react',
+      '@ceedcv-maya/shared-profile-react',
       '@ceedcv-maya/shared-sidebar-react',
+      '@ceedcv-maya/shared-ui-react',
     ],
   },
   resolve: {
