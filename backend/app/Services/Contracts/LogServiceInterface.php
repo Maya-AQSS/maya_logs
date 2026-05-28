@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Contracts;
 
 use App\Dtos\LogDto;
+use App\Dtos\LogFilterDto;
 use Maya\Http\Pagination\PaginatedDto;
 
 interface LogServiceInterface
@@ -34,18 +35,7 @@ interface LogServiceInterface
     /**
      * @return PaginatedDto<LogDto>
      */
-    public function searchAndFilter(
-        ?string $search,
-        ?array $severity,
-        ?int $applicationId,
-        ?string $archived,
-        ?string $resolved,
-        ?string $dateFrom,
-        ?string $dateTo,
-        ?string $sortBy,
-        ?string $sortDir,
-        int $perPage = 25
-    ): PaginatedDto;
+    public function searchAndFilter(LogFilterDto $filter): PaginatedDto;
 
     /**
      * @return array<int,array{key:string,totalCount:int,resolvedCount:int,unresolvedCount:int}>

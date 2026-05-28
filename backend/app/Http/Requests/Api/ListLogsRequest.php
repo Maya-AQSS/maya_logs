@@ -4,45 +4,52 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Maya\Http\Filters\DateRangeFilter;
+use App\Dtos\LogFilterDto;
+use Maya\Http\Http\Requests\PaginatedFilterRequest;
 
-class ListLogsRequest extends FormRequest
+class ListLogsRequest extends PaginatedFilterRequest
 {
-    public function authorize(): bool
-    {
-        // Auth delegada al middleware JWT de la ruta /api/v1.
-        return true;
-    }
-
-    public function rules(): array
+    protected function filterRules(): array
     {
         return [
-            'search' => ['nullable', 'string', 'max:255'],
-            'severity' => ['nullable'], // string CSV o array — se normaliza en el controller
-            'application_id' => ['nullable', 'integer', 'min:1'],
-            'archived' => ['nullable', 'string', 'in:only,without'],
-            'resolved' => ['nullable', 'string', 'in:only,unresolved'],
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date'],
-            'sort_by' => ['nullable', 'string', 'in:created_at,severity,application,resolved'],
-            'sort_dir' => ['nullable', 'string', 'in:asc,desc'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'severity'   => ['nullable', 'string'],  // string CSV — se parsea en getParsedSeverity()
+            'app_slug'   => ['nullable', 'string', 'max:100'],
+            'from'       => ['nullable', 'date'],
+            'to'         => ['nullable', 'date', 'after_or_equal:from'],
+            'error_code' => ['nullable', 'string', 'max:50'],
+            'archived'   => ['nullable', 'string', 'in:only,without'],
+            'resolved'   => ['nullable', 'string', 'in:only,unresolved'],
+            'search'     => ['nullable', 'string', 'max:255'],
+            'sort_by'    => ['nullable', 'string', 'in:created_at,severity,application'],
         ];
     }
 
-    protected function passedValidation(): void
+    /**
+     * Parsea el campo severity, que puede llegar como string CSV o como array.
+     *
+     * @return list<string>|null
+     */
+    public function getParsedSeverity(): ?array
     {
-        [$from, $to] = DateRangeFilter::normalize(
-            $this->input('date_from'),
-            $this->input('date_to'),
-            'date_from',
-            'date_to',
-        );
+        $severity = $this->input('severity');
 
-        $this->merge(array_filter([
-            'date_from' => $from,
-            'date_to' => $to,
-        ], fn ($v) => $v !== null));
+        if ($severity === null) {
+            return null;
+        }
+
+        if (is_array($severity)) {
+            $values = array_values(array_filter(array_map('trim', $severity), fn (string $v): bool => $v !== ''));
+
+            return $values !== [] ? $values : null;
+        }
+
+        $values = array_values(array_filter(array_map('trim', explode(',', (string) $severity)), fn (string $v): bool => $v !== ''));
+
+        return $values !== [] ? $values : null;
+    }
+
+    public function toFilterDto(): LogFilterDto
+    {
+        return LogFilterDto::fromRequest($this);
     }
 }

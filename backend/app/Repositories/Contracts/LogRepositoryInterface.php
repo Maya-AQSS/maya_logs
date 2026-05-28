@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
+use App\Dtos\LogFilterDto;
 use App\Models\Log;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -20,20 +21,9 @@ interface LogRepositoryInterface
     public function latestForStream(int $limit = 10): Collection;
 
     /**
-     * Buscar y filtrar.
+     * Buscar y filtrar con paginación server-side.
      */
-    public function searchAndFilter(
-        ?string $search,
-        ?array $severity,
-        ?int $applicationId,
-        ?string $archived,
-        ?string $resolved,
-        ?string $dateFrom,
-        ?string $dateTo,
-        ?string $sortBy,
-        ?string $sortDir,
-        int $perPage = 25
-    ): LengthAwarePaginator;
+    public function searchAndFilter(LogFilterDto $filter): LengthAwarePaginator;
 
     /**
      * Counts grouped by severity y resolved.

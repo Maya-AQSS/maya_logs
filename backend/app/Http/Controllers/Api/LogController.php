@@ -29,24 +29,7 @@ class LogController extends Controller
 
     public function index(ListLogsRequest $request): JsonResponse
     {
-        $perPage = (int) $request->integer('per_page', 25);
-        $severity = $request->input('severity');
-        if (is_string($severity)) {
-            $severity = array_filter(array_map('trim', explode(',', $severity)), fn (string $v): bool => $v !== '');
-        }
-
-        $page = $this->logService->searchAndFilter(
-            search: $request->string('search')->toString() ?: null,
-            severity: is_array($severity) && $severity !== [] ? array_values($severity) : null,
-            applicationId: $request->filled('application_id') ? (int) $request->input('application_id') : null,
-            archived: $request->string('archived')->toString() ?: null,
-            resolved: $request->string('resolved')->toString() ?: null,
-            dateFrom: $request->string('date_from')->toString() ?: null,
-            dateTo: $request->string('date_to')->toString() ?: null,
-            sortBy: $request->string('sort_by')->toString() ?: null,
-            sortDir: $request->string('sort_dir')->toString() ?: null,
-            perPage: $perPage > 0 ? $perPage : 25,
-        );
+        $page = $this->logService->searchAndFilter($request->toFilterDto());
 
         return $this->paginated($page, LogResource::class, $request);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Eloquent;
 
+use App\Dtos\LogFilterDto;
 use App\Enums\Severity;
 use App\Models\ArchivedLog;
 use App\Models\Log;
@@ -23,7 +24,7 @@ class LogRepository implements LogRepositoryInterface
 
     private const SORT_COLUMN_MAP = [
         'created_at' => 'logs.created_at',
-        'severity' => 'logs.severity',
+        'severity'   => 'logs.severity',
         'application' => 'applications.name',
     ];
 
@@ -63,30 +64,21 @@ class LogRepository implements LogRepositoryInterface
     }
 
     /**
-     * Busca y filtra logs por diferentes criterios:
+     * Busca y filtra logs aplicando los criterios del LogFilterDto:
      * - texto libre en el mensaje
-     * - tipo de severidad de error
-     * - aplicación (application_id)
-     * - si está archivado o no
-     * - si está resuelto o no
+     * - severidad (uno o varios valores)
+     * - aplicación por slug (join con applications)
+     * - código de error por code string (join con error_codes)
+     * - rango de fechas (created_at)
+     * - estado archivado / resuelto
      */
-    public function searchAndFilter(
-        ?string $search,
-        ?array $severity,
-        ?int $applicationId,
-        ?string $archived,
-        ?string $resolved,
-        ?string $dateFrom,
-        ?string $dateTo,
-        ?string $sortBy,
-        ?string $sortDir,
-        int $perPage = 25
-    ): LengthAwarePaginator {
+    public function searchAndFilter(LogFilterDto $filter): LengthAwarePaginator
+    {
         $archivedFlagSubquery = ArchivedLog::query()->selectRaw('1');
         $this->applyArchivedMatchForLogsQuery($archivedFlagSubquery);
 
-        $normalizedSearch = $search !== null && trim($search) !== ''
-            ? trim($search)
+        $normalizedSearch = $filter->search !== null && trim($filter->search) !== ''
+            ? trim($filter->search)
             : null;
 
         $escapedSearchPattern = $normalizedSearch !== null
@@ -95,8 +87,10 @@ class LogRepository implements LogRepositoryInterface
 
         $driver = DB::connection()->getDriverName();
 
-        $validatedSortDirection = in_array($sortDir, self::SORT_DIRECTIONS, true) ? $sortDir : 'asc';
-        $sortColumn = $sortBy !== null ? (self::SORT_COLUMN_MAP[$sortBy] ?? null) : null;
+        $sortDir = in_array($filter->sortDir, self::SORT_DIRECTIONS, true) ? $filter->sortDir : 'desc';
+        $sortColumn = $filter->sortBy !== null ? (self::SORT_COLUMN_MAP[$filter->sortBy] ?? null) : null;
+
+        $needsApplicationJoin = $filter->sortBy === 'application' || $filter->appSlug !== null;
 
         $query = Log::query()
             ->select('logs.*')
@@ -105,8 +99,12 @@ class LogRepository implements LogRepositoryInterface
             ])
             ->with(['application', 'errorCode']);
 
-        if ($sortBy === 'application') {
+        if ($needsApplicationJoin) {
             $query->leftJoin('applications', 'applications.id', '=', 'logs.application_id');
+        }
+
+        if ($filter->errorCode !== null) {
+            $query->leftJoin('error_codes', 'error_codes.id', '=', 'logs.error_code_id');
         }
 
         return $query
@@ -120,31 +118,32 @@ class LogRepository implements LogRepositoryInterface
                 // Fallback for non-PostgreSQL test environments without wildcard semantics.
                 $q->whereRaw('INSTR(LOWER(message), ?) > 0', [mb_strtolower($normalizedSearch)]);
             })
-            ->when($severity, fn ($q) => $q->whereIn('severity', $severity))
-            ->when($applicationId !== null, fn ($q) => $q->where('application_id', $applicationId))
-            ->when($archived, function ($q) use ($archived): void {
-                if ($archived === 'only') {
+            ->when($filter->severity, fn ($q) => $q->whereIn('logs.severity', $filter->severity))
+            ->when($filter->appSlug !== null, fn ($q) => $q->where('applications.slug', $filter->appSlug))
+            ->when($filter->errorCode !== null, fn ($q) => $q->where('error_codes.code', $filter->errorCode))
+            ->when($filter->archived, function ($q) use ($filter): void {
+                if ($filter->archived === 'only') {
                     $q->whereExists(fn ($subQuery) => $this->applyArchivedMatchForLogsQuery($subQuery));
-                } elseif ($archived === 'without') {
+                } elseif ($filter->archived === 'without') {
                     $q->whereNotExists(fn ($subQuery) => $this->applyArchivedMatchForLogsQuery($subQuery));
                 }
             })
-            ->when($resolved, function ($q) use ($resolved): void {
-                if ($resolved === 'only') {
+            ->when($filter->resolved, function ($q) use ($filter): void {
+                if ($filter->resolved === 'only') {
                     $q->where('resolved', true);
-                } elseif ($resolved === 'unresolved') {
+                } elseif ($filter->resolved === 'unresolved') {
                     $q->where('resolved', false);
                 }
             })
-            ->when($dateFrom, fn ($q) => $q->where('logs.created_at', '>=', Date::parse($dateFrom)->utc()->toDateTimeString()))
-            ->when($dateTo, fn ($q) => $q->where('logs.created_at', '<=', Date::parse($dateTo)->utc()->toDateTimeString()))
-            ->when($dateFrom && ! $dateTo, fn ($q) => $q->where('logs.created_at', '<=', now()->utc()->toDateTimeString()))
+            ->when($filter->from, fn ($q) => $q->where('logs.created_at', '>=', Date::parse($filter->from)->utc()->toDateTimeString()))
+            ->when($filter->to, fn ($q) => $q->where('logs.created_at', '<=', Date::parse($filter->to)->utc()->toDateTimeString()))
+            ->when($filter->from && ! $filter->to, fn ($q) => $q->where('logs.created_at', '<=', now()->utc()->toDateTimeString()))
             ->when(
                 $sortColumn !== null,
-                fn ($q) => $q->orderBy($sortColumn, $validatedSortDirection),
+                fn ($q) => $q->orderBy($sortColumn, $sortDir),
                 fn ($q) => $q->orderBy('logs.created_at', 'desc')
             )
-            ->paginate($perPage);
+            ->paginate($filter->perPage, ['*'], 'page', $filter->page);
     }
 
     /**

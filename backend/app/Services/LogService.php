@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Dtos\LogDto;
+use App\Dtos\LogFilterDto;
 use App\Enums\Severity;
 use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
@@ -99,31 +100,10 @@ class LogService implements LogServiceInterface
         })->all();
     }
 
-    public function searchAndFilter(
-        ?string $search,
-        ?array $severity,
-        ?int $applicationId,
-        ?string $archived,
-        ?string $resolved,
-        ?string $dateFrom,
-        ?string $dateTo,
-        ?string $sortBy,
-        ?string $sortDir,
-        int $perPage = 25
-    ): PaginatedDto {
+    public function searchAndFilter(LogFilterDto $filter): PaginatedDto
+    {
         return PaginatedDto::fromPaginator(
-            $this->logRepository->searchAndFilter(
-                $search,
-                $severity,
-                $applicationId,
-                $archived,
-                $resolved,
-                $dateFrom,
-                $dateTo,
-                $sortBy,
-                $sortDir,
-                $perPage
-            ),
+            $this->logRepository->searchAndFilter($filter),
             static fn (Log $m) => LogDto::fromModel($m),
         );
     }
