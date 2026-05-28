@@ -1,41 +1,36 @@
 <?php
 
-namespace Tests\Unit;
+declare(strict_types=1);
+
+uses(\Tests\TestCase::class);
 
 use App\Models\User;
-use Tests\TestCase;
 
 /**
  * Verifica la configuración del modelo User (vista FDW read-only sobre Odoo).
  * No requiere base de datos — todo son aserciones sobre el estado del objeto.
  */
-class UserModelTest extends TestCase
-{
-    public function test_primary_key_is_string_and_non_incrementing(): void
-    {
-        $user = new User();
 
-        $this->assertSame('id', $user->getKeyName());
-        $this->assertSame('string', $user->getKeyType());
-        $this->assertFalse($user->incrementing);
-    }
+it('has string primary key that is non-incrementing', function () {
+    $user = new User();
 
-    public function test_no_timestamps(): void
-    {
-        $this->assertFalse((new User())->usesTimestamps());
-    }
+    expect($user->getKeyName())->toBe('id');
+    expect($user->getKeyType())->toBe('string');
+    expect($user->incrementing)->toBeFalse();
+});
 
-    public function test_table_is_users(): void
-    {
-        $this->assertSame('users', (new User())->getTable());
-    }
+it('does not use timestamps', function () {
+    expect((new User())->usesTimestamps())->toBeFalse();
+});
 
-    public function test_is_active_is_cast_to_boolean(): void
-    {
-        $user = new User(['id' => 'uuid-1', 'email' => 'a@b.com', 'is_active' => '1']);
-        $this->assertTrue($user->is_active);
+it('uses users table', function () {
+    expect((new User())->getTable())->toBe('users');
+});
 
-        $user->is_active = '0';
-        $this->assertFalse($user->is_active);
-    }
-}
+it('casts is_active to boolean', function () {
+    $user = new User(['id' => 'uuid-1', 'email' => 'a@b.com', 'is_active' => '1']);
+    expect($user->is_active)->toBeTrue();
+
+    $user->is_active = '0';
+    expect($user->is_active)->toBeFalse();
+});
