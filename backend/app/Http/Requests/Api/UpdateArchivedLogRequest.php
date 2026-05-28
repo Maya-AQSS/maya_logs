@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api;
 
+use App\Rules\AcceptableTutorialUrl;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateArchivedLogRequest extends FormRequest
@@ -17,7 +18,7 @@ class UpdateArchivedLogRequest extends FormRequest
     {
         return [
             'description' => ['nullable', 'string', 'max:5000'],
-            'url_tutorial' => ['nullable', 'url', 'max:2048'],
+            'url_tutorial' => ['nullable', new AcceptableTutorialUrl(), 'max:2048'],
         ];
     }
 }

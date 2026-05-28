@@ -59,6 +59,30 @@ class LogService implements LogServiceInterface
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function findForShow(int $id): array
+    {
+        try {
+            $result = $this->logRepository->findOrFailWithArchivedLogId($id);
+
+            return [
+                'dto' => LogDto::fromModel($result['log']),
+                'archived_log_id' => $result['archived_log_id'],
+            ];
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'medium',
+                self::CODE_NOT_FOUND,
+                ['log_id' => $id],
+                $this->messagingAppSlug(),
+            );
+            throw $e;
+        }
+    }
+
     public function streamPayload(int $limit = 10): array
     {
         $logs = $this->logRepository->latestForStream($limit);

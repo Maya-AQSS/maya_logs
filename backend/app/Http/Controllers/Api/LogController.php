@@ -53,12 +53,12 @@ class LogController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $dto = $this->logService->findOrFail($id);
+        $result = $this->logService->findForShow($id);
 
         return response()->json([
-            'data' => (new LogResource($dto))->resolve(),
+            'data' => (new LogResource($result['dto']))->resolve(),
             'meta' => [
-                'archived_log_id' => $this->logService->archivedLogIdFor($id),
+                'archived_log_id' => $result['archived_log_id'],
             ],
         ]);
     }
@@ -73,20 +73,18 @@ class LogController extends Controller
             ]);
         }
 
+        $jwtSubject = $this->resolveJwtSubject($request);
+
+        if ($jwtSubject === null) {
+            return response()->json([
+                'error' => [
+                    'code' => 'actor_missing',
+                    'message' => __('logs.actor_missing'),
+                ],
+            ], 403);
+        }
+
         try {
-            /** @var array<string, mixed>|null $jwtUser */
-            $jwtUser = $request->attributes->get('jwt_user');
-            $jwtSubject = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
-
-            if (! is_string($jwtSubject) || $jwtSubject === '') {
-                return response()->json([
-                    'error' => [
-                        'code' => 'actor_missing',
-                        'message' => __('logs.actor_missing'),
-                    ],
-                ], 403);
-            }
-
             $archived = $this->archivedLogService->archiveFromLogId($id, $jwtSubject);
 
             return response()->json([
@@ -114,11 +112,9 @@ class LogController extends Controller
 
     public function resolve(Request $request, int $id): JsonResponse
     {
-        /** @var array<string, mixed>|null $jwtUser */
-        $jwtUser = $request->attributes->get('jwt_user');
-        $jwtSubject = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
+        $jwtSubject = $this->resolveJwtSubject($request);
 
-        if (! is_string($jwtSubject) || $jwtSubject === '') {
+        if ($jwtSubject === null) {
             return response()->json([
                 'error' => [
                     'code' => 'actor_missing',

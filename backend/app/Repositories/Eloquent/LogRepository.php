@@ -9,8 +9,8 @@ use App\Models\ArchivedLog;
 use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
 use App\Support\LikeEscaper;
-use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
@@ -136,8 +136,8 @@ class LogRepository implements LogRepositoryInterface
                     $q->where('resolved', false);
                 }
             })
-            ->when($dateFrom, fn ($q) => $q->where('logs.created_at', '>=', CarbonImmutable::parse($dateFrom)->utc()->toDateTimeString()))
-            ->when($dateTo, fn ($q) => $q->where('logs.created_at', '<=', CarbonImmutable::parse($dateTo)->utc()->toDateTimeString()))
+            ->when($dateFrom, fn ($q) => $q->where('logs.created_at', '>=', Date::parse($dateFrom)->utc()->toDateTimeString()))
+            ->when($dateTo, fn ($q) => $q->where('logs.created_at', '<=', Date::parse($dateTo)->utc()->toDateTimeString()))
             ->when($dateFrom && ! $dateTo, fn ($q) => $q->where('logs.created_at', '<=', now()->utc()->toDateTimeString()))
             ->when(
                 $sortColumn !== null,
@@ -242,6 +242,41 @@ class LogRepository implements LogRepositoryInterface
             ->value('id');
 
         return $archivedId !== null ? (int) $archivedId : null;
+    }
+
+    /**
+     * Carga el log (con relaciones) y resuelve el id del ArchivedLog equivalente
+     * en una sola ronda de base de datos: un SELECT con subquery LEFT JOIN.
+     *
+     * @return array{log: Log, archived_log_id: int|null}
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findOrFailWithArchivedLogId(int $id): array
+    {
+        $archivedIdSubquery = ArchivedLog::query()
+            ->select('id')
+            ->whereColumn('application_id', 'logs.application_id')
+            ->whereRaw('error_code_id IS NOT DISTINCT FROM logs.error_code_id')
+            ->whereColumn('severity', 'logs.severity')
+            ->whereColumn('message', 'logs.message')
+            ->orderByDesc('archived_at')
+            ->orderByDesc('id')
+            ->limit(1);
+
+        /** @var Log $log */
+        $log = Log::query()
+            ->with(['application', 'errorCode'])
+            ->selectRaw('logs.*')
+            ->selectSub($archivedIdSubquery, 'archived_log_id')
+            ->findOrFail($id);
+
+        $rawArchivedId = $log->getAttribute('archived_log_id');
+
+        return [
+            'log' => $log,
+            'archived_log_id' => $rawArchivedId !== null ? (int) $rawArchivedId : null,
+        ];
     }
 
     /**

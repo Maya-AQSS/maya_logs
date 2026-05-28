@@ -17,6 +17,16 @@ interface LogServiceInterface
     public function findOrFail(int $id): LogDto;
 
     /**
+     * Carga el log y el id del archived_log equivalente en una sola query,
+     * eliminando el N+1 del endpoint show().
+     *
+     * @return array{dto: LogDto, archived_log_id: int|null}
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findForShow(int $id): array;
+
+    /**
      * Prepare SSE payload.
      */
     public function streamPayload(int $limit = 10): array;

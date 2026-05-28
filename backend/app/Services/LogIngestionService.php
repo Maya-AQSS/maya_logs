@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\UnrecoverableIngestionException;
 use App\Repositories\Contracts\LogIngestionRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -40,14 +42,23 @@ class LogIngestionService
         $this->slugToId = $map;
     }
 
+    /**
+     * Ingests a single AMQP log payload into the buffer (and flushes if the batch is full).
+     *
+     * Contract for callers (ConsumeLogs):
+     *   - Returns normally  → message has been accepted; caller should ACK.
+     *   - Throws {@see UnrecoverableIngestionException} → payload is invalid / app unknown;
+     *     caller should drop (ACK) to avoid blocking the queue.
+     *   - Throws {@see QueryException} → infrastructure failure; caller should NACK so
+     *     the broker retries.
+     *   - Throws any other {@see \Throwable} → unexpected failure; caller decides, but
+     *     dropping is safest to avoid queue blockage.
+     */
     public function ingest(array $payload): void
     {
         $log = LogPayload::fromArray($payload);
 
         $applicationId = $this->resolveApplicationId($log->app);
-        if ($applicationId === null) {
-            return;
-        }
 
         try {
             $errorCodeId = $this->resolveErrorCodeId(
@@ -56,8 +67,11 @@ class LogIngestionService
                 file: $log->file,
                 line: $log->line,
             );
+        } catch (QueryException $e) {
+            Log::error('ConsumeLogs: failed to resolve error code — infrastructure error', ['error' => $e->getMessage()]);
+            throw $e;
         } catch (\Throwable $e) {
-            Log::error('ConsumeLogs: failed to resolve error code', ['error' => $e->getMessage()]);
+            Log::error('ConsumeLogs: failed to resolve error code — unexpected error', ['error' => $e->getMessage()]);
             throw $e;
         }
 
@@ -105,21 +119,32 @@ class LogIngestionService
         }
     }
 
-    private function resolveApplicationId(string $slug): ?int
+    /**
+     * Resolves the application slug to its database ID.
+     *
+     * @throws UnrecoverableIngestionException if the slug is empty or not registered.
+     */
+    private function resolveApplicationId(string $slug): int
     {
         if ($slug === '') {
-            return null;
+            throw new UnrecoverableIngestionException('ConsumeLogs: dropping payload — empty app slug');
         }
 
         if (! array_key_exists($slug, $this->slugToId)) {
-            Log::warning('ConsumeLogs: dropping payload — app slug not registered in maya_auth', ['slug' => $slug]);
-
-            return null;
+            throw new UnrecoverableIngestionException(
+                "ConsumeLogs: dropping payload — app slug '{$slug}' not registered in maya_auth"
+            );
         }
 
         $id = (int) $this->slugToId[$slug];
 
-        return $id > 0 ? $id : null;
+        if ($id <= 0) {
+            throw new UnrecoverableIngestionException(
+                "ConsumeLogs: dropping payload — resolved application_id is invalid for slug '{$slug}'"
+            );
+        }
+
+        return $id;
     }
 
     private function resolveErrorCodeId(?string $code, int $applicationId, ?string $file, ?int $line): ?int

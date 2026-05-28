@@ -60,6 +60,16 @@ interface LogRepositoryInterface
     public function archivedLogIdFor(int $logId): ?int;
 
     /**
+     * Carga el log (con relaciones) y resuelve el id del ArchivedLog equivalente
+     * en una sola ronda de base de datos.
+     *
+     * @return array{log: \App\Models\Log, archived_log_id: int|null}
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findOrFailWithArchivedLogId(int $id): array;
+
+    /**
      * Marca el log como resuelto (resolved = true).
      */
     public function resolved(int $logId): void;

@@ -36,14 +36,25 @@ trait ResolvesJwtUser
      */
     protected function resolveJwtUser(Request $request): ?User
     {
-        /** @var array<string, mixed>|null $jwtUser */
-        $jwtUser = $request->attributes->get('jwt_user');
-        $externalId = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
+        $externalId = $this->resolveJwtSubject($request);
 
-        if (! is_string($externalId) || $externalId === '') {
+        if ($externalId === null) {
             return null;
         }
 
         return User::find($externalId);
+    }
+
+    /**
+     * Devuelve el subject (external_id / sub del JWT) o `null` si no está presente.
+     * Útil cuando se necesita el id del actor sin hacer un lookup en BD.
+     */
+    protected function resolveJwtSubject(Request $request): ?string
+    {
+        /** @var array<string, mixed>|null $jwtUser */
+        $jwtUser = $request->attributes->get('jwt_user');
+        $externalId = is_array($jwtUser) ? ($jwtUser['id'] ?? null) : null;
+
+        return is_string($externalId) && $externalId !== '' ? $externalId : null;
     }
 }
