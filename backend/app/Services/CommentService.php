@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Dtos\CommentDto;
+use App\Models\ArchivedLog;
 use App\Models\Comment;
 use App\Repositories\Contracts\CommentRepositoryInterface;
 use App\Services\Contracts\CommentContentSanitizerInterface;
 use App\Services\Contracts\CommentServiceInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
+use Maya\Messaging\Publishers\NotificationPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
 use Throwable;
 
@@ -28,6 +30,7 @@ final class CommentService implements CommentServiceInterface
         private readonly CommentRepositoryInterface $commentRepository,
         private readonly ResilientLogPublisher $resilientLogPublisher,
         private readonly CommentContentSanitizerInterface $contentSanitizer,
+        private readonly NotificationPublisher $notificationPublisher,
     ) {}
 
     private function messagingAppSlug(): string
@@ -77,6 +80,8 @@ final class CommentService implements CommentServiceInterface
             $comment = $this->commentRepository->createForCommentable($commentable, $userId, $sanitized);
             $comment->loadMissing('user');
 
+            $this->notifyLogOwner($commentable, $userId);
+
             return CommentDto::fromModel($comment);
         } catch (ValidationException $e) {
             throw $e;
@@ -92,6 +97,45 @@ final class CommentService implements CommentServiceInterface
                 $this->messagingAppSlug(),
             );
             throw $e;
+        }
+    }
+
+    /**
+     * Notifies the ArchivedLog owner when a different user adds a comment.
+     * Wrapped in try/catch so a notification failure never breaks comment creation.
+     */
+    private function notifyLogOwner(Model $commentable, string $commentAuthorId): void
+    {
+        if (! $commentable instanceof ArchivedLog) {
+            return;
+        }
+
+        $ownerId = $commentable->archived_by_id;
+
+        if ($ownerId === null || $ownerId === $commentAuthorId) {
+            return;
+        }
+
+        try {
+            $this->notificationPublisher->send(
+                type: 'log.comment_added',
+                recipientId: (string) $ownerId,
+                title: 'Nuevo comentario en tu log',
+                body: sprintf('Se ha añadido un comentario en el log "%s"', $commentable->message ?? ''),
+                channels: ['app'],
+                metadata: ['log_id' => $commentable->getKey()],
+            );
+        } catch (Throwable $e) {
+            $this->resilientLogPublisher->publishFromThrowable(
+                $e,
+                'low',
+                'LAR-LOG-NOTIF-001',
+                [
+                    'commentable_id' => $commentable->getKey(),
+                    'owner_id' => $ownerId,
+                ],
+                $this->messagingAppSlug(),
+            );
         }
     }
 
