@@ -66,8 +66,11 @@ services:
       REVERB_APP_ID: ${REVERB_APP_ID:-maya-logs}
       REVERB_APP_KEY: ${REVERB_APP_KEY:-}
       REVERB_APP_SECRET: ${REVERB_APP_SECRET:-}
-      REVERB_HOST: 0.0.0.0
-      REVERB_PORT: 8083
+      # Internal addressing for the Pusher HTTP API — backend → reverb container
+      # over the maya_network bridge. Frontend gets its own VITE_REVERB_HOST (public).
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
       BROADCAST_CONNECTION: reverb
     volumes:
       - ./backend:/var/www/html
@@ -125,7 +128,23 @@ services:
       JWKS_URL: ${JWKS_URL:-http://maya_auth_keycloak:8080/realms/maya/protocol/openid-connect/certs}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-maya-logs}
       JWT_ISSUER: ${JWT_ISSUER}
-    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    # backend Dockerfile pins ENTRYPOINT to docker-entrypoint.sh which ignores
+    # CMD args and exec's `php artisan serve`. Override entrypoint so the reverb
+    # service can actually start the WebSocket server.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cd /var/www/html
+        if [ ! -f vendor/autoload.php ]; then
+          echo "[reverb] waiting for vendor (backend composer install)..."
+          while [ ! -f vendor/autoload.php ]; do sleep 3; done
+        fi
+        echo "[reverb] starting reverb server"
+        exec php artisan reverb:start --host=0.0.0.0 --port=8080
+    command: []
+    volumes:
+      - ./backend:/var/www/html
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${MAYA_SLOT_PROJECT}-maya-logs-reverb.rule=Host(`${HOST_PREFIX}logs-reverb.${DOMAIN_SUFFIX}`)"
