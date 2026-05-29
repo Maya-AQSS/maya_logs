@@ -7,9 +7,9 @@ import { PlaceholderPage, SkeletonPage } from '@ceedcv-maya/shared-ui-react';
 import { useKeycloakLocaleSync } from '@ceedcv-maya/shared-i18n-react';
 import { useOidcSession } from '@ceedcv-maya/shared-auth-react';
 import { useRequireAppAccess } from '@ceedcv-maya/shared-profile-react';
+import { useRealtimeNotifications } from '@ceedcv-maya/shared-realtime-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
-import { useRealtimeNotifications } from './hooks/useRealtimeNotifications';
 import { resolveServiceUrl } from './lib/peerService';
 import { LOGS_PERMISSIONS } from './permissions';
 
