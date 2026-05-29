@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.4",
         "laravel/framework": "^13.0",
+        "laravel/reverb": "^1.6",
         "laravel/tinker": "^3.0",
         "ceedcv-maya/shared-auth-laravel": "^0.4",
         "ceedcv-maya/shared-http-laravel": "^0.4",

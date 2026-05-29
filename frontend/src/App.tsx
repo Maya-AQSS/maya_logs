@@ -9,6 +9,7 @@ import { useOidcSession } from '@ceedcv-maya/shared-auth-react';
 import { useRequireAppAccess } from '@ceedcv-maya/shared-profile-react';
 import { useNavItems } from './components/layout';
 import { profileDisplayInitials, useUserProfile } from './features/user-profile';
+import { useRealtimeNotifications } from './hooks/useRealtimeNotifications';
 import { resolveServiceUrl } from './lib/peerService';
 import { LOGS_PERMISSIONS } from './permissions';
 
@@ -67,6 +68,7 @@ function AppWithLayout() {
   const { profile } = useUserProfile();
   const navItems = useNavItems();
   useKeycloakLocaleSync();
+  useRealtimeNotifications({ userId: (user?.sub as string | undefined) ?? null });
 
   // Prefer backend profile name; fall back to Keycloak token (same pattern as other apps)
   const tokenDisplayName = ((user?.name ?? user?.preferred_username ?? '') as string).trim();

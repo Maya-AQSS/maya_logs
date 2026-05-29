@@ -35,6 +35,7 @@ use App\Services\LogService;
 use App\Models\User;
 use App\Services\PanelUserService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Maya\Profile\Repositories\Contracts\UserProfileResolverInterface;
@@ -84,6 +85,14 @@ class AppServiceProvider extends ServiceProvider
         //     configura por app en `database.fdw.user_permissions.remote_view`).
         // dms carga solo los dos primeros grupos (tiene su propio modelo de
         // permisos basado en `permission_code`).
+                // Broadcasting auth endpoint protegido por JWT y bajo prefijo /api/v1 para
+        // consistencia con el resto de la API. Anula el `/broadcasting/auth` que
+        // Laravel registra por defecto con middleware `web` (basado en sesión).
+        Broadcast::routes([
+            'prefix' => 'api/v1',
+            'middleware' => ['api', 'jwt'],
+        ]);
+
         $this->loadMigrationsFrom(ProfileMigrations::users());
         $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
         $this->loadMigrationsFrom(ProfileMigrations::teams());
