@@ -162,7 +162,7 @@ return [
         // consumen `v_portal_user_permissions` (cross-app: incluye todos los
         // slugs `*.login` para decidir acceso/redirect al portal).
         'user_permissions' => [
-            'host'        => env('FDW_USER_PERMISSIONS_HOST', 'maya_infra_postgres'),
+            'host'        => env('FDW_USER_PERMISSIONS_HOST', env('DB_HOST', 'maya_infra_postgres')),
             'port'        => env('FDW_USER_PERMISSIONS_PORT', '5432'),
             'database'    => env('FDW_USER_PERMISSIONS_DATABASE', 'maya_auth'),
             'username'    => env('FDW_USER_PERMISSIONS_USERNAME', 'maya'),
