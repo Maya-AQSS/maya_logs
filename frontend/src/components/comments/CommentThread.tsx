@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
+import { MayaEditor } from '@ceedcv-maya/shared-editor-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -55,16 +56,20 @@ function formatTimestamp(value: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function plainTextToHtml(text: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  const paragraphs = escaped
-    .split(/\n{2,}/)
-    .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-    .join('');
-  return paragraphs;
+/**
+ * Effective text length of an HTML fragment — counts visible characters
+ * only (strips tags + decodes basic entities). Used for the min-length
+ * check on submit, since MayaEditor emits `<p></p>` for an empty doc.
+ */
+function htmlTextLength(html: string): number {
+  const text = html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim();
+  return text.length;
 }
 
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
@@ -107,13 +112,13 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
   const onCreate = useCallback(() => {
     const content = newContent.trim();
-    if (content.length < 3) {
+    if (htmlTextLength(content) < 3) {
       setCreateError(t('minLength'));
       return;
     }
     setCreateError(null);
     createMutation.mutate(
-      { type: commentableType, id: commentableId, content: plainTextToHtml(content) },
+      { type: commentableType, id: commentableId, content },
       {
         onSuccess: () => setNewContent(''),
         onError: (e) => setCreateError(e instanceof Error ? e.message : String(e)),
@@ -123,16 +128,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
   const onStartEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
-    const stripped = comment.content
-      .replace(/<br\s*\/?\s*>/gi, '\n')
-      .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
-      .replace(/<\/?p[^>]*>/gi, '')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .trim();
-    setEditingContent(stripped);
+    setEditingContent(comment.content);
     setEditingError(null);
   }, []);
 
@@ -145,7 +141,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
   const onUpdate = useCallback(() => {
     if (editingId == null) return;
     const content = editingContent.trim();
-    if (content.length < 3) {
+    if (htmlTextLength(content) < 3) {
       setEditingError(t('minLength'));
       return;
     }
@@ -155,7 +151,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
         type: commentableType,
         id: commentableId,
         commentId: editingId,
-        content: plainTextToHtml(content),
+        content,
       },
       {
         onSuccess: () => {
@@ -189,15 +185,15 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
         >
           {t('newComment')}
         </label>
-        <textarea
-          id={`new-comment-${commentableType}-${commentableId}`}
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          disabled={creating}
-          rows={4}
-          placeholder={t('placeholder')}
-          className="w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2 text-sm text-text-primary outline-none focus:border-odoo-purple dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
-        />
+        <div id={`new-comment-${commentableType}-${commentableId}`}>
+          <MayaEditor
+            mode="lite"
+            initialContent={newContent}
+            editable={!creating}
+            onChange={setNewContent}
+            placeholder={t('placeholder')}
+          />
+        </div>
         {createError && (
           <p
             role="alert"
@@ -268,12 +264,11 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
               {isEditing ? (
                 <div className="mt-3 space-y-3">
-                  <textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    disabled={editingBusy}
-                    rows={4}
-                    className="w-full rounded-lg border border-ui-border bg-ui-body px-3 py-2 text-sm text-text-primary outline-none focus:border-odoo-purple dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary dark:focus:border-odoo-dark-purple disabled:cursor-not-allowed disabled:opacity-60"
+                  <MayaEditor
+                    mode="lite"
+                    initialContent={editingContent}
+                    editable={!editingBusy}
+                    onChange={setEditingContent}
                   />
                   {editingError && (
                     <p
