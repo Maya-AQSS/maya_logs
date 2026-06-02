@@ -51,7 +51,9 @@ function _ensureSharedNodeModulesSymlink(): void {
     try {
       mkdirSync(path.dirname(linkPath), { recursive: true })
       symlinkSync(consumerNodeModules, linkPath, 'dir')
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.warn(`[Vite] Failed to symlink ${pkg} node_modules:`, (e as Error).message)
+    }
   }
 }
 _ensureSharedNodeModulesSymlink()
