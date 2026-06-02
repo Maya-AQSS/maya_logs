@@ -571,4 +571,29 @@ return [
         'name' => 'Audit event publish failed',
         'description' => 'AuditPublisher no pudo enviar a maya.audit desde el panel de autorización; RetryAmqpPublishJob puede recuperarlo.',
     ],
+    // Telemetría maya_dashboard → maya.logs (app slug maya-dashboard, application_id 1)
+    [
+        'application_id' => 1,
+        'code' => 'LAR-DASH-001',
+        'name' => 'Panel alert notification publish failed',
+        'description' => 'NotificationPublisher no pudo enviar la notificación in-app a un usuario tras crear una alerta del panel.',
+    ],
+    [
+        'application_id' => 1,
+        'code' => 'LAR-DASH-002',
+        'name' => 'Alert ingestion notify rule creator failed',
+        'description' => 'NotificationPublisher no pudo notificar al creador de la regla tras ingerir una alerta de sistema desde maya.alerts.',
+    ],
+    [
+        'application_id' => 1,
+        'code' => 'LAR-DASH-003',
+        'name' => 'Notification ingestion malformed payload',
+        'description' => 'Payload inválido descartado en notifications.ingest (no reintentable).',
+    ],
+    [
+        'application_id' => 1,
+        'code' => 'LAR-DASH-004',
+        'name' => 'Notification ingestion recipient not found',
+        'description' => 'Notificación omitida porque el destinatario no existe en la tabla users del dashboard.',
+    ],
 ];
