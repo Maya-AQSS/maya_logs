@@ -23,16 +23,6 @@ const _sharedPackageAliases: Record<string, string> = _sharedOverrideDir
     )
   : {}
 
-function _resolvePkgDir(pkg: string): string | null {
-  try {
-    const entry = _require.resolve(pkg, { paths: [appRoot] })
-    const marker = `/node_modules/${pkg}/`
-    const idx = entry.indexOf(marker)
-    if (idx < 0) return null
-    return entry.substring(0, idx + marker.length - 1)
-  } catch { return null }
-}
-
 import { existsSync, symlinkSync, mkdirSync } from 'node:fs'
 function _ensureSharedNodeModulesSymlink(): void {
   if (!_sharedOverrideDir) return
