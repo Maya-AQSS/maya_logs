@@ -15,6 +15,7 @@ import {
   type SortState,
 } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
+import { useLocale } from '@ceedcv-maya/shared-i18n-react';
 import { useSearchParams } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { fetchLogs, type LogsFilters as ApiLogsFilters, type LogsSortBy } from '../api/logs';
@@ -160,6 +161,7 @@ function countActiveFilters(f: LogsFiltersState): number {
 
 export function LogsPage() {
   const { t } = useTranslation('logs');
+  const { dateLocale } = useLocale();
   const { t: tCommon } = useTranslation('common');
   const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
@@ -274,7 +276,7 @@ export function LogsPage() {
       {
         id: 'created_at',
         header: t('tables.date'),
-        cell: (l) => formatDateTime(l.created_at),
+        cell: (l) => formatDateTime(l.created_at, dateLocale),
         sortable: true,
       },
       {
