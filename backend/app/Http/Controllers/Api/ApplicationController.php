@@ -11,9 +11,12 @@ use App\Http\Resources\ApplicationRefResource;
 use App\Services\Contracts\ApplicationServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maya\Http\Concerns\RespondsWithEnvelope;
 
 class ApplicationController extends Controller
 {
+    use RespondsWithEnvelope;
+
     public function __construct(
         private ApplicationServiceInterface $applicationService,
     ) {}
@@ -34,8 +37,6 @@ class ApplicationController extends Controller
             ->values()
             ->all();
 
-        return response()->json([
-            'data' => ApplicationRefResource::collection($dtos)->resolve($request),
-        ]);
+        return $this->okData(ApplicationRefResource::collection($dtos));
     }
 }
