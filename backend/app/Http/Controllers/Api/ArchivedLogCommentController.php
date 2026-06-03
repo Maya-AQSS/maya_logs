@@ -41,8 +41,6 @@ class ArchivedLogCommentController extends Controller
             $request->validated('content'),
         );
 
-        return response()->json([
-            'data' => (new CommentResource($dto))->resolve($request),
-        ], 201);
+        return response()->json(new CommentResource($dto), 201);
     }
 }
