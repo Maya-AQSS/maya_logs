@@ -21,6 +21,7 @@ use App\Repositories\Eloquent\UserRepository;
 use Maya\Profile\Migrations as ProfileMigrations;
 use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
+use App\Services\ArchivedFieldsValidator;
 use App\Services\ArchivedLogService;
 use App\Services\CommentContentSanitizer;
 use App\Services\CommentService;
@@ -32,6 +33,7 @@ use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use App\Services\ErrorCodeService;
 use App\Services\LogService;
+use App\Services\SeverityRankingService;
 use App\Models\User;
 use App\Services\PanelUserService;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +49,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ApplicationRepositoryInterface::class, ApplicationRepository::class);
         $this->app->singleton(ApplicationServiceInterface::class, ApplicationService::class);
 
+        $this->app->singleton(SeverityRankingService::class, SeverityRankingService::class);
+        $this->app->singleton(ArchivedFieldsValidator::class, ArchivedFieldsValidator::class);
         $this->app->singleton(ArchivedLogRepositoryInterface::class, ArchivedLogRepository::class);
         $this->app->singleton(ArchivedLogServiceInterface::class, ArchivedLogService::class);
 
