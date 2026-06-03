@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
+use App\Models\ErrorCode;
 use App\Services\Contracts\CommentServiceInterface;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\PanelUserService;
@@ -24,7 +25,7 @@ class ErrorCodeCommentController extends Controller
     public function index(int $errorCodeId): AnonymousResourceCollection
     {
         // Verify the ErrorCode exists
-        $this->errorCodeService->findModelOrFail($errorCodeId);
+        ErrorCode::query()->findOrFail($errorCodeId);
 
         return CommentResource::collection(
             $this->commentService->listForCommentable('App\Models\ErrorCode', $errorCodeId),
@@ -34,7 +35,7 @@ class ErrorCodeCommentController extends Controller
     public function store(StoreCommentRequest $request, int $errorCodeId): JsonResponse
     {
         // Verify the ErrorCode exists
-        $this->errorCodeService->findModelOrFail($errorCodeId);
+        ErrorCode::query()->findOrFail($errorCodeId);
         $user = $this->panelUserService->resolveFromJwtRequest($request);
 
         $dto = $this->commentService->createForCommentable(

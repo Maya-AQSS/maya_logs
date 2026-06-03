@@ -71,16 +71,20 @@ class ErrorCodeRepository implements ErrorCodeRepositoryInterface
         return ErrorCode::query()->create($data);
     }
 
-    public function update(ErrorCode $errorCode, array $data): ErrorCode
+    public function update(int $id, array $data): ErrorCode
     {
+        $errorCode = ErrorCode::query()->findOrFail($id);
         $errorCode->fill($data);
         $errorCode->save();
 
         return $errorCode;
     }
 
-    public function delete(ErrorCode $errorCode): void
+    public function delete(int $id): void
     {
-        $errorCode->delete();
+        DB::transaction(function () use ($id) {
+            $errorCode = ErrorCode::query()->findOrFail($id);
+            $errorCode->delete();
+        });
     }
 }

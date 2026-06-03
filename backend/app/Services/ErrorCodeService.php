@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Dtos\ErrorCodeDto;
-use App\Models\ErrorCode;
 use App\Repositories\Contracts\ErrorCodeRepositoryInterface;
 use App\Services\Contracts\ErrorCodeServiceInterface;
-use Illuminate\Support\Facades\DB;
 use Maya\Http\Pagination\PaginatedDto;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
 use Throwable;
@@ -59,8 +57,9 @@ class ErrorCodeService implements ErrorCodeServiceInterface
 
     /**
      * Sin telemetría en listados (evita ruido); solo se publica a maya.logs si falla la carga por id.
+     * @internal — Use findOrFail() in public API instead.
      */
-    public function findModelOrFail(int $id): ErrorCode
+    private function findModelOrFail(int $id): ErrorCode
     {
         try {
             return $this->errorCodeRepository->findOrFail($id);
@@ -95,10 +94,10 @@ class ErrorCodeService implements ErrorCodeServiceInterface
         }
     }
 
-    public function update(ErrorCode $errorCode, array $data): ErrorCodeDto
+    public function update(int $id, array $data): ErrorCodeDto
     {
         try {
-            $updated = $this->errorCodeRepository->update($errorCode, $data);
+            $updated = $this->errorCodeRepository->update($id, $data);
             $updated->loadMissing('application');
             $updated->loadCount('comments');
 
@@ -108,25 +107,23 @@ class ErrorCodeService implements ErrorCodeServiceInterface
                 $e,
                 'medium',
                 self::CODE_UPDATE_FAILED,
-                ['error_code_id' => $errorCode->id],
+                ['error_code_id' => $id],
                 $this->messagingAppSlug(),
             );
             throw $e;
         }
     }
 
-    public function delete(ErrorCode $errorCode): void
+    public function delete(int $id): void
     {
         try {
-            DB::transaction(function () use ($errorCode) {
-                $this->errorCodeRepository->delete($errorCode);
-            });
+            $this->errorCodeRepository->delete($id);
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,
                 'medium',
                 self::CODE_DELETE_FAILED,
-                ['error_code_id' => $errorCode->id],
+                ['error_code_id' => $id],
                 $this->messagingAppSlug(),
             );
             throw $e;

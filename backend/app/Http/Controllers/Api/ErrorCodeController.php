@@ -57,11 +57,12 @@ class ErrorCodeController extends Controller
 
     public function update(UpdateErrorCodeRequest $request, int $id): JsonResponse
     {
-        $errorCode = $this->errorCodeService->findModelOrFail($id);
+        // Load ErrorCode for authorization check
+        $errorCode = ErrorCode::query()->findOrFail($id);
 
         $this->authorize('update', $errorCode);
 
-        $dto = $this->errorCodeService->update($errorCode, $request->validated());
+        $dto = $this->errorCodeService->update($id, $request->validated());
 
         return response()->json([
             'data' => (new ErrorCodeResource($dto))->resolve($request),
@@ -70,11 +71,12 @@ class ErrorCodeController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
-        $errorCode = $this->errorCodeService->findModelOrFail($id);
+        // Load ErrorCode for authorization check
+        $errorCode = ErrorCode::query()->findOrFail($id);
 
         $this->authorize('delete', $errorCode);
 
-        $this->errorCodeService->delete($errorCode);
+        $this->errorCodeService->delete($id);
 
         return response()->json(null, 204);
     }
