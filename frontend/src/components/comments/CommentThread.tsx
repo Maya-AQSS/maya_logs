@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
 import { MayaEditor } from '@ceedcv-maya/shared-editor-react';
+import { useDarkMode } from '@ceedcv-maya/shared-layout-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -75,6 +76,7 @@ function htmlTextLength(html: string): number {
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
   const { t } = useTranslation('comments');
   const { hasPermission } = useUserProfile();
+  const { isDark } = useDarkMode();
 
   const canCreate =
     commentableType === 'archived-logs'
@@ -185,9 +187,10 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
         >
           {t('newComment')}
         </label>
-        <div id={`new-comment-${commentableType}-${commentableId}`}>
+        <div id={`new-comment-${commentableType}-${commentableId}`} className="h-40">
           <MayaEditor
             mode="lite"
+            isDark={isDark}
             initialContent={newContent}
             editable={!creating}
             onChange={setNewContent}
@@ -264,12 +267,15 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
               {isEditing ? (
                 <div className="mt-3 space-y-3">
-                  <MayaEditor
-                    mode="lite"
-                    initialContent={editingContent}
-                    editable={!editingBusy}
-                    onChange={setEditingContent}
-                  />
+                  <div className="h-36">
+                    <MayaEditor
+                      mode="lite"
+                      isDark={isDark}
+                      initialContent={editingContent}
+                      editable={!editingBusy}
+                      onChange={setEditingContent}
+                    />
+                  </div>
                   {editingError && (
                     <p
                       role="alert"
