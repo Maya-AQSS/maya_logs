@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react';
-import DOMPurify from 'dompurify';
 import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
-import { MayaEditor } from '@ceedcv-maya/shared-editor-react';
-import { useDarkMode } from '@ceedcv-maya/shared-layout-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -73,10 +70,24 @@ function htmlTextLength(html: string): number {
   return text.length;
 }
 
+/** Strip HTML tags + decode basic entities → plain text (comments are plain text now;
+ * also normalises legacy HTML comments for display/editing). */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
   const { t } = useTranslation('comments');
   const { hasPermission } = useUserProfile();
-  const { isDark } = useDarkMode();
 
   const canCreate =
     commentableType === 'archived-logs'
@@ -130,7 +141,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
   const onStartEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
-    setEditingContent(comment.content);
+    setEditingContent(htmlToText(comment.content));
     setEditingError(null);
   }, []);
 
@@ -233,15 +244,13 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
               {isEditing ? (
                 <div className="mt-3 space-y-3">
-                  <div className="h-36">
-                    <MayaEditor
-                      mode="lite"
-                      isDark={isDark}
-                      initialContent={editingContent}
-                      editable={!editingBusy}
-                      onChange={setEditingContent}
-                    />
-                  </div>
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    disabled={editingBusy}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+                  />
                   {editingError && (
                     <p
                       role="alert"
@@ -266,10 +275,9 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                   </div>
                 </div>
               ) : (
-                <div
-                  className="rte-content mt-3 text-sm text-text-primary dark:text-text-dark-primary"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content) }}
-                />
+                <div className="mt-3 whitespace-pre-wrap break-words text-sm text-text-primary dark:text-text-dark-primary">
+                  {htmlToText(comment.content)}
+                </div>
               )}
               </article>
             </Card>
@@ -286,16 +294,15 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
           >
             {t('newComment')}
           </label>
-          <div id={`new-comment-${commentableType}-${commentableId}`} className="h-36">
-            <MayaEditor
-              mode="lite"
-              isDark={isDark}
-              initialContent={newContent}
-              editable={!creating}
-              onChange={setNewContent}
-              placeholder={t('placeholder')}
-            />
-          </div>
+          <textarea
+            id={`new-comment-${commentableType}-${commentableId}`}
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            disabled={creating}
+            rows={3}
+            placeholder={t('placeholder')}
+            className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+          />
           {createError && (
             <p
               role="alert"
