@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Dtos\JwtProfileDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
@@ -11,6 +12,7 @@ use App\Services\Contracts\ArchivedLogServiceInterface;
 use App\Services\Contracts\CommentServiceInterface;
 use App\Services\PanelUserService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ArchivedLogCommentController extends Controller
@@ -35,7 +37,9 @@ class ArchivedLogCommentController extends Controller
     {
         // Verify the ArchivedLog exists
         $this->archivedLogService->findModelOrFail($archivedLogId);
-        $user = $this->panelUserService->resolveFromJwtRequest($request);
+
+        $jwtProfile = $this->extractJwtProfile($request);
+        $user = $this->panelUserService->resolveFromJwtProfile($jwtProfile);
 
         $dto = $this->commentService->createForCommentable(
             'App\Models\ArchivedLog',
@@ -45,5 +49,23 @@ class ArchivedLogCommentController extends Controller
         );
 
         return response()->json(new CommentResource($dto), 201);
+    }
+
+    private function extractJwtProfile(Request $request): JwtProfileDto
+    {
+        /** @var array<string, mixed>|null $jwtUser */
+        $jwtUser = $request->attributes->get('jwt_user');
+        $jwtProfile = JwtProfileDto::fromRequestAttribute($jwtUser);
+
+        if ($jwtProfile === null) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+                'error' => [
+                    'code' => 'actor_missing',
+                    'message' => __('logs.actor_missing'),
+                ],
+            ], 403));
+        }
+
+        return $jwtProfile;
     }
 }
