@@ -23,20 +23,23 @@ class ErrorCodeCommentController extends Controller
 
     public function index(int $errorCodeId): AnonymousResourceCollection
     {
-        $commentable = $this->errorCodeService->findModelOrFail($errorCodeId);
+        // Verify the ErrorCode exists
+        $this->errorCodeService->findModelOrFail($errorCodeId);
 
         return CommentResource::collection(
-            $this->commentService->listForCommentable($commentable),
+            $this->commentService->listForCommentable('App\Models\ErrorCode', $errorCodeId),
         );
     }
 
     public function store(StoreCommentRequest $request, int $errorCodeId): JsonResponse
     {
-        $commentable = $this->errorCodeService->findModelOrFail($errorCodeId);
+        // Verify the ErrorCode exists
+        $this->errorCodeService->findModelOrFail($errorCodeId);
         $user = $this->panelUserService->resolveFromJwtRequest($request);
 
         $dto = $this->commentService->createForCommentable(
-            $commentable,
+            'App\Models\ErrorCode',
+            $errorCodeId,
             $user->id,
             $request->validated('content'),
         );

@@ -6,7 +6,6 @@ namespace App\Repositories\Contracts;
 
 use App\Models\Comment;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 
 interface CommentRepositoryInterface
 {
@@ -15,11 +14,16 @@ interface CommentRepositoryInterface
     /**
      * @return Collection<int, Comment>
      */
-    public function listForCommentable(Model $commentable): Collection;
+    public function listForCommentable(string $commentableType, int $commentableId): Collection;
 
-    public function createForCommentable(Model $commentable, string $userId, string $sanitizedContent): Comment;
+    public function createForCommentable(
+        string $commentableType,
+        int $commentableId,
+        string $userId,
+        string $sanitizedContent,
+    ): Comment;
 
-    public function updateContent(Comment $comment, string $sanitizedContent): Comment;
+    public function updateContent(int $id, string $sanitizedContent): Comment;
 
-    public function delete(Comment $comment): void;
+    public function delete(int $id): void;
 }

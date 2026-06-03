@@ -27,7 +27,7 @@ class CommentController extends Controller
 
         GateFacade::forUser($user)->authorize('update', $comment);
 
-        $dto = $this->commentService->updateContent($comment, $request->validated('content'));
+        $dto = $this->commentService->updateContent($id, $request->validated('content'));
 
         return response()->json([
             'data' => (new CommentResource($dto))->resolve($request),
@@ -41,7 +41,7 @@ class CommentController extends Controller
 
         GateFacade::forUser($user)->authorize('delete', $comment);
 
-        $this->commentService->delete($comment);
+        $this->commentService->delete($id);
 
         return response()->json(null, 204);
     }

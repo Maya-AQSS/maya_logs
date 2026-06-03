@@ -23,20 +23,23 @@ class ArchivedLogCommentController extends Controller
 
     public function index(int $archivedLogId): AnonymousResourceCollection
     {
-        $commentable = $this->archivedLogService->findModelOrFail($archivedLogId);
+        // Verify the ArchivedLog exists
+        $this->archivedLogService->findModelOrFail($archivedLogId);
 
         return CommentResource::collection(
-            $this->commentService->listForCommentable($commentable),
+            $this->commentService->listForCommentable('App\Models\ArchivedLog', $archivedLogId),
         );
     }
 
     public function store(StoreCommentRequest $request, int $archivedLogId): JsonResponse
     {
-        $commentable = $this->archivedLogService->findModelOrFail($archivedLogId);
+        // Verify the ArchivedLog exists
+        $this->archivedLogService->findModelOrFail($archivedLogId);
         $user = $this->panelUserService->resolveFromJwtRequest($request);
 
         $dto = $this->commentService->createForCommentable(
-            $commentable,
+            'App\Models\ArchivedLog',
+            $archivedLogId,
             $user->id,
             $request->validated('content'),
         );

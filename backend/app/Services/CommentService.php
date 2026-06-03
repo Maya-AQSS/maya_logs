@@ -62,9 +62,9 @@ final class CommentService implements CommentServiceInterface
         }
     }
 
-    public function listForCommentable(Model $commentable): array
+    public function listForCommentable(string $commentableType, int $commentableId): array
     {
-        $comments = $this->commentRepository->listForCommentable($commentable);
+        $comments = $this->commentRepository->listForCommentable($commentableType, $commentableId);
 
         return $comments
             ->map(static fn (Comment $c): CommentDto => CommentDto::fromModel($c))
@@ -72,15 +72,19 @@ final class CommentService implements CommentServiceInterface
             ->all();
     }
 
-    public function createForCommentable(Model $commentable, string $userId, string $rawContent): CommentDto
+    public function createForCommentable(string $commentableType, int $commentableId, string $userId, string $rawContent): CommentDto
     {
         $sanitized = $this->contentSanitizer->sanitize($rawContent);
 
         try {
-            $comment = $this->commentRepository->createForCommentable($commentable, $userId, $sanitized);
-            $comment->loadMissing('user');
+            $comment = $this->commentRepository->createForCommentable(
+                $commentableType,
+                $commentableId,
+                $userId,
+                $sanitized,
+            );
 
-            $this->notifyLogOwner($commentable, $userId);
+            $this->notifyLogOwner($commentableType, $commentableId, $userId);
 
             return CommentDto::fromModel($comment);
         } catch (ValidationException $e) {
@@ -91,8 +95,8 @@ final class CommentService implements CommentServiceInterface
                 'medium',
                 self::CODE_CREATE_FAILED,
                 [
-                    'commentable_type' => $commentable::class,
-                    'commentable_id' => $commentable->getKey(),
+                    'commentable_type' => $commentableType,
+                    'commentable_id' => $commentableId,
                 ],
                 $this->messagingAppSlug(),
             );
@@ -104,13 +108,20 @@ final class CommentService implements CommentServiceInterface
      * Notifies the ArchivedLog owner when a different user adds a comment.
      * Wrapped in try/catch so a notification failure never breaks comment creation.
      */
-    private function notifyLogOwner(Model $commentable, string $commentAuthorId): void
+    private function notifyLogOwner(string $commentableType, int $commentableId, string $commentAuthorId): void
     {
-        if (! $commentable instanceof ArchivedLog) {
+        // Only notify for ArchivedLog commentables
+        if ($commentableType !== ArchivedLog::class) {
             return;
         }
 
-        $ownerId = $commentable->archived_by_id;
+        try {
+            $archivedLog = ArchivedLog::query()->findOrFail($commentableId);
+        } catch (Throwable) {
+            return;
+        }
+
+        $ownerId = $archivedLog->archived_by_id;
 
         if ($ownerId === null || $ownerId === $commentAuthorId) {
             return;
@@ -121,9 +132,9 @@ final class CommentService implements CommentServiceInterface
                 type: 'log.comment_added',
                 recipientId: (string) $ownerId,
                 title: 'Nuevo comentario en tu log',
-                body: sprintf('Se ha añadido un comentario en el log "%s"', $commentable->message ?? ''),
+                body: sprintf('Se ha añadido un comentario en el log "%s"', $archivedLog->message ?? ''),
                 channels: ['app'],
-                metadata: ['log_id' => $commentable->getKey()],
+                metadata: ['log_id' => $archivedLog->getKey()],
             );
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
@@ -131,7 +142,7 @@ final class CommentService implements CommentServiceInterface
                 'low',
                 'LAR-LOG-NOTIF-001',
                 [
-                    'commentable_id' => $commentable->getKey(),
+                    'commentable_id' => $commentableId,
                     'owner_id' => $ownerId,
                 ],
                 $this->messagingAppSlug(),
@@ -139,13 +150,12 @@ final class CommentService implements CommentServiceInterface
         }
     }
 
-    public function updateContent(Comment $comment, string $rawContent): CommentDto
+    public function updateContent(int $id, string $rawContent): CommentDto
     {
         $sanitized = $this->contentSanitizer->sanitize($rawContent);
 
         try {
-            $updated = $this->commentRepository->updateContent($comment, $sanitized);
-            $updated->loadMissing('user');
+            $updated = $this->commentRepository->updateContent($id, $sanitized);
 
             return CommentDto::fromModel($updated);
         } catch (ValidationException $e) {
@@ -155,7 +165,7 @@ final class CommentService implements CommentServiceInterface
                 $e,
                 'medium',
                 self::CODE_UPDATE_FAILED,
-                ['comment_id' => $comment->id],
+                ['comment_id' => $id],
                 $this->messagingAppSlug(),
             );
             throw $e;
@@ -165,16 +175,16 @@ final class CommentService implements CommentServiceInterface
     /**
      * Elimina un comentario.
      */
-    public function delete(Comment $comment): void
+    public function delete(int $id): void
     {
         try {
-            $this->commentRepository->delete($comment);
+            $this->commentRepository->delete($id);
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,
                 'medium',
                 self::CODE_DELETE_FAILED,
-                ['comment_id' => $comment->id],
+                ['comment_id' => $id],
                 $this->messagingAppSlug(),
             );
             throw $e;
