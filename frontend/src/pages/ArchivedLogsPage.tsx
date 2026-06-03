@@ -15,6 +15,7 @@ import {
   type SortState,
 } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
+import { useLocale } from '@ceedcv-maya/shared-i18n-react';
 import { useSearchParams } from 'react-router-dom';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import {
@@ -159,6 +160,7 @@ function countActiveFilters(f: ArchivedLogsFiltersState): number {
 export function ArchivedLogsPage() {
   const { t } = useTranslation('archivedLogs');
   const { t: tCommon } = useTranslation('common');
+  const { dateLocale } = useLocale();
   const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
   const canIndex = hasPermission(LOGS_PERMISSIONS.archivedLogsIndex);
@@ -244,7 +246,7 @@ export function ArchivedLogsPage() {
       {
         id: 'archived_at',
         header: t('states.archived'),
-        cell: (l) => formatDateTime(l.archived_at),
+        cell: (l) => formatDateTime(l.archived_at, dateLocale),
         sortable: true,
       },
     ],
