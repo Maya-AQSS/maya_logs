@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Eloquent;
 
+use App\Dtos\LogDto;
 use App\Dtos\LogFilterDto;
 use App\Enums\Severity;
 use App\Models\ArchivedLog;
@@ -315,5 +316,25 @@ class LogRepository implements LogRepositoryInterface
             ->whereRaw('error_code_id IS NOT DISTINCT FROM ?', [$log->error_code_id])
             ->where('severity', $log->severity)
             ->where('message', $log->message);
+    }
+
+    /**
+     * Devuelve los DTOs más recientes para streaming en tiempo real.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Dtos\LogDto>
+     */
+    public function streamPayloadDtos(int $limit = 10): \Illuminate\Support\Collection
+    {
+        return $this->latestForStream($limit)->map(
+            static fn (Log $m) => \App\Dtos\LogDto::fromModel($m)
+        );
+    }
+
+    /**
+     * Indica si hay una transacción activa en la BD.
+     */
+    public function isInTransaction(): bool
+    {
+        return DB::transactionLevel() > 0;
     }
 }

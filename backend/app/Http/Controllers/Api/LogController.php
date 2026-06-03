@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Concerns\ResolvesJwtUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ListLogsRequest;
+use App\Http\Resources\ArchiveLogResultResource;
 use App\Http\Resources\LogResource;
+use App\Http\Resources\ResolveLogResultResource;
 use App\Services\Contracts\ArchivedLogServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -39,7 +41,7 @@ class LogController extends Controller
         $result = $this->logService->findForShow($id);
 
         return response()->json([
-            'data' => (new LogResource($result['dto']))->resolve(),
+            'data' => new LogResource($result['dto']),
             'meta' => [
                 'archived_log_id' => $result['archived_log_id'],
             ],
@@ -51,8 +53,8 @@ class LogController extends Controller
         $matchedId = $this->logService->archivedLogIdFor($id);
         if ($matchedId !== null) {
             return response()->json([
-                'data' => ['archived_log_id' => $matchedId],
-                'meta' => ['already_archived' => true],
+                'data' => new ArchiveLogResultResource(['archived_log_id' => $matchedId, 'already_archived' => true]),
+                'meta' => [],
             ]);
         }
 
@@ -68,11 +70,11 @@ class LogController extends Controller
         }
 
         try {
-            $archived = $this->archivedLogService->archiveFromLogId($id, $jwtSubject);
+            $archivedDto = $this->archivedLogService->archiveFromLogId($id, $jwtSubject);
 
             return response()->json([
-                'data' => ['archived_log_id' => $archived->id],
-                'meta' => ['already_archived' => false],
+                'data' => new ArchiveLogResultResource(['archived_log_id' => $archivedDto->id, 'already_archived' => false]),
+                'meta' => [],
             ], 201);
         } catch (AccessDeniedHttpException $e) {
             return response()->json([
@@ -109,7 +111,7 @@ class LogController extends Controller
         $this->logService->resolved($id, $jwtSubject);
 
         return response()->json([
-            'data' => ['id' => $id, 'resolved' => true],
+            'data' => new ResolveLogResultResource(['id' => $id, 'resolved' => true]),
         ]);
     }
 

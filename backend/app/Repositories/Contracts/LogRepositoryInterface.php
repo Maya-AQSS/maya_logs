@@ -63,4 +63,16 @@ interface LogRepositoryInterface
      * Marca el log como resuelto (resolved = true).
      */
     public function resolved(int $logId): void;
+
+    /**
+     * Devuelve los DTOs más recientes para streaming en tiempo real.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Dtos\LogDto>
+     */
+    public function streamPayloadDtos(int $limit = 10): \Illuminate\Support\Collection;
+
+    /**
+     * Indica si hay una transacción activa en la BD.
+     */
+    public function isInTransaction(): bool;
 }
