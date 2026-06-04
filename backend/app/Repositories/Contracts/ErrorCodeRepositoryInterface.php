@@ -21,7 +21,7 @@ interface ErrorCodeRepositoryInterface
 
     public function create(array $data): ErrorCode;
 
-    public function update(ErrorCode $errorCode, array $data): ErrorCode;
+    public function update(int $id, array $data): ErrorCode;
 
-    public function delete(ErrorCode $errorCode): void;
+    public function delete(int $id): void;
 }

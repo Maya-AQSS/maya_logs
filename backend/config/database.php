@@ -158,6 +158,18 @@ return [
     */
 
     'fdw' => [
+        // Reglas de notificación programadas — FDW read-only sobre la vista
+        // contrato maya_dashboard.public.v_notification_rules (level B).
+        'notification_rules' => [
+            'host'     => env('FDW_NOTIFICATION_RULES_HOST', env('DB_HOST', 'maya_infra_postgres')),
+            'port'     => env('FDW_NOTIFICATION_RULES_PORT', '5432'),
+            'database' => env('FDW_NOTIFICATION_RULES_DATABASE', 'maya_dashboard'),
+            'username' => env('FDW_NOTIFICATION_RULES_USERNAME', 'maya'),
+            'password' => env('FDW_NOTIFICATION_RULES_PASSWORD', 'secret'),
+            'schema'   => env('FDW_NOTIFICATION_RULES_SCHEMA', 'public'),
+            'table'    => env('FDW_NOTIFICATION_RULES_TABLE', 'v_notification_rules'),
+        ],
+
         // Vista de permisos resueltos por maya_authorization. Todas las apps
         // consumen `v_portal_user_permissions` (cross-app: incluye todos los
         // slugs `*.login` para decidir acceso/redirect al portal).

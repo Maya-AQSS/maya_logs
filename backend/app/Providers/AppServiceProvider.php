@@ -18,9 +18,11 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
+use App\Support\FdwTeardown;
 use Maya\Profile\Migrations as ProfileMigrations;
 use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
+use App\Services\ArchivedFieldsValidator;
 use App\Services\ArchivedLogService;
 use App\Services\CommentContentSanitizer;
 use App\Services\CommentService;
@@ -32,10 +34,13 @@ use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use App\Services\ErrorCodeService;
 use App\Services\LogService;
+use App\Services\SeverityRankingService;
 use App\Models\User;
 use App\Services\PanelUserService;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Maya\Profile\Repositories\Contracts\UserProfileResolverInterface;
@@ -47,6 +52,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ApplicationRepositoryInterface::class, ApplicationRepository::class);
         $this->app->singleton(ApplicationServiceInterface::class, ApplicationService::class);
 
+        $this->app->singleton(SeverityRankingService::class, SeverityRankingService::class);
+        $this->app->singleton(ArchivedFieldsValidator::class, ArchivedFieldsValidator::class);
         $this->app->singleton(ArchivedLogRepositoryInterface::class, ArchivedLogRepository::class);
         $this->app->singleton(ArchivedLogServiceInterface::class, ArchivedLogService::class);
 
@@ -97,6 +104,16 @@ class AppServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
         $this->loadMigrationsFrom(ProfileMigrations::teams());
         $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
+
+        // db:wipe no elimina vistas ni foreign tables FDW (las crea el paquete
+        // shared-profile). Las limpiamos antes de migrate:fresh/db:wipe para que
+        // la reconstrucción sea reproducible (si no, el rewrite de la vista
+        // `teams` falla con «cannot drop columns from view»).
+        Event::listen(CommandStarting::class, static function (CommandStarting $event): void {
+            if (in_array($event->command, ['migrate:fresh', 'db:wipe'], true)) {
+                FdwTeardown::dropAllInPublicSchema();
+            }
+        });
 
         // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
         // que JwtMiddleware deposita en el request tras validar el token.

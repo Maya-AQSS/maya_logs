@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -49,6 +50,12 @@ return new class extends Migration
             $table->index(['application_id', 'created_at']);
             $table->index(['severity', 'resolved']);
         });
+
+        // Búsqueda full-text por similitud sobre `message` (filtro del listado).
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+            DB::statement('CREATE INDEX IF NOT EXISTS logs_message_trgm_idx ON logs USING GIN (message gin_trgm_ops)');
+        }
     }
 
     public function down(): void

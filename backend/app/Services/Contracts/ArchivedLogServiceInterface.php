@@ -43,5 +43,11 @@ interface ArchivedLogServiceInterface
 
     public function delete(ArchivedLog $archivedLog): void;
 
-    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLog;
+    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLogDto;
+
+    /**
+     * @param  array<string, mixed>  $fields
+     * @return array<string, mixed>
+     */
+    public function validateAndFilterFields(array $fields): array;
 }

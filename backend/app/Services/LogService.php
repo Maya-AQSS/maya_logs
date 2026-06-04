@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Dtos\LogDto;
 use App\Dtos\LogFilterDto;
 use App\Enums\Severity;
-use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
 use App\Services\Contracts\LogServiceInterface;
 use Illuminate\Support\Facades\Cache;
@@ -40,7 +39,7 @@ class LogService implements LogServiceInterface
     {
         return PaginatedDto::fromPaginator(
             $this->logRepository->paginate($perPage),
-            static fn (Log $m) => LogDto::fromModel($m),
+            static fn ($m) => LogDto::fromModel($m),
         );
     }
 
@@ -86,16 +85,16 @@ class LogService implements LogServiceInterface
 
     public function streamPayload(int $limit = 10): array
     {
-        $logs = $this->logRepository->latestForStream($limit);
+        $dtos = $this->logRepository->streamPayloadDtos($limit);
 
-        return $logs->map(function (Log $log): array {
+        return $dtos->map(function (LogDto $dto): array {
             return [
-                'id' => $log->id,
-                'severity' => $log->severity,
-                'message' => $log->message,
-                'application' => $log->application?->name,
-                'error_code' => $log->errorCode?->code,
-                'created_at' => $log->created_at?->toIso8601String(),
+                'id' => $dto->id,
+                'severity' => $dto->severity,
+                'message' => $dto->message,
+                'application' => $dto->application?->name,
+                'error_code' => $dto->errorCode?->code,
+                'created_at' => $dto->createdAt,
             ];
         })->all();
     }
@@ -104,7 +103,7 @@ class LogService implements LogServiceInterface
     {
         return PaginatedDto::fromPaginator(
             $this->logRepository->searchAndFilter($filter),
-            static fn (Log $m) => LogDto::fromModel($m),
+            static fn ($m) => LogDto::fromModel($m),
         );
     }
 
@@ -205,13 +204,13 @@ class LogService implements LogServiceInterface
      */
     private function afterCommit(callable $callback): void
     {
-        if (DB::transactionLevel() === 0) {
-            $callback();
+        if ($this->logRepository->isInTransaction()) {
+            DB::afterCommit($callback);
 
             return;
         }
 
-        DB::afterCommit($callback);
+        $callback();
     }
 
     /**

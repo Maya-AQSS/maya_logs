@@ -6,7 +6,6 @@ namespace App\Services\Contracts;
 
 use App\Dtos\CommentDto;
 use App\Models\Comment;
-use Illuminate\Database\Eloquent\Model;
 
 interface CommentServiceInterface
 {
@@ -21,11 +20,11 @@ interface CommentServiceInterface
     /**
      * @return list<CommentDto>
      */
-    public function listForCommentable(Model $commentable): array;
+    public function listForCommentable(string $commentableType, int $commentableId): array;
 
-    public function createForCommentable(Model $commentable, string $userId, string $rawContent): CommentDto;
+    public function createForCommentable(string $commentableType, int $commentableId, string $userId, string $rawContent): CommentDto;
 
-    public function updateContent(Comment $comment, string $rawContent): CommentDto;
+    public function updateContent(int $id, string $rawContent): CommentDto;
 
-    public function delete(Comment $comment): void;
+    public function delete(int $id): void;
 }

@@ -20,6 +20,8 @@ class ArchivedLogService implements ArchivedLogServiceInterface
     public function __construct(
         private ArchivedLogRepositoryInterface $archivedLogRepository,
         private ResilientLogPublisher $resilientLogPublisher,
+        private SeverityRankingService $severityRankingService,
+        private ArchivedFieldsValidator $fieldsValidator,
     ) {}
 
     private function messagingAppSlug(): string
@@ -44,6 +46,8 @@ class ArchivedLogService implements ArchivedLogServiceInterface
         string $sortDir,
         int $perPage = 15
     ): PaginatedDto {
+        $validatedSortDir = $this->severityRankingService->validateSortDirection($sortDir);
+
         return PaginatedDto::fromPaginator(
             $this->archivedLogRepository->searchAndFilter(
                 $severities,
@@ -51,7 +55,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 $dateFrom,
                 $dateTo,
                 $sortBy,
-                $sortDir,
+                $validatedSortDir,
                 $perPage
             ),
             static fn (ArchivedLog $m) => ArchivedLogDto::fromModel($m),
@@ -153,6 +157,17 @@ class ArchivedLogService implements ArchivedLogServiceInterface
     }
 
     /**
+     * Filter provided fields to only allowed ones, applying business validation.
+     *
+     * @param  array<string, mixed>  $fields  The fields to validate and filter
+     * @return array<string, mixed> Only the allowed fields
+     */
+    public function validateAndFilterFields(array $fields): array
+    {
+        return $this->fieldsValidator->filterAllowed($fields);
+    }
+
+    /**
      * @param  array<string, mixed>  $sanitized
      */
     private function archivedLogSanitizedDiffersFromModel(ArchivedLog $archivedLog, array $sanitized): bool
@@ -167,13 +182,13 @@ class ArchivedLogService implements ArchivedLogServiceInterface
     }
 
     /**
-     * Archiva un log por su id.
+     * Archiva un log por su id y devuelve un DTO.
      *
      * Solo se emite {@see LogWasArchived} cuando el repositorio crea un registro nuevo.
      * Si devuelve uno ya existente (huella duplicada o segunda petición concurrente), no se
      * vuelve a publicar a maya.audit (evita filas duplicadas con el mismo `archived_log`).
      */
-    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLog
+    public function archiveFromLogId(int $logId, string $archivedByUserId): ArchivedLogDto
     {
         try {
             $archivedLog = $this->archivedLogRepository->archiveFromLogId($logId, $archivedByUserId);
@@ -181,7 +196,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 LogWasArchived::dispatch($archivedLog, $archivedByUserId);
             }
 
-            return $archivedLog;
+            return ArchivedLogDto::fromModel($archivedLog);
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,

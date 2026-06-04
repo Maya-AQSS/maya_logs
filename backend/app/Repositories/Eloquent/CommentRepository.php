@@ -7,7 +7,6 @@ namespace App\Repositories\Eloquent;
 use App\Models\Comment;
 use App\Repositories\Contracts\CommentRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 
 class CommentRepository implements CommentRepositoryInterface
 {
@@ -22,10 +21,12 @@ class CommentRepository implements CommentRepositoryInterface
     /**
      * Lista los comentarios para un modelo comentable.
      */
-    public function listForCommentable(Model $commentable): Collection
+    public function listForCommentable(string $commentableType, int $commentableId): Collection
     {
         /** @var Collection<int, Comment> */
-        return $commentable->comments()
+        return Comment::query()
+            ->where('commentable_type', $commentableType)
+            ->where('commentable_id', $commentableId)
             ->with('user')
             ->latest()
             ->get();
@@ -34,33 +35,41 @@ class CommentRepository implements CommentRepositoryInterface
     /**
      * Crea un comentario para un modelo comentable.
      */
-    public function createForCommentable(Model $commentable, string $userId, string $sanitizedContent): Comment
-    {
-        $comment = $commentable->comments()->create([
+    public function createForCommentable(
+        string $commentableType,
+        int $commentableId,
+        string $userId,
+        string $sanitizedContent,
+    ): Comment {
+        $comment = Comment::create([
+            'commentable_type' => $commentableType,
+            'commentable_id' => $commentableId,
             'user_id' => $userId,
             'content' => $sanitizedContent,
         ]);
 
-        $comment->loadMissing('user');
-
-        return $comment;
+        // Eager-load user relation
+        return $comment->load('user');
     }
 
     /**
      * Actualiza el contenido de un comentario.
      */
-    public function updateContent(Comment $comment, string $sanitizedContent): Comment
+    public function updateContent(int $id, string $sanitizedContent): Comment
     {
+        $comment = $this->findOrFail($id);
         $comment->update(['content' => $sanitizedContent]);
 
-        return $comment->refresh()->loadMissing('user');
+        // Return with user relation eager-loaded
+        return $comment->refresh()->load('user');
     }
 
     /**
      * Elimina un comentario.
      */
-    public function delete(Comment $comment): void
+    public function delete(int $id): void
     {
+        $comment = $this->findOrFail($id);
         $comment->delete();
     }
 }

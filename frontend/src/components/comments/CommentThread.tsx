@@ -1,7 +1,5 @@
 import { useCallback, useState } from 'react';
-import DOMPurify from 'dompurify';
 import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
-import { MayaEditor } from '@ceedcv-maya/shared-editor-react';
 import { useTranslation } from 'react-i18next';
 import {
   createComment,
@@ -72,6 +70,21 @@ function htmlTextLength(html: string): number {
   return text.length;
 }
 
+/** Strip HTML tags + decode basic entities → plain text (comments are plain text now;
+ * also normalises legacy HTML comments for display/editing). */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function CommentThread({ commentableType, commentableId }: CommentThreadProps) {
   const { t } = useTranslation('comments');
   const { hasPermission } = useUserProfile();
@@ -128,7 +141,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
   const onStartEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
-    setEditingContent(comment.content);
+    setEditingContent(htmlToText(comment.content));
     setEditingError(null);
   }, []);
 
@@ -176,50 +189,17 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
   }, [commentableType, commentableId, deleteTargetId, deleteMutation]);
 
   return (
-    <div className="space-y-4">
-      {canCreate && (
-      <Card padding="md" radius="xl" className="space-y-3">
-        <label
-          htmlFor={`new-comment-${commentableType}-${commentableId}`}
-          className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
-        >
-          {t('newComment')}
-        </label>
-        <div id={`new-comment-${commentableType}-${commentableId}`}>
-          <MayaEditor
-            mode="lite"
-            initialContent={newContent}
-            editable={!creating}
-            onChange={setNewContent}
-            placeholder={t('placeholder')}
-          />
-        </div>
-        {createError && (
-          <p
-            role="alert"
-            className="rounded-lg border border-danger-light bg-danger-light/30 px-3 py-2 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger"
-          >
-            {createError}
-          </p>
+    <div className="flex flex-col max-h-[32rem]">
+      {/* Mensajes (arriba, con scroll) — patrón de DMS */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
+        {loadErrorMessage && (
+          <Alert tone="danger">{t('listLoadError', { message: loadErrorMessage })}
+          </Alert>
         )}
-        <div className="flex justify-end">
-          <Button variant="primary" size="sm" onClick={onCreate} disabled={creating} loading={creating}>
-            {creating ? t('busy') : t('actions.save')}
-          </Button>
-        </div>
-      </Card>
-      )}
 
-      {loadErrorMessage && (
-        <Alert tone="danger" className="mt-4">{t('listLoadError', { message: loadErrorMessage })}
-        </Alert>
-      )}
-
-      {deleteError && (
-        <Alert tone="danger" className="mt-4">{deleteError}</Alert>
-      )}
-
-      <div className="space-y-3">
+        {deleteError && (
+          <Alert tone="danger">{deleteError}</Alert>
+        )}
         {commentsQuery.isLoading && (
           <Card padding="lg" radius="xl" className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary">
             {t('status.loading')}
@@ -264,11 +244,12 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
 
               {isEditing ? (
                 <div className="mt-3 space-y-3">
-                  <MayaEditor
-                    mode="lite"
-                    initialContent={editingContent}
-                    editable={!editingBusy}
-                    onChange={setEditingContent}
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    disabled={editingBusy}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
                   />
                   {editingError && (
                     <p
@@ -294,16 +275,49 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                   </div>
                 </div>
               ) : (
-                <div
-                  className="rte-content mt-3 text-sm text-text-primary dark:text-text-dark-primary"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comment.content) }}
-                />
+                <div className="mt-3 whitespace-pre-wrap break-words text-sm text-text-primary dark:text-text-dark-primary">
+                  {htmlToText(comment.content)}
+                </div>
               )}
               </article>
             </Card>
           );
         })}
       </div>
+
+      {/* Composer (abajo, fijo) — añadir nuevo comentario */}
+      {canCreate && (
+        <div className="mt-3 shrink-0 space-y-2 border-t border-ui-border dark:border-ui-dark-border pt-3">
+          <label
+            htmlFor={`new-comment-${commentableType}-${commentableId}`}
+            className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary"
+          >
+            {t('newComment')}
+          </label>
+          <textarea
+            id={`new-comment-${commentableType}-${commentableId}`}
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            disabled={creating}
+            rows={3}
+            placeholder={t('placeholder')}
+            className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+          />
+          {createError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-danger-light bg-danger-light/30 px-3 py-2 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger"
+            >
+              {createError}
+            </p>
+          )}
+          <div className="flex justify-end">
+            <Button variant="primary" size="sm" onClick={onCreate} disabled={creating} loading={creating}>
+              {creating ? t('busy') : t('actions.save')}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={deleteTargetId !== null}

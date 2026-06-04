@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\User;
+use App\Dtos\JwtProfileDto;
+use App\Dtos\UserRefDto;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\PanelUserService;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
 
 uses(\Tests\TestCase::class);
 
@@ -19,93 +19,42 @@ afterEach(function () {
     Mockery::close();
 });
 
-function makeRequestWithJwt(?array $jwtUser): Request
-{
-    $request = new Request();
-    if ($jwtUser !== null) {
-        $request->attributes->set('jwt_user', $jwtUser);
-    }
-    return $request;
-}
-
-it('resolves user from jwt_user attribute in request', function () {
-    $user = new User(['id' => 'user-uuid-123', 'name' => 'Test']);
-    $request = makeRequestWithJwt(['id' => 'user-uuid-123', 'sub' => 'user-uuid-123']);
+it('resolves user from jwt profile DTO', function () {
+    $userDto = new UserRefDto('user-uuid-123', 'Test User');
+    $jwtProfile = new JwtProfileDto('user-uuid-123');
 
     $this->repo->shouldReceive('findByKey')
         ->with('user-uuid-123')
         ->once()
-        ->andReturn($user);
+        ->andReturn($userDto);
 
-    $result = $this->service->resolveFromJwtRequest($request);
+    $result = $this->service->resolveFromJwtProfile($jwtProfile);
 
-    expect($result)->toBe($user);
-});
-
-it('throws 403 HttpResponseException when jwt_user is missing', function () {
-    $request = new Request(); // no jwt_user attribute
-
-    expect(fn () => $this->service->resolveFromJwtRequest($request))
-        ->toThrow(HttpResponseException::class);
-});
-
-it('throws 403 HttpResponseException when jwt_user has no id', function () {
-    $request = makeRequestWithJwt(['sub' => 'some-sub']); // no 'id'
-
-    expect(fn () => $this->service->resolveFromJwtRequest($request))
-        ->toThrow(HttpResponseException::class);
-});
-
-it('throws 403 HttpResponseException when jwt_user id is empty string', function () {
-    $request = makeRequestWithJwt(['id' => '']);
-
-    expect(fn () => $this->service->resolveFromJwtRequest($request))
-        ->toThrow(HttpResponseException::class);
+    expect($result)->toBe($userDto);
+    expect($result->id)->toBe('user-uuid-123');
 });
 
 it('throws 403 HttpResponseException when user not found in directory', function () {
-    $request = makeRequestWithJwt(['id' => 'unknown-uuid']);
+    $jwtProfile = new JwtProfileDto('unknown-uuid');
 
     $this->repo->shouldReceive('findByKey')
         ->with('unknown-uuid')
         ->once()
         ->andReturn(null);
 
-    expect(fn () => $this->service->resolveFromJwtRequest($request))
+    expect(fn () => $this->service->resolveFromJwtProfile($jwtProfile))
         ->toThrow(HttpResponseException::class);
-});
-
-it('throws 403 HttpResponseException when jwt_user is not an array', function () {
-    $request = new Request();
-    $request->attributes->set('jwt_user', 'invalid-string');
-
-    expect(fn () => $this->service->resolveFromJwtRequest($request))
-        ->toThrow(HttpResponseException::class);
-});
-
-it('includes actor_missing error code when jwt is absent', function () {
-    $request = new Request();
-
-    try {
-        $this->service->resolveFromJwtRequest($request);
-        $this->fail('Expected HttpResponseException');
-    } catch (HttpResponseException $e) {
-        $response = $e->getResponse();
-        expect($response->getStatusCode())->toBe(403);
-        $content = json_decode($response->getContent(), true);
-        expect($content['error']['code'])->toBe('actor_missing');
-    }
 });
 
 it('includes user_not_in_directory error code when user missing from db', function () {
-    $request = makeRequestWithJwt(['id' => 'ghost-uuid']);
+    $jwtProfile = new JwtProfileDto('ghost-uuid');
 
     $this->repo->shouldReceive('findByKey')
         ->with('ghost-uuid')
         ->andReturn(null);
 
     try {
-        $this->service->resolveFromJwtRequest($request);
+        $this->service->resolveFromJwtProfile($jwtProfile);
         $this->fail('Expected HttpResponseException');
     } catch (HttpResponseException $e) {
         $response = $e->getResponse();
@@ -113,4 +62,42 @@ it('includes user_not_in_directory error code when user missing from db', functi
         $content = json_decode($response->getContent(), true);
         expect($content['error']['code'])->toBe('user_not_in_directory');
     }
+});
+
+describe('JwtProfileDto::fromRequestAttribute', function () {
+    it('creates DTO from valid jwt_user array', function () {
+        $jwtUser = ['id' => 'user-uuid-123', 'sub' => 'user-uuid-123'];
+        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+
+        expect($dto)->not->toBeNull();
+        expect($dto->id)->toBe('user-uuid-123');
+    });
+
+    it('returns null when jwt_user is not an array', function () {
+        $dto = JwtProfileDto::fromRequestAttribute('invalid-string');
+        expect($dto)->toBeNull();
+    });
+
+    it('returns null when jwt_user is null', function () {
+        $dto = JwtProfileDto::fromRequestAttribute(null);
+        expect($dto)->toBeNull();
+    });
+
+    it('returns null when jwt_user has no id', function () {
+        $jwtUser = ['sub' => 'some-sub'];
+        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        expect($dto)->toBeNull();
+    });
+
+    it('returns null when jwt_user id is empty string', function () {
+        $jwtUser = ['id' => ''];
+        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        expect($dto)->toBeNull();
+    });
+
+    it('returns null when jwt_user id is not a string', function () {
+        $jwtUser = ['id' => 123];
+        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        expect($dto)->toBeNull();
+    });
 });

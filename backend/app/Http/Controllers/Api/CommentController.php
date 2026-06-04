@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Dtos\JwtProfileDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\UpdateCommentRequest;
 use App\Http\Resources\CommentResource;
+use App\Models\User;
 use App\Services\Contracts\CommentServiceInterface;
 use App\Services\PanelUserService;
 use Illuminate\Http\JsonResponse;
@@ -23,11 +25,20 @@ class CommentController extends Controller
     public function update(UpdateCommentRequest $request, int $id): JsonResponse
     {
         $comment = $this->commentService->findModelOrFail($id);
-        $user = $this->panelUserService->resolveFromJwtRequest($request);
 
-        GateFacade::forUser($user)->authorize('update', $comment);
+        $jwtProfile = $this->extractJwtProfile($request);
+        $user = $this->panelUserService->resolveFromJwtProfile($jwtProfile);
 
-        $dto = $this->commentService->updateContent($comment, $request->validated('content'));
+        // Gate::forUser requires an Authenticatable (User model for compatibility).
+        // Use User model for authorization, then work with DTO.
+        $userModel = User::query()->find($user->id);
+        if ($userModel === null) {
+            abort(403, 'Unauthorized');
+        }
+
+        GateFacade::forUser($userModel)->authorize('update', $comment);
+
+        $dto = $this->commentService->updateContent($id, $request->validated('content'));
 
         return response()->json([
             'data' => (new CommentResource($dto))->resolve($request),
@@ -37,12 +48,39 @@ class CommentController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         $comment = $this->commentService->findModelOrFail($id);
-        $user = $this->panelUserService->resolveFromJwtRequest($request);
 
-        GateFacade::forUser($user)->authorize('delete', $comment);
+        $jwtProfile = $this->extractJwtProfile($request);
+        $user = $this->panelUserService->resolveFromJwtProfile($jwtProfile);
 
-        $this->commentService->delete($comment);
+        // Gate::forUser requires an Authenticatable (User model for compatibility).
+        // Use User model for authorization, then work with DTO.
+        $userModel = User::query()->find($user->id);
+        if ($userModel === null) {
+            abort(403, 'Unauthorized');
+        }
+
+        GateFacade::forUser($userModel)->authorize('delete', $comment);
+
+        $this->commentService->delete($id);
 
         return response()->json(null, 204);
+    }
+
+    private function extractJwtProfile(Request $request): JwtProfileDto
+    {
+        /** @var array<string, mixed>|null $jwtUser */
+        $jwtUser = $request->attributes->get('jwt_user');
+        $jwtProfile = JwtProfileDto::fromRequestAttribute($jwtUser);
+
+        if ($jwtProfile === null) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+                'error' => [
+                    'code' => 'actor_missing',
+                    'message' => __('logs.actor_missing'),
+                ],
+            ], 403));
+        }
+
+        return $jwtProfile;
     }
 }

@@ -27,12 +27,6 @@ interface ErrorCodeServiceInterface
     public function findOrFail(int $id): ErrorCodeDto;
 
     /**
-     * Model lookup for the controller's policy gate. See {@see self::findOrFail()}
-     * for the DTO read path.
-     */
-    public function findModelOrFail(int $id): ErrorCode;
-
-    /**
      * @param  array<string, mixed>  $data
      */
     public function create(array $data): ErrorCodeDto;
@@ -40,7 +34,7 @@ interface ErrorCodeServiceInterface
     /**
      * @param  array<string, mixed>  $data
      */
-    public function update(ErrorCode $errorCode, array $data): ErrorCodeDto;
+    public function update(int $id, array $data): ErrorCodeDto;
 
-    public function delete(ErrorCode $errorCode): void;
+    public function delete(int $id): void;
 }

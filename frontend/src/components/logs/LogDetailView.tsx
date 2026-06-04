@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocale } from '@ceedcv-maya/shared-i18n-react';
 import type { Log } from '../../types/logs';
 import { formatDateTime } from '@ceedcv-maya/shared-ui-react';
 import { SeverityBadge } from '../severity';
@@ -24,6 +25,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
   const { t } = useTranslation('logs');
+  const { dateLocale } = useLocale();
 
   const metadataJson =
     log.metadata && Object.keys(log.metadata).length > 0
@@ -64,7 +66,7 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
 
       <Field label={t('detail.fields.errorCode')}>{log.error_code?.code ?? '—'}</Field>
 
-      <Field label={t('tables.date')}>{formatDateTime(log.created_at)}</Field>
+      <Field label={t('tables.date')}>{formatDateTime(log.created_at, dateLocale)}</Field>
 
       {log.file !== null && (
         <Field label={t('detail.fields.file')}>{log.file}</Field>

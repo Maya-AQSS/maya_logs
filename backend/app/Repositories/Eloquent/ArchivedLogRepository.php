@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class ArchivedLogRepository implements ArchivedLogRepositoryInterface
 {
-    private const SORT_DIRECTIONS = ['asc', 'desc'];
-
-    private const ALLOWED_ARCHIVED_FIELDS = ['resolved', 'error_code_id', 'internal_notes', 'description', 'url_tutorial'];
 
     /**
      * Devuelve una página de logs archivados.
@@ -44,8 +41,6 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
         string $sortDir,
         int $perPage = 15
     ): LengthAwarePaginator {
-        $validatedSortDirection = in_array($sortDir, self::SORT_DIRECTIONS, true) ? $sortDir : 'asc';
-
         $query = ArchivedLog::query()
             ->withStandardRelations()
             ->when($severities !== null && $severities !== [], fn ($q) => $q->whereIn('severity', $severities))
@@ -55,9 +50,9 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
 
         $query = match ($sortBy) {
             'archived_at' => $query
-                ->orderBy('archived_at', $validatedSortDirection)
+                ->orderBy('archived_at', $sortDir)
                 ->orderByDesc('id'),
-            'severity' => $this->applySeverityRankOrder($query, $validatedSortDirection),
+            'severity' => $this->applySeverityRankOrder($query, $sortDir),
             default => $query
                 ->orderBy('archived_at', 'desc')
                 ->orderByDesc('id'),
@@ -69,20 +64,20 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
     }
 
     /**
-     * Orden de negocio: critical → high → medium → low → other (ASC).
-     * DESC invierte ese ranking.
+     * Apply severity ranking to the query.
+     *
+     * Delegates severity ranking business logic to the domain service.
+     * This method exists to preserve the Repository pattern while keeping
+     * domain logic in the Service layer.
      */
     private function applySeverityRankOrder(Builder $query, string $direction): Builder
     {
-        $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-        $query->orderByRaw(
-            'CASE severity WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 WHEN ? THEN 4 WHEN ? THEN 5 ELSE 99 END '.$dir,
-            ['critical', 'high', 'medium', 'low', 'other']
-        );
-        $query->orderByDesc('archived_at');
-        $query->orderByDesc('id');
+        // Domain logic moved to SeverityRankingService; this delegate pattern
+        // maintains Repository method contract while enforcing architecture.
+        // The service is injected at the service layer level.
+        $rankingService = app(\App\Services\SeverityRankingService::class);
 
-        return $query;
+        return $rankingService->applyRankOrder($query, $direction);
     }
 
     /**
@@ -99,10 +94,11 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
      * @param  array<string, mixed>  $fields
      *
      * No valida actor; debe haberse pasado {@see ArchivedLogPolicy} (p. ej. vía `authorize` en el controlador).
+     * Assumes fields have been validated and filtered by the Service layer.
      */
     public function updateArchivedFields(ArchivedLog $archivedLog, array $fields): void
     {
-        $archivedLog->update(array_intersect_key($fields, array_flip(self::ALLOWED_ARCHIVED_FIELDS)));
+        $archivedLog->update($fields);
     }
 
     /**

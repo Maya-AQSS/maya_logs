@@ -47,9 +47,7 @@ class ArchivedLogController extends Controller
     {
         $dto = $this->archivedLogService->findOrFail($id);
 
-        return response()->json([
-            'data' => (new ArchivedLogResource($dto))->resolve(),
-        ]);
+        return $this->okData(new ArchivedLogResource($dto));
     }
 
     public function update(UpdateArchivedLogRequest $request, int $id): JsonResponse
@@ -58,16 +56,18 @@ class ArchivedLogController extends Controller
 
         $this->authorize('update', $archivedLog);
 
+        $validatedFields = $this->archivedLogService->validateAndFilterFields(
+            $request->validated(),
+        );
+
         $this->archivedLogService->updateArchivedFields(
             $archivedLog,
-            $request->validated(),
+            $validatedFields,
         );
 
         $dto = $this->archivedLogService->findOrFail($id);
 
-        return response()->json([
-            'data' => (new ArchivedLogResource($dto))->resolve($request),
-        ]);
+        return $this->okData(new ArchivedLogResource($dto));
     }
 
     public function destroy(int $id): JsonResponse

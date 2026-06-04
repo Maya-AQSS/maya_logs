@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useLocale } from '@ceedcv-maya/shared-i18n-react';
 import type { ArchivedLog } from '../../types/logs';
 import { formatDateTime } from '@ceedcv-maya/shared-ui-react';
 import { SeverityBadge } from '../severity';
@@ -22,6 +23,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function ArchivedLogDetailView({ log }: ArchivedLogDetailViewProps) {
   const { t } = useTranslation('archivedLogs');
+  const { dateLocale } = useLocale();
   const metadataJson =
     log.metadata_formatted ??
     (log.metadata && Object.keys(log.metadata).length > 0
@@ -44,8 +46,8 @@ export function ArchivedLogDetailView({ log }: ArchivedLogDetailViewProps) {
       <Field label={t('detail.fields.errorCode')}>{log.error_code?.code ?? '—'}</Field>
       <Field label={t('detail.fields.archivedBy')}>{log.archived_by?.name ?? '—'}</Field>
 
-      <Field label={t('detail.fields.archivedAt')}>{formatDateTime(log.archived_at)}</Field>
-      <Field label={t('detail.fields.originalCreatedAt')}>{formatDateTime(log.original_created_at)}</Field>
+      <Field label={t('detail.fields.archivedAt')}>{formatDateTime(log.archived_at, dateLocale)}</Field>
+      <Field label={t('detail.fields.originalCreatedAt')}>{formatDateTime(log.original_created_at, dateLocale)}</Field>
 
       <div className="md:col-span-2">
         <div className="block text-sm font-medium text-text-secondary dark:text-text-dark-secondary">

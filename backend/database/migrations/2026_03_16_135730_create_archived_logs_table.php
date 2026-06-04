@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamptz('original_created_at');
             $table->timestamptz('archived_at');
             $table->timestamptz('updated_at')->nullable();
+            $table->softDeletes();
 
             $table->index(['application_id', 'archived_at']);
             $table->index('archived_by_id');

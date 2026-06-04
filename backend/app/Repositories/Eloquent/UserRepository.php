@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Eloquent;
 
+use App\Dtos\UserRefDto;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 
@@ -12,8 +13,9 @@ class UserRepository implements UserRepositoryInterface
     /**
      * Busca un usuario por su clave primaria (id).
      */
-    public function findByKey(string $id): ?User
+    public function findByKey(string $id): ?UserRefDto
     {
-        return User::query()->whereKey($id)->first();
+        $user = User::query()->whereKey($id)->first();
+        return $user !== null ? UserRefDto::fromModel($user) : null;
     }
 }
