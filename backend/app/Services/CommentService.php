@@ -135,6 +135,10 @@ final class CommentService implements CommentServiceInterface
                 body: sprintf('Se ha añadido un comentario en el log "%s"', $archivedLog->message ?? ''),
                 channels: ['app'],
                 metadata: ['log_id' => $archivedLog->getKey()],
+                titleKey: 'notifications.log.comment_added.title',
+                bodyKey: 'notifications.log.comment_added.body',
+                params: ['log_id' => $archivedLog->getKey()],
+                severity: 'info',
             );
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
