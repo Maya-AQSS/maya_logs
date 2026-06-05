@@ -1,4 +1,4 @@
-import { commonResources, COMMON_NAMESPACE, deepMerge } from '@ceedcv-maya/shared-i18n-react';
+import { commonResources, COMMON_NAMESPACE, notificationResources, deepMerge } from '@ceedcv-maya/shared-i18n-react';
 
 import esDashboard from './locales/es/dashboard.json';
 import esLogs from './locales/es/logs.json';
@@ -38,6 +38,7 @@ export const NAMESPACES = [
   'comments',
   'auth',
   'nav',
+  'notifications',
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
@@ -57,6 +58,7 @@ export const resources = {
     comments: deepMerge(baseEs, esComments),
     auth: deepMerge(baseEs, esAuth),
     nav: deepMerge(baseEs, esNav),
+    notifications: notificationResources.es.notifications,
   },
   va: {
     common: baseVa,
@@ -67,6 +69,7 @@ export const resources = {
     comments: deepMerge(baseVa, vaComments),
     auth: deepMerge(baseVa, vaAuth),
     nav: deepMerge(baseVa, vaNav),
+    notifications: notificationResources.va.notifications,
   },
   en: {
     common: baseEn,
@@ -77,5 +80,6 @@ export const resources = {
     comments: deepMerge(baseEn, enComments),
     auth: deepMerge(baseEn, enAuth),
     nav: deepMerge(baseEn, enNav),
+    notifications: notificationResources.en.notifications,
   },
 } as const;
