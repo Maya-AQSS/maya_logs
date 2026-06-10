@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f8201bdfcbe6b5482b433bee2b1fb21f",
+    "content-hash": "96312c7276c6d6e2414c1a29c99fa4e0",
     "packages": [
         {
             "name": "brick/math",
@@ -137,7 +137,7 @@
         },
         {
             "name": "ceedcv-maya/shared-auth-laravel",
-            "version": "v0.8.0",
+            "version": "v0.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-auth-laravel.git",
@@ -209,7 +209,7 @@
         },
         {
             "name": "ceedcv-maya/shared-http-laravel",
-            "version": "v0.8.0",
+            "version": "v0.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-http-laravel.git",
@@ -265,7 +265,7 @@
         },
         {
             "name": "ceedcv-maya/shared-messaging-laravel",
-            "version": "v0.8.0",
+            "version": "v0.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-messaging-laravel.git",
@@ -338,7 +338,7 @@
         },
         {
             "name": "ceedcv-maya/shared-platform-laravel",
-            "version": "v0.8.0",
+            "version": "v0.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-platform-laravel.git",
@@ -391,7 +391,7 @@
         },
         {
             "name": "ceedcv-maya/shared-profile-laravel",
-            "version": "v0.12.0",
+            "version": "v0.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-profile-laravel.git",
