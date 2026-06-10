@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a4a47c5d17fc703946e66c52fa284838",
+    "content-hash": "f8201bdfcbe6b5482b433bee2b1fb21f",
     "packages": [
         {
             "name": "brick/math",
@@ -391,16 +391,16 @@
         },
         {
             "name": "ceedcv-maya/shared-profile-laravel",
-            "version": "v0.8.0",
+            "version": "v0.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Maya-AQSS/shared-profile-laravel.git",
-                "reference": "12fe4bd61f60cef5597499c8728b42e2205acfd4"
+                "reference": "dfc7131cc9fbfe7d2c1b7177d1270222095935b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Maya-AQSS/shared-profile-laravel/zipball/12fe4bd61f60cef5597499c8728b42e2205acfd4",
-                "reference": "12fe4bd61f60cef5597499c8728b42e2205acfd4",
+                "url": "https://api.github.com/repos/Maya-AQSS/shared-profile-laravel/zipball/dfc7131cc9fbfe7d2c1b7177d1270222095935b8",
+                "reference": "dfc7131cc9fbfe7d2c1b7177d1270222095935b8",
                 "shasum": ""
             },
             "require": {
@@ -450,7 +450,7 @@
                 "issues": "https://github.com/Maya-AQSS/maya_platform/issues",
                 "source": "https://github.com/Maya-AQSS/shared-profile-laravel"
             },
-            "time": "2026-06-01T13:49:34+00:00"
+            "time": "2026-06-10T09:55:40+00:00"
         },
         {
             "name": "clue/redis-protocol",
