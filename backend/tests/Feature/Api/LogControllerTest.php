@@ -127,6 +127,63 @@ it('searches logs by message text', function () {
     expect($response->json('data.0.message'))->toBe('unique-error-abc123');
 });
 
+it('search by message is case-insensitive', function () {
+    makeLog(['message' => 'Unique-Error-ABC123']);
+    makeLog(['message' => 'some other error']);
+
+    $response = $this->getJson('/api/v1/logs?search=unique-error-abc123');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1);
+});
+
+it('searches logs by file path', function () {
+    makeLog(['message' => 'a', 'file' => 'app/Special/UniqueThing.php']);
+    makeLog(['message' => 'b', 'file' => 'app/Other/Thing.php']);
+
+    $response = $this->getJson('/api/v1/logs?search=UniqueThing');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1);
+    expect($response->json('data.0.file'))->toBe('app/Special/UniqueThing.php');
+});
+
+it('searches logs by error code name', function () {
+    $appId = makeApplication();
+    $errorCodeId = DB::table('error_codes')->insertGetId([
+        'code'           => 'E_FOO',
+        'name'           => 'Distinctive failure name',
+        'application_id' => $appId,
+        'created_at'     => now(),
+        'updated_at'     => now(),
+    ]);
+    makeLog(['application_id' => $appId, 'message' => 'no match here', 'error_code_id' => $errorCodeId]);
+    makeLog(['application_id' => $appId, 'message' => 'another log']);
+
+    $response = $this->getJson('/api/v1/logs?search=Distinctive');
+
+    $response->assertOk();
+    expect($response->json('data'))->toHaveCount(1);
+});
+
+it('filters logs by date range (date_from / date_to)', function () {
+    makeLog(['message' => 'old', 'created_at' => '2024-01-01 10:00:00']);
+    makeLog(['message' => 'mid', 'created_at' => '2024-06-01 10:00:00']);
+    makeLog(['message' => 'new', 'created_at' => '2024-12-01 10:00:00']);
+
+    // date_from acota por debajo
+    $fromResp = $this->getJson('/api/v1/logs?date_from=2024-05-01');
+    $fromResp->assertOk();
+    $fromMessages = collect($fromResp->json('data'))->pluck('message')->sort()->values()->all();
+    expect($fromMessages)->toBe(['mid', 'new']);
+
+    // date_from + date_to acota una ventana
+    $rangeResp = $this->getJson('/api/v1/logs?date_from=2024-05-01&date_to=2024-09-01');
+    $rangeResp->assertOk();
+    expect($rangeResp->json('data'))->toHaveCount(1);
+    expect($rangeResp->json('data.0.message'))->toBe('mid');
+});
+
 it('filters resolved logs', function () {
     makeLog(['resolved' => false]);
     makeLog(['resolved' => true]);
