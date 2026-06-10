@@ -20,6 +20,8 @@ readonly class LogFilterDto extends FilterDto
         public readonly ?array $severity = null,
         /** Slug de la aplicación (join con applications.slug) */
         public readonly ?string $appSlug = null,
+        /** ID de la aplicación (filtro directo sobre logs.application_id) */
+        public readonly ?int $applicationId = null,
         /** ISO date — límite inferior de created_at */
         public readonly ?string $from = null,
         /** ISO date — límite superior de created_at */
@@ -45,8 +47,9 @@ readonly class LogFilterDto extends FilterDto
         return new static(
             severity: $request->getParsedSeverity(),
             appSlug: $request->input('app_slug') ?: null,
-            from: $request->input('from') ?: null,
-            to: $request->input('to') ?: null,
+            applicationId: $request->input('application_id') !== null ? (int) $request->input('application_id') : null,
+            from: $request->input('date_from') ?: null,
+            to: $request->input('date_to') ?: null,
             errorCode: $request->input('error_code') ?: null,
             archived: $request->input('archived') ?: null,
             resolved: $request->input('resolved') ?: null,

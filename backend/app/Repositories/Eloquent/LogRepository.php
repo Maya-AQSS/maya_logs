@@ -104,22 +104,36 @@ class LogRepository implements LogRepositoryInterface
             $query->leftJoin('applications', 'applications.id', '=', 'logs.application_id');
         }
 
-        if ($filter->errorCode !== null) {
+        // El join con error_codes es necesario tanto para filtrar por código como
+        // para que la búsqueda de texto pueda cubrir el código y nombre del error.
+        if ($filter->errorCode !== null || $normalizedSearch !== null) {
             $query->leftJoin('error_codes', 'error_codes.id', '=', 'logs.error_code_id');
         }
 
         return $query
             ->when($normalizedSearch !== null, function ($q) use ($driver, $normalizedSearch, $escapedSearchPattern): void {
-                if ($driver === 'pgsql') {
-                    $q->whereRaw("message ILIKE ? ESCAPE '".self::LIKE_ESCAPE_CHARACTER."'", [$escapedSearchPattern]);
+                // La búsqueda cubre: mensaje, código y nombre del error asociado, y fichero.
+                $q->where(function ($inner) use ($driver, $normalizedSearch, $escapedSearchPattern): void {
+                    if ($driver === 'pgsql') {
+                        $esc = self::LIKE_ESCAPE_CHARACTER;
+                        $inner->whereRaw("logs.message ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
+                            ->orWhereRaw("error_codes.code ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
+                            ->orWhereRaw("error_codes.name ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
+                            ->orWhereRaw("logs.file ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern]);
 
-                    return;
-                }
+                        return;
+                    }
 
-                // Fallback for non-PostgreSQL test environments without wildcard semantics.
-                $q->whereRaw('INSTR(LOWER(message), ?) > 0', [mb_strtolower($normalizedSearch)]);
+                    // Fallback for non-PostgreSQL test environments without wildcard semantics.
+                    $needle = mb_strtolower($normalizedSearch);
+                    $inner->whereRaw('INSTR(LOWER(logs.message), ?) > 0', [$needle])
+                        ->orWhereRaw("INSTR(LOWER(COALESCE(error_codes.code, '')), ?) > 0", [$needle])
+                        ->orWhereRaw("INSTR(LOWER(COALESCE(error_codes.name, '')), ?) > 0", [$needle])
+                        ->orWhereRaw("INSTR(LOWER(COALESCE(logs.file, '')), ?) > 0", [$needle]);
+                });
             })
             ->when($filter->severity, fn ($q) => $q->whereIn('logs.severity', $filter->severity))
+            ->when($filter->applicationId !== null, fn ($q) => $q->where('logs.application_id', $filter->applicationId))
             ->when($filter->appSlug !== null, fn ($q) => $q->where('applications.slug', $filter->appSlug))
             ->when($filter->errorCode !== null, fn ($q) => $q->where('error_codes.code', $filter->errorCode))
             ->when($filter->archived, function ($q) use ($filter): void {
