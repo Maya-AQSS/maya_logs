@@ -249,6 +249,12 @@ export function ArchivedLogsPage() {
         cell: (l) => formatDateTime(l.archived_at, dateLocale),
         sortable: true,
       },
+      {
+        id: 'original_created_at',
+        header: t('columns.originalCreatedAt'),
+        cell: (l) => formatDateTime(l.original_created_at, dateLocale),
+        sortable: true,
+      },
     ],
     [t],
   );
