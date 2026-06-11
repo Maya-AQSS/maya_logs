@@ -53,6 +53,14 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
                 ->orderBy('archived_at', $sortDir)
                 ->orderByDesc('id'),
             'severity' => $this->applySeverityRankOrder($query, $sortDir),
+            'application' => $query
+                ->join('applications', 'archived_logs.application_id', '=', 'applications.id')
+                ->orderBy('applications.name', $sortDir)
+                ->orderByDesc('archived_logs.id')
+                ->select('archived_logs.*'),
+            'original_created_at' => $query
+                ->orderBy('original_created_at', $sortDir)
+                ->orderByDesc('id'),
             default => $query
                 ->orderBy('archived_at', 'desc')
                 ->orderByDesc('id'),

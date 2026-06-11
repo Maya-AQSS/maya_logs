@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ListErrorCodesRequest;
 use App\Http\Requests\Api\StoreErrorCodeRequest;
 use App\Http\Requests\Api\UpdateErrorCodeRequest;
 use App\Http\Resources\ErrorCodeResource;
@@ -22,14 +23,14 @@ class ErrorCodeController extends Controller
         private ErrorCodeServiceInterface $errorCodeService,
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(ListErrorCodesRequest $request): JsonResponse
     {
-        $perPage = (int) $request->integer('per_page', 15);
-
         $page = $this->errorCodeService->searchAndFilter(
             search: $request->string('search')->toString() ?: null,
-            filterApp: $request->filled('application_id') ? (int) $request->input('application_id') : null,
-            perPage: $perPage > 0 ? $perPage : 15,
+            filterApp: $request->input('application_id') ? (int) $request->input('application_id') : null,
+            sortBy: $request->string('sort_by')->toString() ?: null,
+            sortDir: $request->string('sort_dir')->toString() ?: null,
+            perPage: $request->perPage(),
         );
 
         return $this->paginated($page, ErrorCodeResource::class, $request);

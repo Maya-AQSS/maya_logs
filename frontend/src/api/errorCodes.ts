@@ -9,6 +9,8 @@ export type ErrorCodesFilters = {
   application_id?: number | null;
   per_page?: number | null;
   page?: number | null;
+  sort_by?: string | null;
+  sort_dir?: string | null;
 };
 
 export type ErrorCodePayload = {
@@ -26,6 +28,8 @@ function buildQuery(filters: ErrorCodesFilters): string {
   if (filters.application_id != null) qs.set('application_id', String(filters.application_id));
   if (filters.per_page != null) qs.set('per_page', String(filters.per_page));
   if (filters.page != null) qs.set('page', String(filters.page));
+  if (filters.sort_by) qs.set('sort_by', filters.sort_by);
+  if (filters.sort_dir) qs.set('sort_dir', filters.sort_dir);
   return qs.toString();
 }
 

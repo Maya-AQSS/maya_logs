@@ -5,7 +5,7 @@ import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
 
 export type { Log, LogSeverity, LogStreamItem, LogStreamPayload } from '../types/logs';
 
-export type LogsSortBy = 'created_at' | 'severity' | 'application' | 'resolved';
+export type LogsSortBy = 'created_at' | 'severity' | 'application';
 
 export type LogsFilters = {
   search?: string | null;

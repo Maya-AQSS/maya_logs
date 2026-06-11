@@ -43,10 +43,12 @@ class ErrorCodeService implements ErrorCodeServiceInterface
     public function searchAndFilter(
         ?string $search,
         ?int $filterApp,
+        ?string $sortBy = null,
+        ?string $sortDir = null,
         int $perPage = 15
     ): PaginatedDto {
         return PaginatedDto::fromPaginator(
-            $this->errorCodeRepository->searchAndFilter($search, $filterApp, $perPage),
+            $this->errorCodeRepository->searchAndFilter($search, $filterApp, $sortBy, $sortDir, $perPage),
             static fn (ErrorCode $m) => ErrorCodeDto::fromModel($m),
         );
     }
