@@ -8,6 +8,7 @@ import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
 import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 
 const useLogDetailQuery = createDataHook<number, LogDetailResponse>({
   queryKey: (id) => ['log', id],
@@ -31,6 +32,7 @@ export function LogDetailPage() {
   const { hasPermission } = useUserProfile();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { goBack } = useBackNavigation({ fallback: '/logs' });
   const canResolve = hasPermission(LOGS_PERMISSIONS.update);
   const canArchive = hasPermission(LOGS_PERMISSIONS.archivedLogsCreate);
 
@@ -86,7 +88,7 @@ export function LogDetailPage() {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.show}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
+          <PageTitle title={t('detail.title')} onBack={() => goBack()} backLabel={t('actions.back')} />
           <Card padding="lg" radius="xl" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
             {t('detail.notFound')}
           </Card>
@@ -103,7 +105,7 @@ export function LogDetailPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
-        onBack={() => navigate(-1)}
+        onBack={() => goBack()}
         backLabel={t('actions.back')}
         actions={
           <>

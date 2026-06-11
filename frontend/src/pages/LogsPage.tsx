@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { buildBackState } from '@ceedcv-maya/shared-hooks-react';
 import {
   Alert,
   DataTable,
@@ -165,6 +166,7 @@ export function LogsPage() {
   const { t: tCommon } = useTranslation('common');
   const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
+  const location = useLocation();
   const canOpenDetail = hasPermission(LOGS_PERMISSIONS.show);
   const [searchParams, setSearchParams] = useSearchParams();
   const { hiddenIds, toggleHidden, pageSize, setPageSize } = useTablePreferences({
@@ -411,7 +413,11 @@ export function LogsPage() {
             setPageSize(size)
             setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
           }}
-          onRowClick={canOpenDetail ? (l) => navigate(`/logs/${l.id}`) : undefined}
+          onRowClick={
+            canOpenDetail
+              ? (l) => navigate(`/logs/${l.id}`, { state: buildBackState(location) })
+              : undefined
+          }
           emptyMessage={t('table.emptyText')}
         />
       </div>

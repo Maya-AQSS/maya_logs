@@ -10,7 +10,7 @@ import {
   TextInput,
 } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -30,6 +30,7 @@ import {
 } from '../schemas/archivedLog';
 import type { ArchivedLog } from '../types/logs';
 import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 
 const useArchivedLogDetailQuery = createDataHook<number, ArchivedLog>({
   queryKey: (id) => ['archived-log', id],
@@ -61,7 +62,7 @@ export function ArchivedLogDetailPage() {
   const { t } = useTranslation('archivedLogs');
   const { hasPermission } = useUserProfile();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { goBack } = useBackNavigation({ fallback: '/archived-logs' });
   const canShow = hasPermission(LOGS_PERMISSIONS.archivedLogsShow);
   const canUpdate = hasPermission(LOGS_PERMISSIONS.archivedLogsUpdate);
   const canDelete = hasPermission(LOGS_PERMISSIONS.archivedLogsDelete);
@@ -135,19 +136,19 @@ export function ArchivedLogDetailPage() {
     if (!validId) return;
     setDeleteError(null);
     deleteMutation.mutate(logId, {
-      onSuccess: () => navigate('/archived-logs'),
+      onSuccess: () => goBack({ replace: true }),
       onError: (e) => {
         setDeleteError(e instanceof Error ? e.message : String(e));
         setConfirmDelete(false);
       },
     });
-  }, [logId, validId, navigate, deleteMutation]);
+  }, [logId, validId, goBack, deleteMutation]);
 
   if (notFound) {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title={t('detail.title')} onBack={() => navigate(-1)} backLabel={t('actions.back')} />
+          <PageTitle title={t('detail.title')} onBack={() => goBack()} backLabel={t('actions.back')} />
           <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
             {t('detail.notFound')}
           </Card>
@@ -161,7 +162,7 @@ export function ArchivedLogDetailPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
-        onBack={() => navigate(-1)}
+        onBack={() => goBack()}
         backLabel={t('actions.back')}
         actions={
           log && !editing ? (

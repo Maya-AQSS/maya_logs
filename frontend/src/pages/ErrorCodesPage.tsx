@@ -11,9 +11,9 @@ import {
   useTablePreferences,
   type ColumnDef,
 } from '@ceedcv-maya/shared-ui-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useServerTable } from '@ceedcv-maya/shared-hooks-react';
+import { buildBackState, useServerTable } from '@ceedcv-maya/shared-hooks-react';
 import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
@@ -48,6 +48,7 @@ export function ErrorCodesPage() {
   const { hasPermission } = useUserProfile();
   const canCreate = hasPermission(LOGS_PERMISSIONS.errorCodeCreate);
   const navigate = useNavigate();
+  const location = useLocation();
   const { hiddenIds, toggleHidden } = useTablePreferences({
     storageKey: 'maya:logs:error-codes-table',
   });
@@ -157,6 +158,7 @@ export function ErrorCodesPage() {
             canCreate ? (
               <Link
                 to="/error-codes/create"
+                state={buildBackState(location)}
                 className="inline-flex items-center bg-odoo-purple dark:bg-odoo-dark-purple text-text-inverse border-odoo-purple dark:border-odoo-dark-purple hover:bg-odoo-purple-d dark:hover:bg-odoo-dark-purple-d hover:border-odoo-purple-d dark:hover:border-odoo-dark-purple-d px-4 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border shadow-sm"
               >
                 {t('actions.new')}
@@ -197,7 +199,7 @@ export function ErrorCodesPage() {
                 onSortChange={table.onSortChange}
                 pageSize={table.pageSize}
                 onPageSizeChange={table.onPageSizeChange}
-                onRowClick={(ec) => navigate(`/error-codes/${ec.id}`)}
+                onRowClick={(ec) => navigate(`/error-codes/${ec.id}`, { state: buildBackState(location) })}
                 emptyMessage={t('emptyFiltered')}
               />
             </div>

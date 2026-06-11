@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { buildBackState } from '@ceedcv-maya/shared-hooks-react';
 import {
   Alert,
   Card,
@@ -163,6 +164,7 @@ export function ArchivedLogsPage() {
   const { dateLocale } = useLocale();
   const { hasPermission } = useUserProfile();
   const navigate = useNavigate();
+  const location = useLocation();
   const canIndex = hasPermission(LOGS_PERMISSIONS.archivedLogsIndex);
   const canShow = hasPermission(LOGS_PERMISSIONS.archivedLogsShow);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -360,7 +362,11 @@ export function ArchivedLogsPage() {
                 setPageSize(size)
                 setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
               }}
-              onRowClick={canShow ? (l) => navigate(`/archived-logs/${l.id}`) : undefined}
+              onRowClick={
+                canShow
+                  ? (l) => navigate(`/archived-logs/${l.id}`, { state: buildBackState(location) })
+                  : undefined
+              }
               emptyMessage={t('columns.emptyText')}
             />
           </div>

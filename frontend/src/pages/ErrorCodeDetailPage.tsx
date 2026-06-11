@@ -3,7 +3,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@ceedcv-maya/shared-ui-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 import { fetchApplications } from '../api/applications';
 import {
   deleteErrorCode,
@@ -54,7 +55,7 @@ function toPayload(form: ErrorCodeFormInput): Partial<ErrorCodePayload> {
 
 export function ErrorCodeDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { goBack } = useBackNavigation({ fallback: '/error-codes' });
   const { t } = useTranslation(['errorCodes', 'common', 'comments']);
   const { hasPermission } = useUserProfile();
   const canUpdate = hasPermission(LOGS_PERMISSIONS.errorCodeUpdate);
@@ -161,13 +162,13 @@ export function ErrorCodeDetailPage() {
     setDeleteError(null);
     try {
       await deleteErrorCode(errorCodeId);
-      navigate('/error-codes');
+      goBack({ replace: true });
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : String(e));
       setDeleting(false);
       setConfirmDelete(false);
     }
-  }, [errorCodeId, validId, navigate]);
+  }, [errorCodeId, validId, goBack]);
 
   if (state.status === 'not-found') {
     return (
@@ -175,7 +176,7 @@ export function ErrorCodeDetailPage() {
         <div className="px-4 py-6 sm:px-6 lg:px-8">
           <PageTitle
             title={t('errorCodes:detailTitle')}
-            onBack={() => navigate(-1)}
+            onBack={() => goBack()}
             backLabel={t('common:actions.back')}
           />
           <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
@@ -193,7 +194,7 @@ export function ErrorCodeDetailPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={ec ? t('errorCodes:detailTitleWithCode', { code: ec.code }) : t('errorCodes:detailTitle')}
-        onBack={() => navigate(-1)}
+        onBack={() => goBack()}
         backLabel={t('common:actions.back')}
         actions={
           ec && !editing ? (

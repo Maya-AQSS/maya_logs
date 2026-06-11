@@ -3,7 +3,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { Alert, Button, Card, PageTitle } from '@ceedcv-maya/shared-ui-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 import { fetchApplications, type ApplicationScope } from '../api/applications';
 import { createErrorCode, type ErrorCodePayload } from '../api/errorCodes';
 import { ErrorCodeForm } from '../components/error-codes';
@@ -42,6 +43,8 @@ function toPayload(form: ErrorCodeFormInput): ErrorCodePayload {
 
 export function ErrorCodeCreatePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { goBack } = useBackNavigation({ fallback: '/error-codes' });
   const { t } = useTranslation(['errorCodes', 'common']);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -58,7 +61,10 @@ export function ErrorCodeCreatePage() {
   const onSubmit = methods.handleSubmit((values) => {
     setSaveError(null);
     createMutation.mutate(toPayload(values), {
-      onSuccess: (created) => navigate(`/error-codes/${created.id}`),
+      // replace + reenvío de la pila backTo: el formulario no queda en el
+      // history y el Volver del nuevo detalle regresa al listado filtrado.
+      onSuccess: (created) =>
+        navigate(`/error-codes/${created.id}`, { replace: true, state: location.state }),
       onError: (e) => setSaveError(e instanceof Error ? e.message : String(e)),
     });
   });
@@ -70,7 +76,7 @@ export function ErrorCodeCreatePage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <PageTitle
         title={t('errorCodes:createTitle')}
-        onBack={() => navigate(-1)}
+        onBack={() => goBack()}
         backLabel={t('common:actions.back')}
       />
 
