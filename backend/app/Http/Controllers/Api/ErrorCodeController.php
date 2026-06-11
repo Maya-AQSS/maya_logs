@@ -30,7 +30,7 @@ class ErrorCodeController extends Controller
             filterApp: $request->input('application_id') ? (int) $request->input('application_id') : null,
             sortBy: $request->string('sort_by')->toString() ?: null,
             sortDir: $request->string('sort_dir')->toString() ?: null,
-            perPage: $request->perPage(),
+            perPage: $request->getPerPage(),
         );
 
         return $this->paginated($page, ErrorCodeResource::class, $request);

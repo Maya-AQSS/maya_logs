@@ -21,6 +21,8 @@ interface ErrorCodeServiceInterface
     public function searchAndFilter(
         ?string $search,
         ?int $filterApp,
+        ?string $sortBy = null,
+        ?string $sortDir = null,
         int $perPage = 15
     ): PaginatedDto;
 
