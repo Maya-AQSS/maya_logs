@@ -80,6 +80,7 @@ export default function App() {
       dashboardApiUrl={DASHBOARD_API_URL}
       navItems={navItems}
       loginPermission={LOGS_PERMISSIONS.login}
+      portalLoginSlug="dashboard.login"
       loadingInitializingMessage={t('auth.initializing')}
       loadingRedirectingMessage={t('auth.redirecting')}
       loadingProfileMessage={t('auth.initializing')}
