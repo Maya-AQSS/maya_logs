@@ -8,10 +8,12 @@ use App\Enums\ApplicationPluckScope;
 use App\Repositories\Contracts\ApplicationRepositoryInterface;
 use App\Services\Contracts\ApplicationServiceInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
+use Maya\Platform\Support\CachesFilterOptions;
 
 class ApplicationService implements ApplicationServiceInterface
 {
+    use CachesFilterOptions;
+
     private const CACHE_TTL_SECONDS = 300;
 
     public function __construct(
@@ -22,10 +24,8 @@ class ApplicationService implements ApplicationServiceInterface
     {
         // v2: clave versionada. Si la firma del closure cambia (array ↔ Collection)
         // bumpear el sufijo invalida implícitamente caché stale tras deploy/reset.
-        $key = 'applications:pluck_for_filter:v2:'.$scope->value;
-
-        return Cache::remember(
-            $key,
+        return $this->rememberFilterOptions(
+            'applications:pluck_for_filter:v2:'.$scope->value,
             self::CACHE_TTL_SECONDS,
             fn (): Collection => $this->applicationRepository->pluckForFilter($scope)
         );
