@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Exceptions\UnrecoverableIngestionException;
+use Maya\Messaging\Exceptions\UnrecoverableIngestionException;
 use App\Repositories\Contracts\LogIngestionRepositoryInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
