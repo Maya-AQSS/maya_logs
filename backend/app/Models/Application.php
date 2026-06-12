@@ -5,24 +5,15 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Maya\Profile\Models\ReadOnlyFdwApplication;
 
-class Application extends Model
+// applications es una vista sobre FDW → maya_auth — solo lectura.
+// La configuración read-only (UPDATED_AT null, guarded *, cast created_at)
+// vive en la base compartida; aquí solo las relaciones propias de logs.
+class Application extends ReadOnlyFdwApplication
 {
     use HasFactory;
-
-    public const UPDATED_AT = null;
-
-    // applications es una vista sobre FDW → maya_auth — solo lectura
-    protected $guarded = ['*'];
-
-    protected function casts(): array
-    {
-        return [
-            'created_at' => 'datetime',
-        ];
-    }
 
     public function logs(): HasMany
     {
