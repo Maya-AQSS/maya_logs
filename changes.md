@@ -76,3 +76,22 @@ Los refactors que preservan comportamiento NO se registran aquí.
   grepee los logs internos del worker por el prefijo literal.
 - **Impacto en cliente**: ninguno.
 - **Decidido por**: agente unify-cross-app (fase logs), según PLAN §7.
+
+## [UNIFY-LOGS-4] Telemetría LAR-LOG-010 en 404 de error-codes update/destroy/comments
+
+- **Fecha**: 2026-06-12
+- **Severidad**: INFO
+- **Qué cambió**: al pasar los lookups de `ErrorCodeController.update/destroy`
+  y la verificación del padre en `ErrorCodeCommentController` por
+  `ErrorCodeService` (cumplimiento de capas F4-B2), un id inexistente ahora
+  publica telemetría `LAR-LOG-010` a `maya.logs` (vía `ResilientLogPublisher`),
+  igual que ya hacía `GET /error-codes/{id}`. Antes el `findOrFail` directo del
+  controlador no publicaba nada. La respuesta HTTP (404, mismo JSON) no cambia.
+- **Por qué**: F4-B2 — Controller→Service→Repository estricto; el path de
+  lookup por id del service es el canónico e incluye telemetría.
+- **Endpoint(s) afectado(s)**: `PUT/PATCH|DELETE /api/v1/error-codes/{id}`,
+  `GET|POST /api/v1/error-codes/{id}/comments` (solo cuando el id no existe).
+- **Impacto en cliente**: ninguno en el wire format; solo más eventos de
+  telemetría interna ante 404.
+- **Decidido por**: agente F4-B2 (maya_logs), excepción de capas aceptada
+  "modelo solo para authorize vía service".
