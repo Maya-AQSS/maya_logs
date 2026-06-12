@@ -107,12 +107,15 @@ describe('logs API', () => {
       expect(call).toContain('page=2');
     });
 
-    it('application_id=0 sí se incluye (0 != null)', async () => {
+    it('application_id=0 se omite (buildQueryString canónica trata 0 como "sin filtro")', async () => {
+      // Cambio de semántica respecto al buildLogsQuery local (0.16.0): la
+      // canónica omite 0/false. Ningún call site real produce 0 — los ids de
+      // aplicación del backend son siempre > 0.
       vi.mocked(apiGetJson).mockResolvedValue({ data: [] } as any);
 
       await fetchLogs({ application_id: 0 });
 
-      expect(apiGetJson).toHaveBeenCalledWith('logs?application_id=0');
+      expect(apiGetJson).toHaveBeenCalledWith('logs');
     });
 
     it('per_page=null y page=null no se serializan', async () => {

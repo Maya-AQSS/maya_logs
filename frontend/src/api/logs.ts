@@ -1,4 +1,9 @@
-import type { ApiEnvelope, PaginatedResponse, SortDir } from '@ceedcv-maya/shared-auth-react';
+import {
+  buildQueryString,
+  type ApiEnvelope,
+  type PaginatedResponse,
+  type SortDir,
+} from '@ceedcv-maya/shared-auth-react';
 import type { Log, LogStreamPayload } from '../types/logs';
 import { ApiHttpError, apiFetchJson, apiGetJson, buildApiUrl, getBearerToken } from './http';
 import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
@@ -33,29 +38,17 @@ export type ArchiveLogResponse = {
 
 export type ResolveLogResponse = ApiEnvelope<{ id: number; resolved: true }>;
 
-function buildLogsQuery(filters: LogsFilters): string {
-  const qs = new URLSearchParams();
-  if (filters.search) qs.set('search', filters.search);
-  if (filters.severity && filters.severity.length > 0) {
-    qs.set('severity', filters.severity.join(','));
-  }
-  if (filters.application_id != null) qs.set('application_id', String(filters.application_id));
-  if (filters.archived) qs.set('archived', filters.archived);
-  if (filters.resolved) qs.set('resolved', filters.resolved);
-  if (filters.date_from) qs.set('date_from', filters.date_from);
-  if (filters.date_to) qs.set('date_to', filters.date_to);
-  if (filters.sort_by) qs.set('sort_by', filters.sort_by);
-  if (filters.sort_dir) qs.set('sort_dir', filters.sort_dir);
-  if (filters.per_page != null) qs.set('per_page', String(filters.per_page));
-  if (filters.page != null) qs.set('page', String(filters.page));
-  return qs.toString();
-}
-
-/** GET /api/v1/logs — listado paginado con filtros. */
+/**
+ * GET /api/v1/logs — listado paginado con filtros.
+ *
+ * Serialización via `buildQueryString` canónica (shared-auth-react 0.16.0):
+ * misma semántica que el buildLogsQuery local que sustituye (omite null/
+ * undefined/''/arrays vacíos; arrays → CSV) salvo que también omite `0` y
+ * `false` — verificado: ningún call site produce esos valores (los ids de
+ * aplicación del backend son siempre > 0 y no hay filtros booleanos).
+ */
 export async function fetchLogs(filters: LogsFilters = {}): Promise<PaginatedResponse<Log>> {
-  const qs = buildLogsQuery(filters);
-  const path = qs === '' ? 'logs' : `logs?${qs}`;
-  return apiGetJson<PaginatedResponse<Log>>(path);
+  return apiGetJson<PaginatedResponse<Log>>(`logs${buildQueryString(filters)}`);
 }
 
 /** GET /api/v1/logs/{id} — detalle + id del ArchivedLog asociado si existe. */
