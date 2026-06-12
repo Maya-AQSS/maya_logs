@@ -4,66 +4,41 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use Maya\Auth\Dtos\JwtProfileDto;
-use App\Http\Controllers\Controller;
+use App\Dtos\CommentDto;
 use App\Http\Requests\Api\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
+use App\Models\ArchivedLog;
 use App\Services\Contracts\ArchivedLogServiceInterface;
 use App\Services\Contracts\CommentServiceInterface;
 use App\Services\PanelUserService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class ArchivedLogCommentController extends Controller
+class ArchivedLogCommentController extends AbstractCommentController
 {
     public function __construct(
-        private readonly PanelUserService $panelUserService,
+        PanelUserService $panelUserService,
+        CommentServiceInterface $commentService,
         private readonly ArchivedLogServiceInterface $archivedLogService,
-        private readonly CommentServiceInterface $commentService,
-    ) {}
-
-    public function index(int $archivedLogId): AnonymousResourceCollection
-    {
-        // Verify the ArchivedLog exists
-        $this->archivedLogService->findModelOrFail($archivedLogId);
-
-        return CommentResource::collection(
-            $this->commentService->listForCommentable('App\Models\ArchivedLog', $archivedLogId),
-        );
+    ) {
+        parent::__construct($panelUserService, $commentService);
     }
 
-    public function store(StoreCommentRequest $request, int $archivedLogId): JsonResponse
+    protected function commentableType(): string
     {
-        // Verify the ArchivedLog exists
-        $this->archivedLogService->findModelOrFail($archivedLogId);
+        return ArchivedLog::class;
+    }
 
-        $jwtProfile = $this->extractJwtProfile($request);
-        $user = $this->panelUserService->resolveFromJwtProfile($jwtProfile);
+    protected function assertParentExists(int $parentId): void
+    {
+        $this->archivedLogService->findOrFail($parentId);
+    }
 
-        $dto = $this->commentService->createForCommentable(
-            'App\Models\ArchivedLog',
-            $archivedLogId,
-            $user->id,
-            $request->validated('content'),
-        );
-
+    /**
+     * Wire format histórico de este endpoint: recurso pelado SIN envelope
+     * `data` (a diferencia de error-codes). Se preserva tal cual.
+     */
+    protected function storeResponse(CommentDto $dto, StoreCommentRequest $request): JsonResponse
+    {
         return response()->json(new CommentResource($dto), 201);
-    }
-
-    private function extractJwtProfile(Request $request): JwtProfileDto
-    {
-        $jwtProfile = JwtProfileDto::fromRequestAttribute($request);
-
-        if ($jwtProfile === null) {
-            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
-                'error' => [
-                    'code' => 'actor_missing',
-                    'message' => __('logs.actor_missing'),
-                ],
-            ], 403));
-        }
-
-        return $jwtProfile;
     }
 }
