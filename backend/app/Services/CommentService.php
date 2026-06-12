@@ -7,10 +7,10 @@ namespace App\Services;
 use App\Dtos\CommentDto;
 use App\Models\ArchivedLog;
 use App\Models\Comment;
+use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use App\Repositories\Contracts\CommentRepositoryInterface;
 use App\Services\Contracts\CommentContentSanitizerInterface;
 use App\Services\Contracts\CommentServiceInterface;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 use Maya\Messaging\Publishers\NotificationPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
@@ -31,6 +31,7 @@ final class CommentService implements CommentServiceInterface
         private readonly ResilientLogPublisher $resilientLogPublisher,
         private readonly CommentContentSanitizerInterface $contentSanitizer,
         private readonly NotificationPublisher $notificationPublisher,
+        private readonly ArchivedLogRepositoryInterface $archivedLogRepository,
     ) {}
 
     private function messagingAppSlug(): string
@@ -116,7 +117,7 @@ final class CommentService implements CommentServiceInterface
         }
 
         try {
-            $archivedLog = ArchivedLog::query()->findOrFail($commentableId);
+            $archivedLog = $this->archivedLogRepository->findOrFail($commentableId);
         } catch (Throwable) {
             return;
         }
@@ -194,5 +195,4 @@ final class CommentService implements CommentServiceInterface
             throw $e;
         }
     }
-
 }
