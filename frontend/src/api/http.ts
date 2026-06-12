@@ -1,15 +1,17 @@
 /**
  * Cliente HTTP autenticado — delegado al factory de @ceedcv-maya/shared-auth-react.
- * El Bearer lo añade la instancia Keycloak de {@link ../auth/oidcAdapter}.
+ * `createServiceApiClient` resuelve la baseUrl (VITE_API_URL override o
+ * `peerOrigin('logs-api')/api/v1`) y el Bearer lo añade la instancia Keycloak
+ * de {@link ../auth/oidcAdapter}.
  */
-import { createApiClient, ApiHttpError, type ApiFetchOptions } from '@ceedcv-maya/shared-auth-react'
+import { createServiceApiClient, ApiHttpError, type ApiFetchOptions } from '@ceedcv-maya/shared-auth-react'
 import { oidcAuthService } from '../auth/oidcAdapter'
-import { peerOrigin } from '../lib/peerService'
 
-const baseUrl = ((import.meta.env.VITE_API_URL as string | undefined)?.trim())
-  || `${peerOrigin('logs-api')}/api/v1`
-
-const client = createApiClient(oidcAuthService.keycloak, baseUrl)
+const client = createServiceApiClient(
+  'logs-api',
+  oidcAuthService.keycloak,
+  import.meta.env.VITE_API_URL as string | undefined,
+)
 
 export { ApiHttpError, type ApiFetchOptions }
 export const { apiFetchJson, apiGetJson, buildApiUrl, getBearerToken } = client

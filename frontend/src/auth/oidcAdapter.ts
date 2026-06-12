@@ -5,15 +5,10 @@
  *
  * Identidad y permisos de negocio: GET /api/v1/me.
  */
-import { AuthService } from '@ceedcv-maya/shared-auth-react';
+import { createOidcAdapter } from '@ceedcv-maya/shared-auth-react';
 
-export const oidcAuthService = new AuthService({
+export const { oidcAuthService, appendBearerAuthorization, triggerSignIn } = createOidcAdapter({
   url: import.meta.env.VITE_KEYCLOAK_URL,
   realm: import.meta.env.VITE_KEYCLOAK_REALM,
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
 });
-
-export const appendBearerAuthorization = (headers: Record<string, string>) =>
-  oidcAuthService.appendBearerAuthorization(headers);
-
-export const triggerSignIn = () => oidcAuthService.triggerSignIn();

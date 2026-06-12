@@ -1,16 +1,10 @@
-import { createEcho } from '@ceedcv-maya/shared-realtime-react'
+import { bootstrapRealtime as sharedBootstrapRealtime } from '@ceedcv-maya/shared-realtime-react'
 import { getBearerToken } from '../api/http'
-import { peerOrigin } from './peerService'
 
+/**
+ * Inicializa Echo/Reverb con el slug 'logs' (deriva `logs-reverb` y `logs-api`
+ * via peerOrigin). No-op si falta VITE_REVERB_APP_KEY — igual que antes.
+ */
 export function bootstrapRealtime(): void {
-  const env = import.meta.env as Record<string, string | undefined>
-  const appKey = env.VITE_REVERB_APP_KEY?.trim()
-  if (!appKey) return // sin config no hay realtime
-
-  const host = env.VITE_REVERB_HOST?.trim() || new URL(peerOrigin('logs-reverb')).hostname
-  const scheme = (env.VITE_REVERB_SCHEME === 'http' ? 'http' : 'https') as 'http' | 'https'
-  const port = Number.parseInt(env.VITE_REVERB_PORT ?? '', 10) || (scheme === 'https' ? 443 : 80)
-  const authEndpoint = `${peerOrigin('logs-api')}/api/v1/broadcasting/auth`
-
-  createEcho({ appKey, host, port, scheme, authEndpoint, getBearerToken })
+  sharedBootstrapRealtime('logs', getBearerToken)
 }
