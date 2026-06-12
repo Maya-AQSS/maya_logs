@@ -1,16 +1,10 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AppLayout } from '@ceedcv-maya/shared-layout-react';
-import { NotificationsBell, SidebarFavorites } from '@ceedcv-maya/shared-sidebar-react';
+import { resolveServiceUrl } from '@ceedcv-maya/shared-auth-react';
+import { MayaAppShell } from '@ceedcv-maya/shared-layout-react';
 import { PlaceholderPage, SkeletonPage } from '@ceedcv-maya/shared-ui-react';
-import { useKeycloakLocaleSync } from '@ceedcv-maya/shared-i18n-react';
-import { useOidcSession } from '@ceedcv-maya/shared-auth-react';
-import { useRequireAppAccess } from '@ceedcv-maya/shared-profile-react';
-import { useRealtimeNotifications } from '@ceedcv-maya/shared-realtime-react';
 import { useNavItems } from './components/layout';
-import { profileDisplayInitials, useUserProfile } from './features/user-profile';
-import { resolveServiceUrl } from './lib/peerService';
 import { LOGS_PERMISSIONS } from './permissions';
 
 // Code-splitting route-level: cada página carga en chunk separado bajo demanda.
@@ -38,6 +32,11 @@ const LogDetailPage = lazy(() =>
 const LogsPage = lazy(() =>
   import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })),
 );
+
+const DASHBOARD_URL = resolveServiceUrl(
+  import.meta.env.VITE_DASHBOARD_URL as string | undefined,
+  'dashboard',
+);
 const DASHBOARD_API_URL = resolveServiceUrl(
   import.meta.env.VITE_DASHBOARD_API_URL as string | undefined,
   'dashboard-api',
@@ -63,106 +62,30 @@ function AppRoutes() {
   );
 }
 
-function AppWithLayout() {
-  const { logout, user } = useOidcSession();
-  const { profile } = useUserProfile();
+/**
+ * Shell unificado (MayaAppShell): OIDC + gate `logs.login` (redirige al portal
+ * si el usuario tiene `dashboard.login`; si no, cierra sesión SSO) + AppLayout
+ * con favoritas/notificaciones. Debe renderizarse dentro de <MayaProviders>.
+ */
+export default function App() {
+  const { t } = useTranslation('auth');
   const navItems = useNavItems();
-  useKeycloakLocaleSync();
-  useRealtimeNotifications({ userId: (user?.sub as string | undefined) ?? null });
-
-  // Prefer backend profile name; fall back to Keycloak token (same pattern as other apps)
-  const tokenDisplayName = ((user?.name ?? user?.preferred_username ?? '') as string).trim();
-  const userName = profile?.name?.trim() || tokenDisplayName;
-  const userInitials = profile
-    ? profileDisplayInitials(profile)
-    : tokenDisplayName
-      ? tokenDisplayName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() || 'U'
-      : 'U';
-
-  const userEmail = (profile?.email ?? user?.email) as string | undefined;
-  const onProfile = () => {
-    const dashboardOrigin = resolveServiceUrl(
-      import.meta.env.VITE_DASHBOARD_URL as string | undefined,
-      'dashboard',
-    );
-    window.location.assign(`${dashboardOrigin}/profile`);
-  };
 
   return (
-    <AppLayout
-      navItems={navItems}
+    <MayaAppShell
       brandName="TraCEED"
       brandVersion="v1.0"
       brandLogoUrl="/favicon.png"
-      userName={userName}
-      userEmail={userEmail}
-      userInitials={userInitials}
-      onLogout={logout}
-      onProfile={onProfile}
-      favoritesSlot={<SidebarFavorites label="Favoritas" dashboardApiUrl={DASHBOARD_API_URL} />}
-      notificationsSlot={<NotificationsBell dashboardApiUrl={DASHBOARD_API_URL} />}
+      dashboardUrl={DASHBOARD_URL}
+      dashboardApiUrl={DASHBOARD_API_URL}
+      navItems={navItems}
+      loginPermission={LOGS_PERMISSIONS.login}
+      loadingInitializingMessage={t('auth.initializing')}
+      loadingRedirectingMessage={t('auth.redirecting')}
+      loadingProfileMessage={t('auth.initializing')}
+      loadingNoPermissionMessage={t('signingOutNoPermission')}
     >
       <AppRoutes />
-    </AppLayout>
+    </MayaAppShell>
   );
-}
-
-function AuthLoadingScreen({ message }: { message: string }) {
-  return (
-    <div className="flex items-center justify-center h-screen bg-ui-body dark:bg-ui-dark-bg text-text-muted dark:text-text-dark-muted font-sans">
-      {message}
-    </div>
-  );
-}
-
-/**
- * Requiere `logs.login` en /me. Si falta:
- *  - Si el usuario tiene `dashboard.login`, redirige al portal (preserva SSO).
- *  - Si no, cierra sesión SSO.
- */
-function AppAfterProfile() {
-  const { t } = useTranslation('auth');
-  const dashboardOrigin = resolveServiceUrl(
-    import.meta.env.VITE_DASHBOARD_URL as string | undefined,
-    'dashboard',
-  );
-  const { profileLoading, lacksLoginPermission } = useRequireAppAccess(
-    LOGS_PERMISSIONS.login,
-    { portalLoginSlug: 'dashboard.login', portalUrl: dashboardOrigin },
-  );
-
-  if (profileLoading) {
-    return <AuthLoadingScreen message={t('auth.initializing')} />;
-  }
-
-  if (lacksLoginPermission) {
-    return (
-      <AuthLoadingScreen
-        message={t('signingOutNoPermission')}
-      />
-    );
-  }
-
-  return <AppWithLayout />;
-}
-
-export default function App() {
-  const { t } = useTranslation('auth');
-  const { isOidcLoading, isOidcSignedIn, beginSignIn } = useOidcSession();
-
-  useEffect(() => {
-    if (!isOidcLoading && !isOidcSignedIn) {
-      beginSignIn();
-    }
-  }, [isOidcLoading, isOidcSignedIn, beginSignIn]);
-
-  if (isOidcLoading) {
-    return <AuthLoadingScreen message={t('auth.initializing')} />;
-  }
-
-  if (!isOidcSignedIn) {
-    return <AuthLoadingScreen message={t('auth.redirecting')} />;
-  }
-
-  return <AppAfterProfile />;
 }
