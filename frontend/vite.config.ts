@@ -23,27 +23,28 @@ const _sharedPackageAliases: Record<string, string> = _sharedOverrideDir
     )
   : {}
 
-import { existsSync, symlinkSync, mkdirSync } from 'node:fs'
+// Bare imports desde los fuentes compartidos (eg. `i18next`) resuelven subiendo
+// desde el override dir. Solo `packages/js` está bind-mounted en el contenedor,
+// así que cualquier `node_modules` por-paquete dejado por un pnpm install del
+// host cuelga. Apuntar la primera parada del walk-up fuera del bind mount —
+// `<override>/../../node_modules` (eg. `/maya_platform/node_modules`,
+// container-local) — a los installs del consumidor. Se recrea en cada eval de
+// la config, así que sobrevive la recreación del contenedor.
+import { lstatSync, readlinkSync, rmSync, symlinkSync } from 'node:fs'
 function _ensureSharedNodeModulesSymlink(): void {
   if (!_sharedOverrideDir) return
   const consumerNodeModules = path.join(appRoot, 'node_modules')
-  const sharedPackages = [
-    'shared-auth-react', 'shared-dashboard-react', 'shared-editor-react',
-    'shared-hooks-react', 'shared-i18n-react', 'shared-layout-react',
-    'shared-profile-react', 'shared-realtime-react', 'shared-sidebar-react',
-    'shared-styles', 'shared-ui-react',
-  ]
-  for (const pkg of sharedPackages) {
-    const pkgDir = path.join(_sharedOverrideDir, pkg)
-    if (!existsSync(pkgDir)) continue
-    const linkPath = path.join(pkgDir, 'node_modules')
-    if (existsSync(linkPath)) continue
-    try {
-      mkdirSync(path.dirname(linkPath), { recursive: true })
-      symlinkSync(consumerNodeModules, linkPath, 'dir')
-    } catch (e) {
-      console.warn(`[Vite] Failed to symlink ${pkg} node_modules:`, (e as Error).message)
+  const linkPath = path.resolve(_sharedOverrideDir, '..', '..', 'node_modules')
+  try {
+    const current = lstatSync(linkPath, { throwIfNoEntry: false })
+    if (current && !current.isSymbolicLink()) return // install real (host run) — no tocar
+    if (current?.isSymbolicLink()) {
+      if (readlinkSync(linkPath) === consumerNodeModules) return
+      rmSync(linkPath)
     }
+    symlinkSync(consumerNodeModules, linkPath, 'dir')
+  } catch (err) {
+    console.warn(`[vite] Failed to symlink ${linkPath}:`, (err as Error).message)
   }
 }
 _ensureSharedNodeModulesSymlink()
