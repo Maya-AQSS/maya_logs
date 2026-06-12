@@ -77,26 +77,23 @@ class AppServiceProvider extends ServiceProvider
     {
         // Bloque de bootstrap FDW compartido (shared-platform-laravel):
         // forceScheme(https) en production/staging, Broadcast::routes bajo
-        // /api/v1 con middleware ['api','jwt'] (default), migraciones de
-        // shared-profile, listener FdwTeardown para migrate:fresh/db:wipe y
-        // guard JWT stateless 'jwt-token' (resuelve App\Models\User por defecto).
-        RegistersFdwBootstrap::register($this);
-
-        // Migraciones FDW compartidas del paquete `ceedcv-maya/shared-profile-laravel`:
+        // /api/v1 con middleware ['api','jwt'] (default), listener FdwTeardown
+        // para migrate:fresh/db:wipe y guard JWT stateless 'jwt-token'
+        // (resuelve App\Models\User por defecto).
+        //
+        // Migraciones FDW compartidas de `ceedcv-maya/shared-profile-laravel`:
         //   - users
         //   - academicAssignments: user_study_types, user_studies, user_course_modules
         //   - teams: teams, team_members
         //   - userPermissions: user_resolved_permissions (la vista remota se
         //     configura por app en `database.fdw.user_permissions.remote_view`).
-        //
-        // NOTA: no se pasan via la opción 'profileMigrations' del helper porque
-        // RegistersFdwBootstrap (0.16.0) invoca ServiceProvider::loadMigrationsFrom(),
-        // que es protected, desde fuera del provider → Error en runtime. Hasta que
-        // el paquete lo corrija (p. ej. via Migrator::path()), se cargan aquí,
-        // dentro del scope del provider, con comportamiento idéntico.
-        $this->loadMigrationsFrom(ProfileMigrations::users());
-        $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
-        $this->loadMigrationsFrom(ProfileMigrations::teams());
-        $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
+        RegistersFdwBootstrap::register($this, [
+            'profileMigrations' => [
+                ProfileMigrations::users(),
+                ProfileMigrations::academicAssignments(),
+                ProfileMigrations::teams(),
+                ProfileMigrations::userPermissions(),
+            ],
+        ]);
     }
 }
