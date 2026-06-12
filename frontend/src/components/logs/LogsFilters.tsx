@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, DatePicker } from '@ceedcv-maya/shared-ui-react';
+import { Button, Card, DatePicker, FieldLabel } from '@ceedcv-maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
 import {
   ApplicationSelect,
+  filterLabelClass,
   ResolvedFilter,
   SearchInput,
   SeverityFilterCheckboxes,
@@ -25,9 +26,6 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
     />
   </svg>
 );
-
-const labelClass =
-  'mb-1 block text-xs font-semibold text-text-secondary dark:text-text-dark-secondary';
 
 export type LogsFiltersState = {
   search: string;
@@ -93,7 +91,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
         {/* Fila 2: fechas + aplicación + estado */}
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex-1 min-w-[110px]">
-            <label className={labelClass}>{t('filters.dateFrom')}</label>
+            <FieldLabel className={filterLabelClass}>{t('filters.dateFrom')}</FieldLabel>
             <DatePicker
               value={value.dateFrom ?? null}
               onChange={(d) => onChange({ dateFrom: d })}
@@ -102,7 +100,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
             />
           </div>
           <div className="flex-1 min-w-[110px]">
-            <label className={labelClass}>{t('filters.dateTo')}</label>
+            <FieldLabel className={filterLabelClass}>{t('filters.dateTo')}</FieldLabel>
             <DatePicker
               value={value.dateTo ?? null}
               onChange={(d) => onChange({ dateTo: d })}

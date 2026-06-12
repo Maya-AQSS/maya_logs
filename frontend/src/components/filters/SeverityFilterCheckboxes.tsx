@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@ceedcv-maya/shared-ui-react';
 import { LOG_SEVERITY_KEYS } from '../../types/logs';
 import { severityLabel } from '../severity';
+import { filterLabelClass } from './fieldStyles';
 
 type SeverityFilterCheckboxesProps = {
   selected: string[];
@@ -27,9 +28,8 @@ export function SeverityFilterCheckboxes({
 
   return (
     <fieldset>
-      <legend className="mb-1 block text-xs font-semibold text-text-secondary dark:text-text-dark-secondary">
-        {resolvedLabel}
-      </legend>
+      {/* <legend> por semántica de fieldset; comparte estilo con FieldLabel+filterLabelClass */}
+      <legend className={`mb-1 block text-xs ${filterLabelClass}`}>{resolvedLabel}</legend>
       <div className="flex flex-wrap gap-x-4 gap-y-1.5">
         {LOG_SEVERITY_KEYS.map((key) => (
           <Checkbox

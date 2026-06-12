@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, DatePicker } from '@ceedcv-maya/shared-ui-react';
+import { Button, Card, DatePicker, FieldLabel } from '@ceedcv-maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
-import { ApplicationSelect, SeverityFilterCheckboxes } from '../filters';
+import { ApplicationSelect, filterLabelClass, SeverityFilterCheckboxes } from '../filters';
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg
@@ -19,9 +19,6 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
     />
   </svg>
 );
-
-const labelClass =
-  'mb-1 block text-xs font-semibold text-text-secondary dark:text-text-dark-secondary';
 
 export type ArchivedLogsFiltersState = {
   severity: string[];
@@ -78,7 +75,7 @@ export function ArchivedLogsFilters({
         {/* Fila 1: fechas + aplicación */}
         <div className="flex flex-wrap items-end gap-2">
           <div className="flex-1 min-w-[110px]">
-            <label className={labelClass}>{tCommon('filters.dateFrom')}</label>
+            <FieldLabel className={filterLabelClass}>{tCommon('filters.dateFrom')}</FieldLabel>
             <DatePicker
               value={value.dateFrom ?? null}
               onChange={(d) => onChange({ dateFrom: d })}
@@ -87,7 +84,7 @@ export function ArchivedLogsFilters({
             />
           </div>
           <div className="flex-1 min-w-[110px]">
-            <label className={labelClass}>{tCommon('filters.dateTo')}</label>
+            <FieldLabel className={filterLabelClass}>{tCommon('filters.dateTo')}</FieldLabel>
             <DatePicker
               value={value.dateTo ?? null}
               onChange={(d) => onChange({ dateTo: d })}
