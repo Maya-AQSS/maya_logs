@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Dtos\JwtProfileDto;
+use Maya\Auth\Dtos\JwtProfileDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\UpdateCommentRequest;
 use App\Http\Resources\CommentResource;
@@ -68,9 +68,7 @@ class CommentController extends Controller
 
     private function extractJwtProfile(Request $request): JwtProfileDto
     {
-        /** @var array<string, mixed>|null $jwtUser */
-        $jwtUser = $request->attributes->get('jwt_user');
-        $jwtProfile = JwtProfileDto::fromRequestAttribute($jwtUser);
+        $jwtProfile = JwtProfileDto::fromRequestAttribute($request);
 
         if ($jwtProfile === null) {
             throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Concerns\ResolvesJwtUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ListLogsRequest;
 use App\Http\Resources\ArchiveLogResultResource;
@@ -14,6 +13,7 @@ use App\Services\Contracts\ArchivedLogServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maya\Auth\Support\JwtSubject;
 use Maya\Http\Concerns\RespondsWithEnvelope;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -21,7 +21,6 @@ use Throwable;
 
 class LogController extends Controller
 {
-    use ResolvesJwtUser;
     use RespondsWithEnvelope;
 
     public function __construct(
@@ -58,7 +57,7 @@ class LogController extends Controller
             ]);
         }
 
-        $jwtSubject = $this->resolveJwtSubject($request);
+        $jwtSubject = JwtSubject::fromRequest($request);
 
         if ($jwtSubject === null) {
             return response()->json([
@@ -97,7 +96,7 @@ class LogController extends Controller
 
     public function resolve(Request $request, int $id): JsonResponse
     {
-        $jwtSubject = $this->resolveJwtSubject($request);
+        $jwtSubject = JwtSubject::fromRequest($request);
 
         if ($jwtSubject === null) {
             return response()->json([

@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Dtos\JwtProfileDto;
 use App\Dtos\UserRefDto;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\PanelUserService;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Request;
+use Maya\Auth\Dtos\JwtProfileDto;
 
 uses(\Tests\TestCase::class);
 
@@ -64,40 +65,52 @@ it('includes user_not_in_directory error code when user missing from db', functi
     }
 });
 
-describe('JwtProfileDto::fromRequestAttribute', function () {
+// Cobertura del DTO compartido (Maya\Auth\Dtos\JwtProfileDto) en los mismos
+// escenarios que cubría el DTO local: fromArray para claims pelados y
+// fromRequestAttribute para el atributo 'jwt_user' del request.
+describe('JwtProfileDto (shared) fromArray / fromRequestAttribute', function () {
     it('creates DTO from valid jwt_user array', function () {
         $jwtUser = ['id' => 'user-uuid-123', 'sub' => 'user-uuid-123'];
-        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        $dto = JwtProfileDto::fromArray($jwtUser);
 
         expect($dto)->not->toBeNull();
         expect($dto->id)->toBe('user-uuid-123');
     });
 
-    it('returns null when jwt_user is not an array', function () {
-        $dto = JwtProfileDto::fromRequestAttribute('invalid-string');
+    it('returns null when jwt_user attribute is not an array', function () {
+        $request = new Request();
+        $request->attributes->set('jwt_user', 'invalid-string');
+
+        $dto = JwtProfileDto::fromRequestAttribute($request);
         expect($dto)->toBeNull();
     });
 
-    it('returns null when jwt_user is null', function () {
-        $dto = JwtProfileDto::fromRequestAttribute(null);
+    it('returns null when jwt_user attribute is missing', function () {
+        $dto = JwtProfileDto::fromRequestAttribute(new Request());
         expect($dto)->toBeNull();
+    });
+
+    it('creates DTO from valid jwt_user request attribute', function () {
+        $request = new Request();
+        $request->attributes->set('jwt_user', ['id' => 'user-uuid-123']);
+
+        $dto = JwtProfileDto::fromRequestAttribute($request);
+        expect($dto)->not->toBeNull();
+        expect($dto->id)->toBe('user-uuid-123');
     });
 
     it('returns null when jwt_user has no id', function () {
-        $jwtUser = ['sub' => 'some-sub'];
-        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        $dto = JwtProfileDto::fromArray(['sub' => 'some-sub']);
         expect($dto)->toBeNull();
     });
 
     it('returns null when jwt_user id is empty string', function () {
-        $jwtUser = ['id' => ''];
-        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        $dto = JwtProfileDto::fromArray(['id' => '']);
         expect($dto)->toBeNull();
     });
 
     it('returns null when jwt_user id is not a string', function () {
-        $jwtUser = ['id' => 123];
-        $dto = JwtProfileDto::fromRequestAttribute($jwtUser);
+        $dto = JwtProfileDto::fromArray(['id' => 123]);
         expect($dto)->toBeNull();
     });
 });

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Dtos\JwtProfileDto;
+use Maya\Auth\Dtos\JwtProfileDto;
 use App\Dtos\UserRefDto;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Exceptions\HttpResponseException;

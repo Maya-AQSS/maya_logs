@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Concerns\ResolvesJwtUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ListArchivedLogsRequest;
 use App\Http\Requests\Api\UpdateArchivedLogRequest;
@@ -15,7 +14,6 @@ use Maya\Http\Concerns\RespondsWithEnvelope;
 
 class ArchivedLogController extends Controller
 {
-    use ResolvesJwtUser;
     use RespondsWithEnvelope;
 
     public function __construct(
