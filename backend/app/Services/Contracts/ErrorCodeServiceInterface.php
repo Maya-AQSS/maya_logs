@@ -29,6 +29,12 @@ interface ErrorCodeServiceInterface
     public function findOrFail(int $id): ErrorCodeDto;
 
     /**
+     * Model lookup for the controller's policy gate (authorize uses the Eloquent
+     * instance). Kept separate from {@see self::findOrFail()} which returns a DTO.
+     */
+    public function findModelOrFail(int $id): ErrorCode;
+
+    /**
      * @param  array<string, mixed>  $data
      */
     public function create(array $data): ErrorCodeDto;

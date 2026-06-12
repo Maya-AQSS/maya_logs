@@ -60,9 +60,9 @@ class ErrorCodeService implements ErrorCodeServiceInterface
 
     /**
      * Sin telemetría en listados (evita ruido); solo se publica a maya.logs si falla la carga por id.
-     * @internal — Use findOrFail() in public API instead.
+     * Público solo para el policy gate del controlador; para el read path usar {@see self::findOrFail()}.
      */
-    private function findModelOrFail(int $id): ErrorCode
+    public function findModelOrFail(int $id): ErrorCode
     {
         try {
             return $this->errorCodeRepository->findOrFail($id);

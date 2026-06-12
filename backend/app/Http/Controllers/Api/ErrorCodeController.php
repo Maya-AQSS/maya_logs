@@ -12,7 +12,6 @@ use App\Http\Resources\ErrorCodeResource;
 use App\Models\ErrorCode;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Maya\Http\Concerns\RespondsWithEnvelope;
 
 class ErrorCodeController extends Controller
@@ -58,8 +57,8 @@ class ErrorCodeController extends Controller
 
     public function update(UpdateErrorCodeRequest $request, int $id): JsonResponse
     {
-        // Load ErrorCode for authorization check
-        $errorCode = ErrorCode::query()->findOrFail($id);
+        // Model lookup vía service: solo para el policy gate
+        $errorCode = $this->errorCodeService->findModelOrFail($id);
 
         $this->authorize('update', $errorCode);
 
@@ -72,8 +71,8 @@ class ErrorCodeController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
-        // Load ErrorCode for authorization check
-        $errorCode = ErrorCode::query()->findOrFail($id);
+        // Model lookup vía service: solo para el policy gate
+        $errorCode = $this->errorCodeService->findModelOrFail($id);
 
         $this->authorize('delete', $errorCode);
 

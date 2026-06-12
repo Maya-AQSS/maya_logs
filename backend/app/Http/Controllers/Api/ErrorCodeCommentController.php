@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use Maya\Auth\Dtos\JwtProfileDto;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreCommentRequest;
 use App\Http\Resources\CommentResource;
-use App\Models\ErrorCode;
 use App\Services\Contracts\CommentServiceInterface;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\PanelUserService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Maya\Auth\Dtos\JwtProfileDto;
 
 class ErrorCodeCommentController extends Controller
 {
@@ -26,8 +26,8 @@ class ErrorCodeCommentController extends Controller
 
     public function index(int $errorCodeId): AnonymousResourceCollection
     {
-        // Verify the ErrorCode exists
-        ErrorCode::query()->findOrFail($errorCodeId);
+        // Verify the ErrorCode exists (vía service, capa Eloquent solo en repos)
+        $this->errorCodeService->findOrFail($errorCodeId);
 
         return CommentResource::collection(
             $this->commentService->listForCommentable('App\Models\ErrorCode', $errorCodeId),
@@ -36,8 +36,8 @@ class ErrorCodeCommentController extends Controller
 
     public function store(StoreCommentRequest $request, int $errorCodeId): JsonResponse
     {
-        // Verify the ErrorCode exists
-        ErrorCode::query()->findOrFail($errorCodeId);
+        // Verify the ErrorCode exists (vía service, capa Eloquent solo en repos)
+        $this->errorCodeService->findOrFail($errorCodeId);
 
         $jwtProfile = $this->extractJwtProfile($request);
         $user = $this->panelUserService->resolveFromJwtProfile($jwtProfile);
@@ -59,7 +59,7 @@ class ErrorCodeCommentController extends Controller
         $jwtProfile = JwtProfileDto::fromRequestAttribute($request);
 
         if ($jwtProfile === null) {
-            throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+            throw new HttpResponseException(response()->json([
                 'error' => [
                     'code' => 'actor_missing',
                     'message' => __('logs.actor_missing'),
