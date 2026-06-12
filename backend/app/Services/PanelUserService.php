@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Maya\Auth\Dtos\JwtProfileDto;
 use App\Dtos\UserRefDto;
+use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Maya\Auth\Dtos\JwtProfileDto;
 
 /**
  * Resuelve el usuario del directorio (vista FDW `users`) a partir del JWT.
@@ -37,5 +38,14 @@ final class PanelUserService
         }
 
         return $user;
+    }
+
+    /**
+     * Devuelve el modelo User SOLO para Gate::forUser (exige Authenticatable).
+     * Excepción de capas aceptada: el modelo no debe usarse para nada más.
+     */
+    public function resolveAuthenticatable(string $id): ?User
+    {
+        return $this->userRepository->findAuthenticatableByKey($id);
     }
 }
