@@ -18,16 +18,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
-
-        $middleware->alias([
+        // Registro común Maya: trustProxies('*') + HandleCors prepended al grupo
+        // api (defaults del helper), más los alias y el prepend propios de logs.
+        \Maya\Http\Support\CommonMiddleware::register($middleware, [
             'jwt' => \Maya\Auth\Middleware\JwtMiddleware::class,
             'permission' => \Maya\Auth\Middleware\RequirePermissionMiddleware::class,
-        ]);
-
-        $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
-            \App\Http\Middleware\SetLocaleFromAcceptLanguage::class,
+        ], [
+            'apiPrepend' => [
+                \App\Http\Middleware\SetLocaleFromAcceptLanguage::class,
+            ],
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -35,6 +34,14 @@ return Application::configure(basePath: dirname(__DIR__))
          * El Handler convierte {@see AuthorizationException} en HttpException antes de los
          * renderables; resolvemos la excepción original con {@see Throwable::getPrevious()}.
          * Solo actuamos en rutas `api/*` o cuando el cliente espera JSON.
+         *
+         * ORDEN DE REGISTRO: este renderable específico DEBE registrarse ANTES que
+         * JsonExceptionRenderer (catch-all). Laravel evalúa los renderables en orden
+         * de registro y devuelve la primera respuesta no-null, por lo que registrar
+         * el específico "después" jamás se ejecutaría: el override se consigue
+         * registrándolo primero. Para AuthorizationException se conserva el shape
+         * propio de logs {error:{code,message}}; el resto de tipos cae en el
+         * renderer JSON uniforme del paquete shared-http ({message,...}).
          */
         $exceptions->renderable(function (\Throwable $e, Request $request) {
             if (!$request->is('api/*') && !$request->expectsJson()) {
@@ -67,4 +74,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 ],
             ], $auth->status() ?? 403);
         });
+
+        // Renderer JSON uniforme para el resto de tipos en rutas api/* (shared-http).
+        // Ver changes.md: el shape de errores no-AuthorizationException pasa del
+        // render por defecto de Laravel al envelope uniforme {message[, errors]}.
+        \Maya\Http\Exceptions\JsonExceptionRenderer::register($exceptions);
     })->create();
