@@ -1,6 +1,8 @@
 /**
- * Re-exporta los símbolos del paquete compartido `@ceedcv-maya/shared-profile-react`
- * tipados con el `MeProfile` propio de la app.
+ * Re-exporta los símbolos del paquete compartido `@ceedcv-maya/shared-profile-react`.
+ * El perfil de logs es el `StandardMeProfile` (idéntico 4/4 apps), así que el
+ * provider pre-cableado con `fetchMe` viene de `createStandardProfileApi`
+ * (instanciado en ../../api/auth).
  */
 import {
   profileDisplayInitials,
@@ -9,7 +11,7 @@ import {
 } from '@ceedcv-maya/shared-profile-react';
 import type { MeProfile } from '../../types/users';
 
-export { UserProfileProvider } from './UserProfileProvider';
+export { StandardUserProfileProvider as UserProfileProvider } from '../../api/auth';
 
 export function useUserProfile(): UserProfileContextValue<MeProfile> {
   return useSharedUserProfile<MeProfile>();

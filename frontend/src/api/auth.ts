@@ -1,9 +1,8 @@
-import { createProfileApi } from '@ceedcv-maya/shared-profile-react';
+import { createStandardProfileApi } from '@ceedcv-maya/shared-profile-react';
 import { apiFetchJson, apiGetJson } from './http';
-import type { MeProfile } from '../types/users';
 
 export type { MeProfile } from '../types/users';
 
-const profileApi = createProfileApi<MeProfile>({ apiFetchJson, apiGetJson });
+const profileApi = createStandardProfileApi({ apiGetJson, apiFetchJson });
 
-export const { fetchMe, updateMyLocale } = profileApi;
+export const { fetchMe, updateMyLocale, StandardUserProfileProvider } = profileApi;
