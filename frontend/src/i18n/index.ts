@@ -1,11 +1,7 @@
-import { createI18n } from '@ceedcv-maya/shared-i18n-react';
-import { NAMESPACES, resources, type SupportedLocale } from './resources';
+import { createAppI18n } from '@ceedcv-maya/shared-i18n-react';
+import { NAMESPACES, resources } from './resources';
 
-const i18n = createI18n(resources, NAMESPACES);
-
-export function changeLocale(locale: SupportedLocale): Promise<unknown> {
-  return i18n.changeLanguage(locale);
-}
+export const { i18n, changeLocale } = createAppI18n(resources, NAMESPACES);
 
 export { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@ceedcv-maya/shared-i18n-react';
 export type { SupportedLocale } from './resources';

@@ -11,27 +11,18 @@ type SearchInputProps = {
 };
 
 /**
- * Wrapper sobre `@ceedcv-maya/shared-ui-react` que rellena los textos por defecto
- * desde `common.filters.search*` cuando no se pasan por props.
+ * Wrapper sobre `@ceedcv-maya/shared-ui-react` que rellena los textos por
+ * defecto desde `common.filters.search*` via las props `defaultLabel`/
+ * `defaultPlaceholder` del componente compartido (0.16.0).
  */
-export function SearchInput({
-  value,
-  onChange,
-  label,
-  hideLabel = false,
-  placeholder,
-  debounceMs = 300,
-}: SearchInputProps) {
+export function SearchInput(props: SearchInputProps) {
   const { t } = useTranslation('common');
 
   return (
     <SharedSearchInput
-      value={value}
-      onChange={onChange}
-      label={label ?? t('filters.searchLabel')}
-      hideLabel={hideLabel}
-      placeholder={placeholder ?? t('filters.searchPlaceholder')}
-      debounceMs={debounceMs}
+      {...props}
+      defaultLabel={t('filters.searchLabel')}
+      defaultPlaceholder={t('filters.searchPlaceholder')}
     />
   );
 }
