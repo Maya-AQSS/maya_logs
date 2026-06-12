@@ -18,7 +18,7 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
-use App\Support\FdwTeardown;
+use Maya\Platform\Support\RegistersFdwBootstrap;
 use Maya\Profile\Migrations as ProfileMigrations;
 use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
@@ -35,13 +35,7 @@ use App\Services\Contracts\LogServiceInterface;
 use App\Services\ErrorCodeService;
 use App\Services\LogService;
 use App\Services\SeverityRankingService;
-use App\Models\User;
 use App\Services\PanelUserService;
-use Illuminate\Console\Events\CommandStarting;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Maya\Profile\Repositories\Contracts\UserProfileResolverInterface;
 
@@ -81,49 +75,28 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if ($this->app->environment(['production', 'staging'])) {
-            URL::forceScheme('https');
-        }
+        // Bloque de bootstrap FDW compartido (shared-platform-laravel):
+        // forceScheme(https) en production/staging, Broadcast::routes bajo
+        // /api/v1 con middleware ['api','jwt'] (default), migraciones de
+        // shared-profile, listener FdwTeardown para migrate:fresh/db:wipe y
+        // guard JWT stateless 'jwt-token' (resuelve App\Models\User por defecto).
+        RegistersFdwBootstrap::register($this);
 
-        // Migraciones FDW compartidas del paquete `maya/shared-profile-laravel`:
+        // Migraciones FDW compartidas del paquete `ceedcv-maya/shared-profile-laravel`:
+        //   - users
         //   - academicAssignments: user_study_types, user_studies, user_course_modules
         //   - teams: teams, team_members
         //   - userPermissions: user_resolved_permissions (la vista remota se
         //     configura por app en `database.fdw.user_permissions.remote_view`).
-        // dms carga solo los dos primeros grupos (tiene su propio modelo de
-        // permisos basado en `permission_code`).
-                // Broadcasting auth endpoint protegido por JWT y bajo prefijo /api/v1 para
-        // consistencia con el resto de la API. Anula el `/broadcasting/auth` que
-        // Laravel registra por defecto con middleware `web` (basado en sesión).
-        Broadcast::routes([
-            'prefix' => 'api/v1',
-            'middleware' => ['api', 'jwt'],
-        ]);
-
+        //
+        // NOTA: no se pasan via la opción 'profileMigrations' del helper porque
+        // RegistersFdwBootstrap (0.16.0) invoca ServiceProvider::loadMigrationsFrom(),
+        // que es protected, desde fuera del provider → Error en runtime. Hasta que
+        // el paquete lo corrija (p. ej. via Migrator::path()), se cargan aquí,
+        // dentro del scope del provider, con comportamiento idéntico.
         $this->loadMigrationsFrom(ProfileMigrations::users());
         $this->loadMigrationsFrom(ProfileMigrations::academicAssignments());
         $this->loadMigrationsFrom(ProfileMigrations::teams());
         $this->loadMigrationsFrom(ProfileMigrations::userPermissions());
-
-        // db:wipe no elimina vistas ni foreign tables FDW (las crea el paquete
-        // shared-profile). Las limpiamos antes de migrate:fresh/db:wipe para que
-        // la reconstrucción sea reproducible (si no, el rewrite de la vista
-        // `teams` falla con «cannot drop columns from view»).
-        Event::listen(CommandStarting::class, static function (CommandStarting $event): void {
-            if (in_array($event->command, ['migrate:fresh', 'db:wipe'], true)) {
-                FdwTeardown::dropAllInPublicSchema();
-            }
-        });
-
-        // Guard JWT stateless: resuelve el usuario desde el atributo 'jwt_user'
-        // que JwtMiddleware deposita en el request tras validar el token.
-        Auth::viaRequest('jwt-token', function ($request) {
-            $profile = $request->attributes->get('jwt_user');
-            if (! is_array($profile) || empty($profile['id'])) {
-                return null;
-            }
-
-            return User::query()->find($profile['id']);
-        });
     }
 }
