@@ -6,9 +6,9 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\ErrorCode;
 use App\Repositories\Contracts\ErrorCodeRepositoryInterface;
-use App\Support\LikeEscaper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Maya\Search\AccentFold;
 
 class ErrorCodeRepository implements ErrorCodeRepositoryInterface
 {
@@ -40,8 +40,12 @@ class ErrorCodeRepository implements ErrorCodeRepositoryInterface
         int $perPage = 15
     ): LengthAwarePaginator {
         $driver = DB::connection()->getDriverName();
+
+        // Accent-folding compartido (Maya\Search\AccentFold): needle plegado en PHP,
+        // columnas plegadas en SQL driver-aware ("facturacion" encuentra "Facturación").
+        // Escape de comodines con backslash — sin cláusula ESCAPE '!'.
         $escapedSearch = $search !== null && trim($search) !== ''
-            ? LikeEscaper::escapeLikePattern(trim($search))
+            ? AccentFold::escapeLike(AccentFold::fold(trim($search)))
             : null;
 
         $sortDir = in_array($sortDir, self::SORT_DIRECTIONS, true) ? $sortDir : 'asc';
@@ -61,21 +65,14 @@ class ErrorCodeRepository implements ErrorCodeRepositoryInterface
         return $query
             ->when($escapedSearch !== null, function ($query) use ($driver, $escapedSearch) {
                 $pattern = '%'.$escapedSearch.'%';
-                $esc = LikeEscaper::LIKE_ESCAPE_CHARACTER;
-                if ($driver === 'pgsql') {
-                    $query->where(function ($query) use ($pattern, $esc) {
-                        $query->whereRaw("code ILIKE ? ESCAPE '".$esc."'", [$pattern])
-                            ->orWhereRaw("name ILIKE ? ESCAPE '".$esc."'", [$pattern]);
-                    });
-                } else {
-                    /*
-                    SQLite u otros: LIKE con ESCAPE (misma semántica de comodines) y LOWER para aproximar ILIKE.
-                    */
-                    $query->where(function ($query) use ($pattern, $esc) {
-                        $query->whereRaw("LOWER(code) LIKE LOWER(?) ESCAPE '".$esc."'", [$pattern])
-                            ->orWhereRaw("LOWER(name) LIKE LOWER(?) ESCAPE '".$esc."'", [$pattern]);
-                    });
-                }
+
+                [$codeExpr, $codeBindings] = AccentFold::sqlFoldedLowerColumn('code', $driver);
+                [$nameExpr, $nameBindings] = AccentFold::sqlFoldedLowerColumn('name', $driver);
+
+                $query->where(function ($query) use ($pattern, $codeExpr, $codeBindings, $nameExpr, $nameBindings) {
+                    $query->whereRaw("{$codeExpr} LIKE ?", [...$codeBindings, $pattern])
+                        ->orWhereRaw("{$nameExpr} LIKE ?", [...$nameBindings, $pattern]);
+                });
             })
             ->when($filterApp, fn ($query, $filterApp) => $query->where('application_id', $filterApp))
             ->when(

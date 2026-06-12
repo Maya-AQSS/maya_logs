@@ -10,19 +10,16 @@ use App\Enums\Severity;
 use App\Models\ArchivedLog;
 use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
-use App\Support\LikeEscaper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Maya\Search\AccentFold;
 
 class LogRepository implements LogRepositoryInterface
 {
-    // Mantener la constante para compatibilidad con queries existentes
-    private const LIKE_ESCAPE_CHARACTER = LikeEscaper::LIKE_ESCAPE_CHARACTER;
-
     private const SORT_COLUMN_MAP = [
         'created_at' => 'logs.created_at',
         'severity'   => 'logs.severity',
@@ -82,8 +79,13 @@ class LogRepository implements LogRepositoryInterface
             ? trim($filter->search)
             : null;
 
+        // Accent-folding compartido (Maya\Search\AccentFold): el needle se pliega
+        // en PHP (lowercase + sin acentos) y las columnas se pliegan en SQL de
+        // forma driver-aware, de modo que "facturacion" encuentra "Facturación".
+        // Escape de comodines LIKE con backslash (convención del paquete) — ya no
+        // se necesita cláusula ESCAPE '!'.
         $escapedSearchPattern = $normalizedSearch !== null
-            ? '%'.LikeEscaper::escapeLikePattern($normalizedSearch).'%'
+            ? '%'.AccentFold::escapeLike(AccentFold::fold($normalizedSearch)).'%'
             : null;
 
         $driver = DB::connection()->getDriverName();
@@ -111,25 +113,20 @@ class LogRepository implements LogRepositoryInterface
         }
 
         return $query
-            ->when($normalizedSearch !== null, function ($q) use ($driver, $normalizedSearch, $escapedSearchPattern): void {
+            ->when($normalizedSearch !== null, function ($q) use ($driver, $escapedSearchPattern): void {
                 // La búsqueda cubre: mensaje, código y nombre del error asociado, y fichero.
-                $q->where(function ($inner) use ($driver, $normalizedSearch, $escapedSearchPattern): void {
-                    if ($driver === 'pgsql') {
-                        $esc = self::LIKE_ESCAPE_CHARACTER;
-                        $inner->whereRaw("logs.message ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
-                            ->orWhereRaw("error_codes.code ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
-                            ->orWhereRaw("error_codes.name ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern])
-                            ->orWhereRaw("logs.file ILIKE ? ESCAPE '".$esc."'", [$escapedSearchPattern]);
+                // sqlFoldedLowerColumn: pgsql pliega acentos en SQL; sqlite solo lower()
+                // (el needle ya viene plegado en PHP — mismas garantías que antes).
+                $q->where(function ($inner) use ($driver, $escapedSearchPattern): void {
+                    $first = true;
+                    foreach (['logs.message', 'error_codes.code', 'error_codes.name', 'logs.file'] as $column) {
+                        [$expr, $bindings] = AccentFold::sqlFoldedLowerColumn($column, $driver);
+                        $sql = "{$expr} LIKE ?";
+                        $params = [...$bindings, $escapedSearchPattern];
 
-                        return;
+                        $first ? $inner->whereRaw($sql, $params) : $inner->orWhereRaw($sql, $params);
+                        $first = false;
                     }
-
-                    // Fallback for non-PostgreSQL test environments without wildcard semantics.
-                    $needle = mb_strtolower($normalizedSearch);
-                    $inner->whereRaw('INSTR(LOWER(logs.message), ?) > 0', [$needle])
-                        ->orWhereRaw("INSTR(LOWER(COALESCE(error_codes.code, '')), ?) > 0", [$needle])
-                        ->orWhereRaw("INSTR(LOWER(COALESCE(error_codes.name, '')), ?) > 0", [$needle])
-                        ->orWhereRaw("INSTR(LOWER(COALESCE(logs.file, '')), ?) > 0", [$needle]);
                 });
             })
             ->when($filter->severity, fn ($q) => $q->whereIn('logs.severity', $filter->severity))
