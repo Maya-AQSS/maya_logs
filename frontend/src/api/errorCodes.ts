@@ -1,4 +1,8 @@
-import type { ApiEnvelope, PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
+import {
+  buildQueryString,
+  type ApiEnvelope,
+  type PaginatedResponse,
+} from '@ceedcv-maya/shared-auth-react';
 import type { ErrorCode } from '../types/logs';
 import { apiFetchJson, apiGetJson } from './http';
 
@@ -22,22 +26,17 @@ export type ErrorCodePayload = {
   description?: string | null;
 };
 
-function buildQuery(filters: ErrorCodesFilters): string {
-  const qs = new URLSearchParams();
-  if (filters.search) qs.set('search', filters.search);
-  if (filters.application_id != null) qs.set('application_id', String(filters.application_id));
-  if (filters.per_page != null) qs.set('per_page', String(filters.per_page));
-  if (filters.page != null) qs.set('page', String(filters.page));
-  if (filters.sort_by) qs.set('sort_by', filters.sort_by);
-  if (filters.sort_dir) qs.set('sort_dir', filters.sort_dir);
-  return qs.toString();
-}
-
-/** GET /api/v1/error-codes — paginado. */
+/**
+ * GET /api/v1/error-codes — paginado.
+ *
+ * Serialización vía `buildQueryString` canónica (shared-auth-react): misma
+ * semántica que el `buildQuery` local que sustituye (omite null/undefined/'')
+ * salvo que también omite `0` y `false`. Verificado: ningún call site produce
+ * esos valores (application_id del backend siempre > 0, per_page/page > 0, sin
+ * filtros booleanos).
+ */
 export async function fetchErrorCodes(filters: ErrorCodesFilters = {}): Promise<PaginatedResponse<ErrorCode>> {
-  const qs = buildQuery(filters);
-  const path = qs === '' ? 'error-codes' : `error-codes?${qs}`;
-  return apiGetJson<PaginatedResponse<ErrorCode>>(path);
+  return apiGetJson<PaginatedResponse<ErrorCode>>(`error-codes${buildQueryString(filters)}`);
 }
 
 /** GET /api/v1/error-codes/{id}. */

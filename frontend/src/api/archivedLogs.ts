@@ -1,4 +1,9 @@
-import type { ApiEnvelope, PaginatedResponse, SortDir } from '@ceedcv-maya/shared-auth-react';
+import {
+  buildQueryString,
+  type ApiEnvelope,
+  type PaginatedResponse,
+  type SortDir,
+} from '@ceedcv-maya/shared-auth-react';
 import type { ArchivedLog } from '../types/logs';
 import { apiFetchJson, apiGetJson } from './http';
 
@@ -22,24 +27,17 @@ export type ArchivedLogUpdatePayload = {
   url_tutorial?: string | null;
 };
 
-function buildQuery(filters: ArchivedLogsFilters): string {
-  const qs = new URLSearchParams();
-  if (filters.severity && filters.severity.length > 0) qs.set('severity', filters.severity.join(','));
-  if (filters.application_id != null) qs.set('application_id', String(filters.application_id));
-  if (filters.date_from) qs.set('date_from', filters.date_from);
-  if (filters.date_to) qs.set('date_to', filters.date_to);
-  if (filters.sort_by) qs.set('sort_by', filters.sort_by);
-  if (filters.sort_dir) qs.set('sort_dir', filters.sort_dir);
-  if (filters.per_page != null) qs.set('per_page', String(filters.per_page));
-  if (filters.page != null) qs.set('page', String(filters.page));
-  return qs.toString();
-}
-
-/** GET /api/v1/archived-logs — paginado con filtros. */
+/**
+ * GET /api/v1/archived-logs — paginado con filtros.
+ *
+ * Serialización vía `buildQueryString` canónica (shared-auth-react): misma
+ * semántica que el `buildQuery` local que sustituye (omite null/undefined/''/
+ * arrays vacíos; arrays → CSV) salvo que también omite `0` y `false`.
+ * Verificado: ningún call site produce esos valores (application_id del backend
+ * siempre > 0, per_page/page > 0, sin filtros booleanos).
+ */
 export async function fetchArchivedLogs(filters: ArchivedLogsFilters = {}): Promise<PaginatedResponse<ArchivedLog>> {
-  const qs = buildQuery(filters);
-  const path = qs === '' ? 'archived-logs' : `archived-logs?${qs}`;
-  return apiGetJson<PaginatedResponse<ArchivedLog>>(path);
+  return apiGetJson<PaginatedResponse<ArchivedLog>>(`archived-logs${buildQueryString(filters)}`);
 }
 
 /** GET /api/v1/archived-logs/{id} — detalle con relaciones y `comments_count`. */
