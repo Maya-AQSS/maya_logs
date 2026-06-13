@@ -52,7 +52,7 @@ it('searchAndFilter returns all when no search or filter', function () {
     ErrorCode::create(makeErrorCodeData($this->appId, ['code' => 'ERR_001']));
     ErrorCode::create(makeErrorCodeData($this->appId, ['code' => 'ERR_002']));
 
-    $paginator = $this->repo->searchAndFilter(null, null, 15);
+    $paginator = $this->repo->searchAndFilter(null, null, null, null, 15);
 
     expect($paginator->total())->toBe(2);
 });
@@ -61,7 +61,7 @@ it('searchAndFilter filters by search term (case insensitive)', function () {
     ErrorCode::create(makeErrorCodeData($this->appId, ['code' => 'AUTH_FAIL', 'name' => 'Auth failure']));
     ErrorCode::create(makeErrorCodeData($this->appId, ['code' => 'DB_CONN', 'name' => 'DB connection']));
 
-    $paginator = $this->repo->searchAndFilter('auth', null, 15);
+    $paginator = $this->repo->searchAndFilter('auth', null, null, null, 15);
 
     expect($paginator->total())->toBe(1)
         ->and($paginator->items()[0]->code)->toBe('AUTH_FAIL');
@@ -77,7 +77,7 @@ it('searchAndFilter filters by application id', function () {
     ErrorCode::create(makeErrorCodeData($this->appId, ['code' => 'ERR_APP1']));
     ErrorCode::create(makeErrorCodeData($appId2, ['code' => 'ERR_APP2']));
 
-    $paginator = $this->repo->searchAndFilter(null, $appId2, 15);
+    $paginator = $this->repo->searchAndFilter(null, $appId2, null, null, 15);
 
     expect($paginator->total())->toBe(1)
         ->and($paginator->items()[0]->code)->toBe('ERR_APP2');
@@ -86,7 +86,7 @@ it('searchAndFilter filters by application id', function () {
 it('searchAndFilter returns empty when search matches nothing', function () {
     ErrorCode::create(makeErrorCodeData($this->appId));
 
-    $paginator = $this->repo->searchAndFilter('XYZNOTFOUND', null, 15);
+    $paginator = $this->repo->searchAndFilter('XYZNOTFOUND', null, null, null, 15);
 
     expect($paginator->total())->toBe(0);
 });
@@ -117,7 +117,7 @@ it('creates an error code', function () {
 it('updates an error code', function () {
     $ec = ErrorCode::create(makeErrorCodeData($this->appId));
 
-    $updated = $this->repo->update($ec, ['name' => 'Updated Name']);
+    $updated = $this->repo->update($ec->id, ['name' => 'Updated Name']);
 
     expect($updated->name)->toBe('Updated Name');
     $this->assertDatabaseHas('error_codes', ['id' => $ec->id, 'name' => 'Updated Name']);
@@ -126,7 +126,7 @@ it('updates an error code', function () {
 it('deletes an error code', function () {
     $ec = ErrorCode::create(makeErrorCodeData($this->appId));
 
-    $this->repo->delete($ec);
+    $this->repo->delete($ec->id);
 
     $this->assertDatabaseMissing('error_codes', ['id' => $ec->id]);
 });

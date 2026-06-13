@@ -8,6 +8,7 @@ use App\Models\ArchivedLog;
 use App\Models\Log;
 use App\Policies\ArchivedLogPolicy;
 use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
+use App\Services\ArchivedFieldsValidator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,10 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
         string $sortDir,
         int $perPage = 15
     ): LengthAwarePaginator {
+        // Defensa: coercer a una dirección válida (el FormRequest ya valida
+        // sort_dir, pero el repo no debe lanzar si llega un valor arbitrario).
+        $sortDir = strtolower($sortDir) === 'desc' ? 'desc' : 'asc';
+
         $query = ArchivedLog::query()
             ->withStandardRelations()
             ->when($severities !== null && $severities !== [], fn ($q) => $q->whereIn('severity', $severities))
@@ -106,7 +111,9 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
      */
     public function updateArchivedFields(ArchivedLog $archivedLog, array $fields): void
     {
-        $archivedLog->update($fields);
+        // Defensa en profundidad: solo persistir campos de la whitelist, aunque
+        // el FormRequest ya los filtre (evita mass-assignment si se llama directo).
+        $archivedLog->update((new ArchivedFieldsValidator())->filterAllowed($fields));
     }
 
     /**

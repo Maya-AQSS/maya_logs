@@ -9,7 +9,9 @@ use App\Events\ArchivedLogWasDeleted;
 use App\Events\LogWasArchived;
 use App\Models\ArchivedLog;
 use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
+use App\Services\ArchivedFieldsValidator;
 use App\Services\ArchivedLogService;
+use App\Services\SeverityRankingService;
 use Illuminate\Support\Facades\Event;
 use Maya\Messaging\Publishers\LogPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
@@ -35,7 +37,7 @@ it('does not dispatch LogWasArchived when repository returns an existing archive
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
 
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
     $out = $sut->archiveFromLogId(7, 'user-subject');
 
     expect($out->id)->toBe(42);
@@ -57,7 +59,7 @@ it('dispatches LogWasArchived when model indicates recent creation', function ()
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
 
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
     $sut->archiveFromLogId(1, 'actor-id');
 
     Event::assertDispatched(LogWasArchived::class, function (LogWasArchived $e) use ($created): bool {
@@ -76,7 +78,7 @@ it('does not emit event when update values match current values', function () {
     $repo->shouldReceive('updateArchivedFields')->never();
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
 
     $sut->updateArchivedFields($log, ['description' => 'igual']);
 
@@ -96,7 +98,7 @@ it('emits ArchivedLogFieldsWereUpdated when there is a change', function () {
         ->with($log, ['description' => 'nuevo']);
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
 
     $sut->updateArchivedFields($log, ['description' => 'nuevo']);
 
@@ -120,7 +122,7 @@ it('does not emit ArchivedLogWasDeleted when repository returns false', function
     $repo->shouldReceive('delete')->once()->with($log)->andReturn(false);
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
 
     $sut->delete($log);
 
@@ -139,7 +141,7 @@ it('emits ArchivedLogWasDeleted when repository returns true', function () {
     $repo->shouldReceive('delete')->once()->with($log)->andReturn(true);
 
     $publisher = new ResilientLogPublisher($this->createMock(LogPublisher::class));
-    $sut = new ArchivedLogService($repo, $publisher);
+    $sut = new ArchivedLogService($repo, $publisher, new SeverityRankingService(), new ArchivedFieldsValidator());
 
     $sut->delete($log);
 

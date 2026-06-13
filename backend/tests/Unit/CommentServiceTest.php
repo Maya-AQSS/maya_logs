@@ -5,11 +5,14 @@ declare(strict_types=1);
 use App\Models\Comment;
 use App\Models\ErrorCode;
 use App\Models\User;
+use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use App\Repositories\Contracts\CommentRepositoryInterface;
+use App\Services\Contracts\CommentContentSanitizerInterface;
 use App\Services\CommentService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 use Maya\Messaging\Publishers\LogPublisher;
+use Maya\Messaging\Publishers\NotificationPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
 use Mews\Purifier\Facades\Purifier;
 
@@ -20,7 +23,13 @@ beforeEach(function () {
     // ResilientLogPublisher es final → instanciar real con LogPublisher mock
     // (igual que ArchivedLogServiceArchiveEventTest).
     $publisher = new ResilientLogPublisher(Mockery::mock(LogPublisher::class)->shouldIgnoreMissing());
-    $this->service  = new CommentService($this->mockRepo, $publisher);
+    $this->service  = new CommentService(
+        $this->mockRepo,
+        $publisher,
+        app(CommentContentSanitizerInterface::class),
+        Mockery::mock(NotificationPublisher::class)->shouldIgnoreMissing(),
+        Mockery::mock(ArchivedLogRepositoryInterface::class)->shouldIgnoreMissing(),
+    );
 });
 
 afterEach(function () {
@@ -108,11 +117,11 @@ it('listForCommentable returns array of CommentDtos', function () {
 
     $this->mockRepo
         ->shouldReceive('listForCommentable')
-        ->with($commentable)
+        ->with(ErrorCode::class, $commentable->id)
         ->once()
         ->andReturn(new Collection([$c1, $c2]));
 
-    $result = $this->service->listForCommentable($commentable);
+    $result = $this->service->listForCommentable(ErrorCode::class, $commentable->id);
 
     expect($result)->toHaveCount(2)
         ->and($result[0]->content)->toBe('<p>First</p>')
@@ -125,11 +134,11 @@ it('listForCommentable returns empty array when no comments', function () {
 
     $this->mockRepo
         ->shouldReceive('listForCommentable')
-        ->with($commentable)
+        ->with(ErrorCode::class, $commentable->id)
         ->once()
         ->andReturn(new Collection([]));
 
-    $result = $this->service->listForCommentable($commentable);
+    $result = $this->service->listForCommentable(ErrorCode::class, $commentable->id);
 
     expect($result)->toBeEmpty();
 });
@@ -155,11 +164,11 @@ it('createForCommentable sanitizes content and delegates to repository', functio
 
     $this->mockRepo
         ->shouldReceive('createForCommentable')
-        ->with($commentable, $userId, '<p>Valid content</p>')
+        ->with(ErrorCode::class, $commentable->id, $userId,'<p>Valid content</p>')
         ->once()
         ->andReturn($storedComment);
 
-    $dto = $this->service->createForCommentable($commentable, $userId, '<p>Valid content</p>');
+    $dto = $this->service->createForCommentable(ErrorCode::class, $commentable->id,$userId, '<p>Valid content</p>');
 
     expect($dto->content)->toBe('<p>Valid content</p>');
 });
@@ -173,7 +182,7 @@ it('createForCommentable throws ValidationException when content is blank after 
 
     $this->mockRepo->shouldNotReceive('createForCommentable');
 
-    expect(fn () => $this->service->createForCommentable($commentable, 'user-1', '<p>   </p>'))
+    expect(fn () => $this->service->createForCommentable(ErrorCode::class, $commentable->id,'user-1', '<p>   </p>'))
         ->toThrow(ValidationException::class);
 });
 
@@ -188,7 +197,7 @@ it('createForCommentable throws ValidationException when content exceeds 10MB', 
 
     $this->mockRepo->shouldNotReceive('createForCommentable');
 
-    expect(fn () => $this->service->createForCommentable($commentable, 'user-1', $bigContent))
+    expect(fn () => $this->service->createForCommentable(ErrorCode::class, $commentable->id,'user-1', $bigContent))
         ->toThrow(ValidationException::class);
 });
 
@@ -203,7 +212,7 @@ it('createForCommentable throws ValidationException for invalid base64 image', f
 
     $this->mockRepo->shouldNotReceive('createForCommentable');
 
-    expect(fn () => $this->service->createForCommentable($commentable, 'user-1', $html))
+    expect(fn () => $this->service->createForCommentable(ErrorCode::class, $commentable->id,'user-1', $html))
         ->toThrow(ValidationException::class);
 });
 
@@ -220,7 +229,7 @@ it('createForCommentable throws ValidationException for embedded image exceeding
 
     $this->mockRepo->shouldNotReceive('createForCommentable');
 
-    expect(fn () => $this->service->createForCommentable($commentable, 'user-1', $html))
+    expect(fn () => $this->service->createForCommentable(ErrorCode::class, $commentable->id,'user-1', $html))
         ->toThrow(ValidationException::class);
 });
 
@@ -237,7 +246,7 @@ it('createForCommentable throws ValidationException for disallowed image magic b
 
     $this->mockRepo->shouldNotReceive('createForCommentable');
 
-    expect(fn () => $this->service->createForCommentable($commentable, 'user-1', $html))
+    expect(fn () => $this->service->createForCommentable(ErrorCode::class, $commentable->id,'user-1', $html))
         ->toThrow(ValidationException::class);
 });
 
@@ -262,11 +271,11 @@ it('createForCommentable passes for content with only an img tag', function () {
 
     $this->mockRepo
         ->shouldReceive('createForCommentable')
-        ->with($commentable, $userId, $html)
+        ->with(ErrorCode::class, $commentable->id, $userId,$html)
         ->once()
         ->andReturn($stored);
 
-    $dto = $this->service->createForCommentable($commentable, $userId, $html);
+    $dto = $this->service->createForCommentable(ErrorCode::class, $commentable->id,$userId, $html);
 
     expect($dto->content)->toBe($html);
 });
@@ -291,11 +300,11 @@ it('updateContent sanitizes and delegates to repository', function () {
 
     $this->mockRepo
         ->shouldReceive('updateContent')
-        ->with($comment, '<p>New content</p>')
+        ->with($comment->id,'<p>New content</p>')
         ->once()
         ->andReturn($updated);
 
-    $dto = $this->service->updateContent($comment, '<p>New content</p>');
+    $dto = $this->service->updateContent($comment->id,'<p>New content</p>');
 
     expect($dto->content)->toBe('<p>New content</p>');
 });
@@ -308,7 +317,7 @@ it('updateContent throws ValidationException when new content is blank', functio
 
     $this->mockRepo->shouldNotReceive('updateContent');
 
-    expect(fn () => $this->service->updateContent($comment, ''))
+    expect(fn () => $this->service->updateContent($comment->id,''))
         ->toThrow(ValidationException::class);
 });
 
@@ -319,10 +328,10 @@ it('delete delegates to repository', function () {
 
     $this->mockRepo
         ->shouldReceive('delete')
-        ->with($comment)
+        ->with($comment->id)
         ->once();
 
-    $this->service->delete($comment);
+    $this->service->delete($comment->id);
 
     // If no exception, the delete was called
     expect(true)->toBeTrue();

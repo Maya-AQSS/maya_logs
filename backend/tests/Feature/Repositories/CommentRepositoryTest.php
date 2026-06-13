@@ -66,7 +66,7 @@ it('lists comments for commentable model ordered by latest', function () {
         'content'          => 'Second',
     ]);
 
-    $comments = $this->repo->listForCommentable($this->errorCode);
+    $comments = $this->repo->listForCommentable(ErrorCode::class, $this->errorCode->id);
 
     expect($comments)->toHaveCount(2);
     // Both comments are present (ordering may differ due to SQLite timestamp precision)
@@ -76,13 +76,13 @@ it('lists comments for commentable model ordered by latest', function () {
 });
 
 it('returns empty collection when no comments exist', function () {
-    $comments = $this->repo->listForCommentable($this->errorCode);
+    $comments = $this->repo->listForCommentable(ErrorCode::class, $this->errorCode->id);
 
     expect($comments)->toBeEmpty();
 });
 
 it('creates a comment for commentable model', function () {
-    $comment = $this->repo->createForCommentable($this->errorCode, $this->user->id, '<p>My comment</p>');
+    $comment = $this->repo->createForCommentable(ErrorCode::class, $this->errorCode->id, $this->user->id,'<p>My comment</p>');
 
     expect($comment->content)->toBe('<p>My comment</p>')
         ->and($comment->user_id)->toBe($this->user->id)
@@ -91,7 +91,7 @@ it('creates a comment for commentable model', function () {
 });
 
 it('creates a comment and eager loads user relation', function () {
-    $comment = $this->repo->createForCommentable($this->errorCode, $this->user->id, '<p>Test</p>');
+    $comment = $this->repo->createForCommentable(ErrorCode::class, $this->errorCode->id, $this->user->id,'<p>Test</p>');
 
     expect($comment->relationLoaded('user'))->toBeTrue()
         ->and($comment->user->id)->toBe($this->user->id);
@@ -105,7 +105,7 @@ it('updates comment content', function () {
         'content'          => 'Old content',
     ]);
 
-    $updated = $this->repo->updateContent($comment, '<p>New content</p>');
+    $updated = $this->repo->updateContent($comment->id, '<p>New content</p>');
 
     expect($updated->content)->toBe('<p>New content</p>');
     $this->assertDatabaseHas('comments', ['id' => $comment->id, 'content' => '<p>New content</p>']);
@@ -119,7 +119,7 @@ it('deletes a comment', function () {
         'content'          => 'To be deleted',
     ]);
 
-    $this->repo->delete($comment);
+    $this->repo->delete($comment->id);
 
     $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
 });
