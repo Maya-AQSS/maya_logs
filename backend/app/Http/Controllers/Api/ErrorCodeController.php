@@ -39,9 +39,7 @@ class ErrorCodeController extends Controller
     {
         $dto = $this->errorCodeService->findOrFail($id);
 
-        return response()->json([
-            'data' => (new ErrorCodeResource($dto))->resolve(),
-        ]);
+        return $this->okData(new ErrorCodeResource($dto));
     }
 
     public function store(StoreErrorCodeRequest $request): JsonResponse
@@ -50,9 +48,7 @@ class ErrorCodeController extends Controller
 
         $dto = $this->errorCodeService->create($request->validated());
 
-        return response()->json([
-            'data' => (new ErrorCodeResource($dto))->resolve($request),
-        ], 201);
+        return $this->created(new ErrorCodeResource($dto));
     }
 
     public function update(UpdateErrorCodeRequest $request, int $id): JsonResponse
@@ -64,9 +60,7 @@ class ErrorCodeController extends Controller
 
         $dto = $this->errorCodeService->update($id, $request->validated());
 
-        return response()->json([
-            'data' => (new ErrorCodeResource($dto))->resolve($request),
-        ]);
+        return $this->okData(new ErrorCodeResource($dto));
     }
 
     public function destroy(int $id): JsonResponse
@@ -78,6 +72,6 @@ class ErrorCodeController extends Controller
 
         $this->errorCodeService->delete($id);
 
-        return response()->json(null, 204);
+        return $this->noContent();
     }
 }
