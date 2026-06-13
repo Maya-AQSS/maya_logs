@@ -10,6 +10,7 @@ use App\Repositories\Contracts\ErrorCodeRepositoryInterface;
 use App\Services\Contracts\ErrorCodeServiceInterface;
 use Maya\Http\Pagination\PaginatedDto;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 use Throwable;
 
 class ErrorCodeService implements ErrorCodeServiceInterface
@@ -26,11 +27,6 @@ class ErrorCodeService implements ErrorCodeServiceInterface
         private ErrorCodeRepositoryInterface $errorCodeRepository,
         private ResilientLogPublisher $resilientLogPublisher,
     ) {}
-
-    private function messagingAppSlug(): string
-    {
-        return (string) config('messaging.app');
-    }
 
     public function paginate(int $perPage = 15): PaginatedDto
     {
@@ -72,7 +68,7 @@ class ErrorCodeService implements ErrorCodeServiceInterface
                 'medium',
                 self::CODE_NOT_FOUND,
                 ['error_code_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -91,7 +87,7 @@ class ErrorCodeService implements ErrorCodeServiceInterface
                 'medium',
                 self::CODE_CREATE_FAILED,
                 ['payload_keys' => array_keys($data)],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -111,7 +107,7 @@ class ErrorCodeService implements ErrorCodeServiceInterface
                 'medium',
                 self::CODE_UPDATE_FAILED,
                 ['error_code_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -127,7 +123,7 @@ class ErrorCodeService implements ErrorCodeServiceInterface
                 'medium',
                 self::CODE_DELETE_FAILED,
                 ['error_code_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }

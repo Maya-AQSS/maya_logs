@@ -14,6 +14,7 @@ use App\Services\Contracts\CommentServiceInterface;
 use Illuminate\Validation\ValidationException;
 use Maya\Messaging\Publishers\NotificationPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 use Throwable;
 
 final class CommentService implements CommentServiceInterface
@@ -34,11 +35,6 @@ final class CommentService implements CommentServiceInterface
         private readonly ArchivedLogRepositoryInterface $archivedLogRepository,
     ) {}
 
-    private function messagingAppSlug(): string
-    {
-        return (string) config('messaging.app');
-    }
-
     public function findOrFail(int $id): CommentDto
     {
         return CommentDto::fromModel($this->findModelOrFail($id));
@@ -57,7 +53,7 @@ final class CommentService implements CommentServiceInterface
                 'medium',
                 self::CODE_NOT_FOUND,
                 ['comment_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -99,7 +95,7 @@ final class CommentService implements CommentServiceInterface
                     'commentable_type' => $commentableType,
                     'commentable_id' => $commentableId,
                 ],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -150,7 +146,7 @@ final class CommentService implements CommentServiceInterface
                     'commentable_id' => $commentableId,
                     'owner_id' => $ownerId,
                 ],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
         }
     }
@@ -171,7 +167,7 @@ final class CommentService implements CommentServiceInterface
                 'medium',
                 self::CODE_UPDATE_FAILED,
                 ['comment_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -190,7 +186,7 @@ final class CommentService implements CommentServiceInterface
                 'medium',
                 self::CODE_DELETE_FAILED,
                 ['comment_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }

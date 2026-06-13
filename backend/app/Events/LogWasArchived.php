@@ -7,6 +7,7 @@ namespace App\Events;
 use App\Models\ArchivedLog;
 use Illuminate\Foundation\Events\Dispatchable;
 use Maya\Messaging\Contracts\AuditableEvent;
+use Maya\Messaging\Support\MessagingConfig;
 
 /**
  * Un log activo acaba de persistirse como {@see ArchivedLog} (transacción del repositorio ya cerrada).
@@ -23,7 +24,7 @@ final class LogWasArchived implements AuditableEvent
     public function toAuditPayload(): array
     {
         return [
-            'applicationSlug' => (string) config('messaging.app'),
+            'applicationSlug' => MessagingConfig::appSlug(),
             'entityType' => 'archived_log',
             'entityId' => (string) $this->archivedLog->id,
             'action' => 'archive',

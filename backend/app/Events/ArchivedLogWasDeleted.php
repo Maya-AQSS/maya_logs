@@ -7,6 +7,7 @@ namespace App\Events;
 use App\Models\ArchivedLog;
 use Illuminate\Foundation\Events\Dispatchable;
 use Maya\Messaging\Contracts\AuditableEvent;
+use Maya\Messaging\Support\MessagingConfig;
 
 /**
  * Un {@see ArchivedLog} acaba de eliminarse (soft delete) en base de datos.
@@ -23,7 +24,7 @@ final class ArchivedLogWasDeleted implements AuditableEvent
     public function toAuditPayload(): array
     {
         return [
-            'applicationSlug' => (string) config('messaging.app'),
+            'applicationSlug' => MessagingConfig::appSlug(),
             'entityType' => 'archived_log',
             'entityId' => (string) $this->archivedLogId,
             'action' => 'delete',

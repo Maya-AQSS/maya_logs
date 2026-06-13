@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Maya\Http\Pagination\PaginatedDto;
 use Maya\Messaging\Publishers\AuditPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 use Throwable;
 
 class LogService implements LogServiceInterface
@@ -29,11 +30,6 @@ class LogService implements LogServiceInterface
         private AuditPublisher $auditPublisher,
         private ResilientLogPublisher $resilientLogPublisher,
     ) {}
-
-    private function messagingAppSlug(): string
-    {
-        return (string) config('messaging.app');
-    }
 
     public function paginate(int $perPage = 25): PaginatedDto
     {
@@ -53,7 +49,7 @@ class LogService implements LogServiceInterface
                 'medium',
                 self::CODE_NOT_FOUND,
                 ['log_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -77,7 +73,7 @@ class LogService implements LogServiceInterface
                 'medium',
                 self::CODE_NOT_FOUND,
                 ['log_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -178,7 +174,7 @@ class LogService implements LogServiceInterface
 
             $this->afterCommit(function () use ($logId, $actorUserId): void {
                 $this->auditPublisher->publish(
-                    applicationSlug: $this->messagingAppSlug(),
+                    applicationSlug: MessagingConfig::appSlug(),
                     entityType: self::AUDIT_ENTITY_TYPE,
                     entityId: (string) $logId,
                     action: 'Marcar un log como resuelto',
@@ -193,7 +189,7 @@ class LogService implements LogServiceInterface
                 'medium',
                 self::CODE_MARK_RESOLVED_FAILED,
                 ['log_id' => $logId, 'actor_user_id' => $actorUserId],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }

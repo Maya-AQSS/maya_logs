@@ -8,6 +8,7 @@ use App\Models\ErrorCode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maya\Messaging\Publishers\AuditPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 
 /**
  * Observer CRUD para {@see ErrorCode}. Publica en `maya.audit` los verbos
@@ -60,7 +61,7 @@ final class ErrorCodeObserver
     private function publish(string $action, ErrorCode $errorCode, ?array $previous, ?array $new): void
     {
         $this->publisher->publish(
-            applicationSlug: (string) config('messaging.app'),
+            applicationSlug: MessagingConfig::appSlug(),
             entityType: 'error_code',
             entityId: (string) $errorCode->getKey(),
             action: $action,

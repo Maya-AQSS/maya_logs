@@ -13,6 +13,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Maya\Messaging\Publishers\NotificationPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 use Throwable;
 
 /**
@@ -36,7 +37,7 @@ class EvaluateNotificationRules extends Command
 
     public function handle(NotificationPublisher $publisher): int
     {
-        $app = (string) config('messaging.app');
+        $app = MessagingConfig::appSlug();
         $now = now();
         $total = 0;
 

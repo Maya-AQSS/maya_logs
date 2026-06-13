@@ -7,6 +7,7 @@ namespace App\Events;
 use App\Models\ArchivedLog;
 use Illuminate\Foundation\Events\Dispatchable;
 use Maya\Messaging\Contracts\AuditableEvent;
+use Maya\Messaging\Support\MessagingConfig;
 
 /**
  * Los campos editables de un {@see ArchivedLog} acaban de persistirse.
@@ -29,7 +30,7 @@ final class ArchivedLogFieldsWereUpdated implements AuditableEvent
     public function toAuditPayload(): array
     {
         return [
-            'applicationSlug' => (string) config('messaging.app'),
+            'applicationSlug' => MessagingConfig::appSlug(),
             'entityType' => 'archived_log',
             'entityId' => (string) $this->archivedLogId,
             'action' => 'update.fields',

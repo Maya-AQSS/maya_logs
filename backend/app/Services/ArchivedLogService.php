@@ -13,6 +13,7 @@ use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use App\Services\Contracts\ArchivedLogServiceInterface;
 use Maya\Http\Pagination\PaginatedDto;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
+use Maya\Messaging\Support\MessagingConfig;
 use Throwable;
 
 class ArchivedLogService implements ArchivedLogServiceInterface
@@ -23,11 +24,6 @@ class ArchivedLogService implements ArchivedLogServiceInterface
         private SeverityRankingService $severityRankingService,
         private ArchivedFieldsValidator $fieldsValidator,
     ) {}
-
-    private function messagingAppSlug(): string
-    {
-        return (string) config('messaging.app');
-    }
 
     public function paginate(int $perPage = 15): PaginatedDto
     {
@@ -77,7 +73,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 'medium',
                 'LAR-LOG-004',
                 ['archived_log_id' => $id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -121,7 +117,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 'medium',
                 'LAR-LOG-001',
                 ['archived_log_id' => $archivedLog->id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -150,7 +146,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 'medium',
                 'LAR-LOG-002',
                 ['archived_log_id' => $archivedLog->id],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
@@ -203,7 +199,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 'medium',
                 'LAR-LOG-003',
                 ['log_id' => $logId],
-                $this->messagingAppSlug(),
+                MessagingConfig::appSlug(),
             );
             throw $e;
         }
