@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Models\ErrorCode;
 use App\Models\User;
+use App\Policies\Concerns\ResolvesJwtContext;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Http\Request;
 use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
@@ -20,6 +21,8 @@ use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
  */
 class ErrorCodePolicy
 {
+    use ResolvesJwtContext;
+
     public const CREATE_PERMISSION_CODE = 'error-code.create';
 
     public const UPDATE_PERMISSION_CODE = 'error-code.update';
@@ -64,18 +67,5 @@ class ErrorCodePolicy
         }
 
         return Response::deny(__('api.error_codes.forbidden'), 'error_codes_permission_denied')->withStatus(403);
-    }
-
-    /**
-     * Mismo criterio que el contexto JWT del request.
-     *
-     * @return array{0: string, 1: array<string, mixed>}
-     */
-    private function jwtContext(): array
-    {
-        $jwtProfile = (array) $this->request->attributes->get('jwt_user', []);
-        $userId = (string) ($jwtProfile['id'] ?? '');
-
-        return [$userId, $jwtProfile];
     }
 }

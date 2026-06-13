@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Models\ArchivedLog;
 use App\Models\User;
+use App\Policies\Concerns\ResolvesJwtContext;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Http\Request;
 use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
@@ -16,6 +17,8 @@ use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
  */
 class ArchivedLogPolicy
 {
+    use ResolvesJwtContext;
+
     public const UPDATE_PERMISSION_CODE = 'archived-logs.update';
 
     public const DELETE_PERMISSION_CODE = 'archived-logs.delete';
@@ -53,16 +56,5 @@ class ArchivedLogPolicy
         }
 
         return Response::deny(__('api.error_codes.forbidden'), 'archived_logs_permission_denied')->withStatus(403);
-    }
-
-    /**
-     * @return array{0: string, 1: array<string, mixed>}
-     */
-    private function jwtContext(): array
-    {
-        $jwtProfile = (array) $this->request->attributes->get('jwt_user', []);
-        $userId = (string) ($jwtProfile['id'] ?? '');
-
-        return [$userId, $jwtProfile];
     }
 }
