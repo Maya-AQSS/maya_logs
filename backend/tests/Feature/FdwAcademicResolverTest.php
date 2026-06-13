@@ -53,7 +53,7 @@ it('returns empty arrays when no local data exists', function () {
     expect($dto->extra['study_ids'] ?? null)->toBe([]);
     expect($dto->extra['module_ids'] ?? null)->toBe([]);
     expect($dto->extra['team_ids'] ?? null)->toBe([]);
-    expect($dto->extra['teams'] ?? null)->toBe([]);
+    expect($dto->extra['teams'] ?? null)->toBeNull();
 });
 
 it('enriches dto with academic data from fdw stubs', function () {
@@ -107,20 +107,15 @@ it('enriches dto with academic data from fdw stubs', function () {
     sort($moduleIds);
     expect($moduleIds)->toBe(['M_ENG_1', 'M_MAT_1']);
 
-    $teamIds = $dto->extra['team_ids'];
-    sort($teamIds);
-    expect($teamIds)->toBe(['T1', 'T2']);
+    // loadTeamIdsSplit separa equipos (no-departamento) de departamentos:
+    // T1 (is_department=false) → team_ids; T2 (is_department=true) → department_ids.
+    expect($dto->extra['team_ids'])->toBe(['T1']);
+    expect($dto->extra['department_ids'])->toBe(['T2']);
 
-    $teams = collect($dto->extra['teams'])->sortBy('id')->values()->all();
-    expect($teams)->toHaveCount(2);
-    expect($teams[0]['id'])->toBe('T1');
-    expect($teams[0]['name'])->toBe('Equipo Calidad');
-    expect($teams[0]['description'])->toBe('QA');
-    expect($teams[0]['role'])->toBe('member');
-    expect($teams[0]['is_department'])->toBeFalse();
-    expect($teams[1]['id'])->toBe('T2');
-    expect($teams[1]['role'])->toBe('lead');
-    expect($teams[1]['is_department'])->toBeTrue();
+    // teams[] (objetos detallados) es exclusivo de maya_dms; el resto de apps
+    // solo exponen team_ids (ver AcademicDataReader: "El resto de apps NO
+    // incluyen teams[] en /me"). Por eso no se asume aquí.
+    expect($dto->extra['teams'] ?? null)->toBeNull();
 });
 
 it('filters strictly by user_id and never returns other users data', function () {
@@ -138,7 +133,7 @@ it('filters strictly by user_id and never returns other users data', function ()
 
     expect($dto->extra['study_type_ids'])->toBe([]);
     expect($dto->extra['team_ids'])->toBe([]);
-    expect($dto->extra['teams'])->toBe([]);
+    expect($dto->extra['teams'] ?? null)->toBeNull();
 });
 
 it('returns empty arrays for empty user id', function () {
@@ -149,5 +144,5 @@ it('returns empty arrays for empty user id', function () {
     expect($dto->extra['study_ids'])->toBe([]);
     expect($dto->extra['module_ids'])->toBe([]);
     expect($dto->extra['team_ids'])->toBe([]);
-    expect($dto->extra['teams'])->toBe([]);
+    expect($dto->extra['teams'] ?? null)->toBeNull();
 });

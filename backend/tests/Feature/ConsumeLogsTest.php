@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Repositories\Contracts\LogIngestionRepositoryInterface;
 use App\Services\LogIngestionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Maya\Messaging\Exceptions\UnrecoverableIngestionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,27 +24,28 @@ function makeIngestionService(array $slugToId = [], int $batchSize = 1): LogInge
     return $service;
 }
 
+// ingest() lanza UnrecoverableIngestionException para señalar "drop" — el
+// ConsumeQueueCommand la captura (ACK/drop, sin requeue) y registra el warning.
 it('drops payload with null app', function () {
-    makeIngestionService(['known' => 1])
-        ->ingest(['app' => null, 'severity' => 'low', 'message' => 'test']);
+    expect(fn () => makeIngestionService(['known' => 1])
+        ->ingest(['app' => null, 'severity' => 'low', 'message' => 'test']))
+        ->toThrow(UnrecoverableIngestionException::class);
 
     $this->assertDatabaseCount('logs', 0);
 });
 
 it('drops payload with empty app', function () {
-    makeIngestionService(['known' => 1])
-        ->ingest(['app' => '', 'severity' => 'low', 'message' => 'test']);
+    expect(fn () => makeIngestionService(['known' => 1])
+        ->ingest(['app' => '', 'severity' => 'low', 'message' => 'test']))
+        ->toThrow(UnrecoverableIngestionException::class);
 
     $this->assertDatabaseCount('logs', 0);
 });
 
-it('drops payload with unknown app and logs warning', function () {
-    Log::shouldReceive('warning')
-        ->once()
-        ->withArgs(fn (string $msg, array $ctx = []) => isset($ctx['slug']) && $ctx['slug'] === 'ghost-app');
-
-    makeIngestionService(['known' => 1])
-        ->ingest(['app' => 'ghost-app', 'severity' => 'low', 'message' => 'test']);
+it('drops payload with unknown app', function () {
+    expect(fn () => makeIngestionService(['known' => 1])
+        ->ingest(['app' => 'ghost-app', 'severity' => 'low', 'message' => 'test']))
+        ->toThrow(UnrecoverableIngestionException::class);
 
     $this->assertDatabaseCount('logs', 0);
 });
@@ -167,15 +169,17 @@ it('defaults severity to other when missing', function () {
 });
 
 it('drops payload when app has zero id', function () {
-    makeIngestionService(['zero-app' => 0])
-        ->ingest(['app' => 'zero-app', 'severity' => 'low', 'message' => 'test']);
+    expect(fn () => makeIngestionService(['zero-app' => 0])
+        ->ingest(['app' => 'zero-app', 'severity' => 'low', 'message' => 'test']))
+        ->toThrow(UnrecoverableIngestionException::class);
 
     $this->assertDatabaseCount('logs', 0);
 });
 
 it('drops payload when app has negative id', function () {
-    makeIngestionService(['neg-app' => -1])
-        ->ingest(['app' => 'neg-app', 'severity' => 'low', 'message' => 'test']);
+    expect(fn () => makeIngestionService(['neg-app' => -1])
+        ->ingest(['app' => 'neg-app', 'severity' => 'low', 'message' => 'test']))
+        ->toThrow(UnrecoverableIngestionException::class);
 
     $this->assertDatabaseCount('logs', 0);
 });

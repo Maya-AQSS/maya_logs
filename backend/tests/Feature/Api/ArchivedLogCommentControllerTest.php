@@ -98,7 +98,9 @@ it('creates a comment on an archived log', function () {
     ]);
 
     $response->assertCreated();
-    expect($response->json('data.content'))->toBe('This is a new comment');
+    // ArchivedLogCommentController::storeResponse devuelve el recurso sin envelope
+    // `data` (wire histórico), a diferencia de AbstractCommentController.
+    expect($response->json('content'))->toBe('This is a new comment');
 
     $this->assertDatabaseHas('comments', [
         'commentable_id'   => $this->archivedLogId,
