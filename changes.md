@@ -114,3 +114,21 @@ Los refactors que preservan comportamiento NO se registran aquí.
 - **Impacto en cliente**: ninguno para el SPA legítimo (su token va dirigido a
   `maya-logs`); tokens de otros clients dejarían de ser aceptados.
 - **Decidido por**: agente V2 dedup/seguridad (fase logs).
+
+## [V2.logs] Fix stale-closure de dateLocale en tablas de logs
+
+- **Fecha**: 2026-06-13
+- **Severidad**: LOW (bug fix UI i18n)
+- **Qué cambió**: los `useMemo` que construyen las columnas de tabla en
+  `LogsPage.tsx` y `ArchivedLogsPage.tsx` consumían `dateLocale` (para
+  `formatDateTime`) pero su dep array era `[t]`, no `[t, dateLocale]`. Tras un
+  cambio de idioma/locale, las celdas de fecha conservaban el formato del
+  locale anterior hasta que algún otro cambio recomputaba el memo. Se añade
+  `dateLocale` al dep array en ambas páginas.
+- **Por qué**: corrección de stale closure — las fechas deben reflejar el
+  locale activo de inmediato.
+- **Endpoint(s) afectado(s)**: ninguno (solo render cliente de
+  `GET /api/v1/logs` y `GET /api/v1/archived-logs`).
+- **Impacto en cliente**: positivo — formato de fecha coherente con el locale
+  seleccionado sin necesidad de re-render adicional.
+- **Decidido por**: agente V2 dedup/seguridad (fase logs).

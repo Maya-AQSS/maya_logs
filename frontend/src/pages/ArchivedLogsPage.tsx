@@ -258,7 +258,7 @@ export function ArchivedLogsPage() {
         sortable: true,
       },
     ],
-    [t],
+    [t, dateLocale],
   );
 
   const pagination = archivedLogsQuery.data;

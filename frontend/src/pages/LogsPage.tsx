@@ -297,7 +297,7 @@ export function LogsPage() {
         ),
       },
     ],
-    [t],
+    [t, dateLocale],
   );
 
   const pagination = logsQuery.data;
