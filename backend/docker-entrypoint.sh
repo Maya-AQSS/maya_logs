@@ -19,8 +19,8 @@ rm -f bootstrap/cache/config.php
 # Composer dependencies (volumen bind monta packages/ en runtime)
 if [ ! -f "vendor/autoload.php" ] || [ "composer.json" -nt "vendor/autoload.php" ]; then
     echo "[entrypoint] Installing composer dependencies..."
-    # Sync only maya/* path packages in lock (handles stale lock when new shared package is added)
-    composer update "maya/*" --no-install --no-interaction --ignore-platform-reqs --no-scripts 2>/dev/null || true
+    # Sync only ceedcv-maya/* path packages in lock (handles stale lock when a new shared package is added)
+    composer update "ceedcv-maya/*" --no-install --no-interaction --ignore-platform-reqs --no-scripts 2>/dev/null || true
     composer install --optimize-autoloader --no-interaction --no-scripts
 else
     echo "[entrypoint] Composer deps up to date"
