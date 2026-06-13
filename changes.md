@@ -95,3 +95,22 @@ Los refactors que preservan comportamiento NO se registran aquí.
   telemetría interna ante 404.
 - **Decidido por**: agente F4-B2 (maya_logs), excepción de capas aceptada
   "modelo solo para authorize vía service".
+
+## [V2.logs] Validación de audiencia JWT por defecto (JWT_AUDIENCE)
+
+- **Fecha**: 2026-06-13
+- **Severidad**: MEDIUM (seguridad)
+- **Qué cambió**: `backend/.env.example` pasa `JWT_AUDIENCE=` (vacío) a
+  `JWT_AUDIENCE=maya-logs`. Vacío equivalía a aceptar tokens emitidos para
+  cualquier client del realm (sin validar el claim `aud`); el nuevo valor exige
+  que el token vaya dirigido al client `maya-logs`, rechazando tokens emitidos
+  para otros clients. Solo cambia el ejemplo de entorno; los despliegues que ya
+  fijen `JWT_AUDIENCE` por env no se ven afectados. Despliegues nuevos que
+  copien `.env.example` empezarán a validar audiencia (postura fail-closed).
+- **Por qué**: defensa en profundidad — un token robado de otro client del
+  realm no debe ser válido contra la API de logs (`shared-auth-laravel`).
+- **Endpoint(s) afectado(s)**: todos los `api/*` protegidos por validación JWT
+  (la audiencia se comprueba en el middleware de auth del paquete compartido).
+- **Impacto en cliente**: ninguno para el SPA legítimo (su token va dirigido a
+  `maya-logs`); tokens de otros clients dejarían de ser aceptados.
+- **Decidido por**: agente V2 dedup/seguridad (fase logs).
