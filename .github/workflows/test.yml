@@ -65,10 +65,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node 22
+      - name: Setup Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # Node 24 (igual que los contenedores de dev): Vite 8 / rolldown usan
+          # bindings nativos de oxc que en Node 22 fallan al resolver el tsconfig
+          # de vitest.setup.ts ([TSCONFIG_ERROR] Tsconfig not found). En Node 24
+          # la suite pasa idéntica al entorno local.
+          node-version: "24"
           # cache: "npm" deshabilitado mientras package-lock.json no esté en git.
 
       - name: Install npm dependencies
