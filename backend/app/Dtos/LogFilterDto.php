@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dtos;
 
+use App\Http\Requests\Api\ListLogsRequest;
 use Maya\Http\Data\FilterDto;
 use Maya\Http\Http\Requests\PaginatedFilterRequest;
 
@@ -43,7 +44,7 @@ readonly class LogFilterDto extends FilterDto
 
     public static function fromRequest(PaginatedFilterRequest $request): static
     {
-        /** @var \App\Http\Requests\Api\ListLogsRequest $request */
+        /** @var ListLogsRequest $request */
         return new static(
             severity: $request->getParsedSeverity(),
             appSlug: $request->input('app_slug') ?: null,

@@ -18,7 +18,7 @@ class UpdateArchivedLogRequest extends FormRequest
     {
         return [
             'description' => ['nullable', 'string', 'max:5000'],
-            'url_tutorial' => ['nullable', new AcceptableTutorialUrl(), 'max:2048'],
+            'url_tutorial' => ['nullable', new AcceptableTutorialUrl, 'max:2048'],
         ];
     }
 }

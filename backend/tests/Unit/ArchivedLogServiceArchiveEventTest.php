@@ -15,7 +15,6 @@ use App\Services\SeverityRankingService;
 use Illuminate\Support\Facades\Event;
 use Maya\Messaging\Publishers\LogPublisher;
 use Maya\Messaging\Publishers\ResilientLogPublisher;
-use Mockery;
 
 afterEach(function () {
     Mockery::close();

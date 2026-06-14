@@ -1,3 +1,3 @@
 {
-  "extends": "../../maya_infra/configs/tsconfig/tsconfig.node.base.json"
+  "extends": "./tsconfig.node.base.json"
 }

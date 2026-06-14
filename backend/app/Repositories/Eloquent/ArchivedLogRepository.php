@@ -9,13 +9,13 @@ use App\Models\Log;
 use App\Policies\ArchivedLogPolicy;
 use App\Repositories\Contracts\ArchivedLogRepositoryInterface;
 use App\Services\ArchivedFieldsValidator;
+use App\Services\SeverityRankingService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class ArchivedLogRepository implements ArchivedLogRepositoryInterface
 {
-
     /**
      * Devuelve una página de logs archivados.
      */
@@ -88,7 +88,7 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
         // Domain logic moved to SeverityRankingService; this delegate pattern
         // maintains Repository method contract while enforcing architecture.
         // The service is injected at the service layer level.
-        $rankingService = app(\App\Services\SeverityRankingService::class);
+        $rankingService = app(SeverityRankingService::class);
 
         return $rankingService->applyRankOrder($query, $direction);
     }
@@ -113,7 +113,7 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
     {
         // Defensa en profundidad: solo persistir campos de la whitelist, aunque
         // el FormRequest ya los filtre (evita mass-assignment si se llama directo).
-        $archivedLog->update((new ArchivedFieldsValidator())->filterAllowed($fields));
+        $archivedLog->update((new ArchivedFieldsValidator)->filterAllowed($fields));
     }
 
     /**

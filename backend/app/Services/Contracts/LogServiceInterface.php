@@ -6,6 +6,7 @@ namespace App\Services\Contracts;
 
 use App\Dtos\LogDto;
 use App\Dtos\LogFilterDto;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Maya\Http\Pagination\PaginatedDto;
 
 interface LogServiceInterface
@@ -23,7 +24,7 @@ interface LogServiceInterface
      *
      * @return array{dto: LogDto, archived_log_id: int|null}
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findForShow(int $id): array;
 

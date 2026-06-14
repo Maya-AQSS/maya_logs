@@ -29,6 +29,7 @@ class ErrorSpikeRule implements ScheduledNotificationRule
 
             if ($errorCount >= $threshold) {
                 $this->publishAlert($publisher, $errorCount, $severity);
+
                 return 1;
             }
 
@@ -37,6 +38,7 @@ class ErrorSpikeRule implements ScheduledNotificationRule
             LogFacade::error('ErrorSpikeRule evaluation failed', [
                 'error' => $e->getMessage(),
             ]);
+
             return 0;
         }
     }

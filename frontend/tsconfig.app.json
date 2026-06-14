@@ -1,5 +1,5 @@
 {
-  "extends": "../../maya_infra/configs/tsconfig/tsconfig.app.base.json",
+  "extends": "./tsconfig.app.base.json",
   "compilerOptions": {
     "paths": {
       "@ceedcv-maya/shared-auth-react": [

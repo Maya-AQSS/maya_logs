@@ -18,9 +18,6 @@ use App\Repositories\Eloquent\ErrorCodeRepository;
 use App\Repositories\Eloquent\LogIngestionRepository;
 use App\Repositories\Eloquent\LogRepository;
 use App\Repositories\Eloquent\UserRepository;
-use Maya\Platform\Support\RegistersFdwBootstrap;
-use Maya\Profile\Migrations as ProfileMigrations;
-use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 use App\Services\ApplicationService;
 use App\Services\ArchivedFieldsValidator;
 use App\Services\ArchivedLogService;
@@ -34,10 +31,13 @@ use App\Services\Contracts\ErrorCodeServiceInterface;
 use App\Services\Contracts\LogServiceInterface;
 use App\Services\ErrorCodeService;
 use App\Services\LogService;
-use App\Services\SeverityRankingService;
 use App\Services\PanelUserService;
+use App\Services\SeverityRankingService;
 use Illuminate\Support\ServiceProvider;
+use Maya\Platform\Support\RegistersFdwBootstrap;
+use Maya\Profile\Migrations as ProfileMigrations;
 use Maya\Profile\Repositories\Contracts\UserProfileResolverInterface;
+use Maya\Profile\Repositories\Resolvers\FdwAcademicResolver;
 
 class AppServiceProvider extends ServiceProvider
 {

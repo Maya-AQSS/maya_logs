@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
+use App\Dtos\LogDto;
 use App\Dtos\LogFilterDto;
 use App\Models\Log;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 
 interface LogRepositoryInterface
@@ -53,9 +55,9 @@ interface LogRepositoryInterface
      * Carga el log (con relaciones) y resuelve el id del ArchivedLog equivalente
      * en una sola ronda de base de datos.
      *
-     * @return array{log: \App\Models\Log, archived_log_id: int|null}
+     * @return array{log: Log, archived_log_id: int|null}
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findOrFailWithArchivedLogId(int $id): array;
 
@@ -67,9 +69,9 @@ interface LogRepositoryInterface
     /**
      * Devuelve los DTOs más recientes para streaming en tiempo real.
      *
-     * @return \Illuminate\Support\Collection<int, \App\Dtos\LogDto>
+     * @return Collection<int, LogDto>
      */
-    public function streamPayloadDtos(int $limit = 10): \Illuminate\Support\Collection;
+    public function streamPayloadDtos(int $limit = 10): Collection;
 
     /**
      * Indica si hay una transacción activa en la BD.

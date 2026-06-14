@@ -12,16 +12,16 @@ class ListLogsRequest extends PaginatedFilterRequest
     protected function filterRules(): array
     {
         return [
-            'severity'       => ['nullable', 'string'],  // string CSV — se parsea en getParsedSeverity()
-            'app_slug'       => ['nullable', 'string', 'max:100'],
+            'severity' => ['nullable', 'string'],  // string CSV — se parsea en getParsedSeverity()
+            'app_slug' => ['nullable', 'string', 'max:100'],
             'application_id' => ['nullable', 'integer'],
-            'date_from'      => ['nullable', 'date'],
-            'date_to'        => ['nullable', 'date', 'after_or_equal:date_from'],
-            'error_code'     => ['nullable', 'string', 'max:50'],
-            'archived'       => ['nullable', 'string', 'in:only,without'],
-            'resolved'       => ['nullable', 'string', 'in:only,unresolved'],
-            'search'         => ['nullable', 'string', 'max:255'],
-            'sort_by'        => ['nullable', 'string', 'in:created_at,severity,application'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'error_code' => ['nullable', 'string', 'max:50'],
+            'archived' => ['nullable', 'string', 'in:only,without'],
+            'resolved' => ['nullable', 'string', 'in:only,unresolved'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'sort_by' => ['nullable', 'string', 'in:created_at,severity,application'],
         ];
     }
 

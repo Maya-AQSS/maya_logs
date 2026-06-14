@@ -10,6 +10,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
+use Maya\Auth\Middleware\JwtMiddleware;
 
 /**
  * @property CommentDto $resource
@@ -50,7 +51,7 @@ class CommentResource extends JsonResource
      * flujos (el guard `api` resuelve User via attribute, pero no siempre se inyecta a
      * tiempo para los Resources). Los flags `can_edit`/`can_delete` deben evaluarse contra
      * el mismo actor que update/delete — fallback al sujeto JWT depositado por el
-     * middleware {@see \Maya\Auth\Middleware\JwtMiddleware} en el attribute `jwt_user`.
+     * middleware {@see JwtMiddleware} en el attribute `jwt_user`.
      *
      * Cherry-pick conceptual del commit 23af11b de refactor/globalExperts adaptado a la
      * arquitectura DTO de v2.

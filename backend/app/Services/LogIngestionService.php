@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Maya\Messaging\Exceptions\UnrecoverableIngestionException;
 use App\Repositories\Contracts\LogIngestionRepositoryInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Maya\Messaging\Exceptions\UnrecoverableIngestionException;
 
 class LogIngestionService
 {

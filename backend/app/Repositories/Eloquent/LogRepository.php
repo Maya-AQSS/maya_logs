@@ -11,10 +11,11 @@ use App\Models\ArchivedLog;
 use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Maya\Search\AccentFold;
 
@@ -22,7 +23,7 @@ class LogRepository implements LogRepositoryInterface
 {
     private const SORT_COLUMN_MAP = [
         'created_at' => 'logs.created_at',
-        'severity'   => 'logs.severity',
+        'severity' => 'logs.severity',
         'application' => 'applications.name',
     ];
 
@@ -261,7 +262,7 @@ class LogRepository implements LogRepositoryInterface
      *
      * @return array{log: Log, archived_log_id: int|null}
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findOrFailWithArchivedLogId(int $id): array
     {
@@ -332,12 +333,12 @@ class LogRepository implements LogRepositoryInterface
     /**
      * Devuelve los DTOs más recientes para streaming en tiempo real.
      *
-     * @return \Illuminate\Support\Collection<int, \App\Dtos\LogDto>
+     * @return Collection<int, LogDto>
      */
-    public function streamPayloadDtos(int $limit = 10): \Illuminate\Support\Collection
+    public function streamPayloadDtos(int $limit = 10): Collection
     {
         return $this->latestForStream($limit)->map(
-            static fn (Log $m) => \App\Dtos\LogDto::fromModel($m)
+            static fn (Log $m) => LogDto::fromModel($m)
         );
     }
 

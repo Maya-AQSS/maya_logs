@@ -38,10 +38,10 @@ final class SeverityRankingService
         $caseStatement = 'CASE severity ';
         $bindings = [];
         foreach (self::SEVERITY_HIERARCHY as $rank => $severity) {
-            $caseStatement .= 'WHEN ? THEN ' . ($rank + 1) . ' ';
+            $caseStatement .= 'WHEN ? THEN '.($rank + 1).' ';
             $bindings[] = $severity;
         }
-        $caseStatement .= 'ELSE ' . (count(self::SEVERITY_HIERARCHY) + 1) . ' END ' . $dir;
+        $caseStatement .= 'ELSE '.(count(self::SEVERITY_HIERARCHY) + 1).' END '.$dir;
 
         return $query
             ->orderByRaw($caseStatement, $bindings)
