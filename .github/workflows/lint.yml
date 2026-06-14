@@ -35,7 +35,7 @@ jobs:
           restore-keys: composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --dev
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
       # Falla si algún archivo no cumple Pint laravel preset + declare_strict_types.
       - name: Run Pint (test mode)

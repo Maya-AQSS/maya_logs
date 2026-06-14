@@ -15,6 +15,12 @@ jobs:
     env:
       APP_ENV: testing
 
+    # El código Laravel vive en backend/; sin esto composer corre en la raíz
+    # del repo y no encuentra composer.json.
+    defaults:
+      run:
+        working-directory: backend
+
     services:
       # Contenedor PostgreSQL 18 que levanta GitHub Actions automáticamente.
       # Los health-checks garantizan que el contenedor esté listo antes de
@@ -49,15 +55,15 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
           restore-keys: composer-
 
       - name: Copy .env for CI
         run: cp .env.example .env
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --dev
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
       - name: Generate application key
         run: php artisan key:generate

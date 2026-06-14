@@ -41,7 +41,7 @@ jobs:
           restore-keys: composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --dev
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
       - name: Run tests
         run: ./vendor/bin/pest --no-coverage --colors=never
