@@ -177,7 +177,7 @@ class LogService implements LogServiceInterface
                     applicationSlug: MessagingConfig::appSlug(),
                     entityType: self::AUDIT_ENTITY_TYPE,
                     entityId: (string) $logId,
-                    action: 'Marcar un log como resuelto',
+                    action: 'log_resolved',
                     userId: $actorUserId,
                     previousValue: ['resolved' => false],
                     newValue: ['resolved' => true],
