@@ -23,8 +23,10 @@ class CommentResource extends JsonResource
         $dto = $this->resource;
 
         $authUser = $this->resolveViewerForGates($request);
-        $canEdit = $authUser !== null && Gate::forUser($authUser)->check('update', $dto->source);
-        $canDelete = $authUser !== null && Gate::forUser($authUser)->check('delete', $dto->source);
+        // El gate opera sobre el DTO (Opción A — DTO estricto): CommentPolicy está
+        // registrada contra CommentDto, no contra el modelo Eloquent.
+        $canEdit = $authUser !== null && Gate::forUser($authUser)->check('update', $dto);
+        $canDelete = $authUser !== null && Gate::forUser($authUser)->check('delete', $dto);
 
         $payload = [
             'id' => $dto->id,

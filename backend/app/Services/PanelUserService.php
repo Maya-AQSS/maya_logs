@@ -8,6 +8,7 @@ use App\Dtos\UserRefDto;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\Gate;
 use Maya\Auth\Dtos\JwtProfileDto;
 
 /**
@@ -41,10 +42,13 @@ final class PanelUserService
     }
 
     /**
-     * Devuelve el modelo User SOLO para Gate::forUser (exige Authenticatable).
-     * Excepción de capas aceptada: el modelo no debe usarse para nada más.
+     * Resuelve el ACTOR de la petición como Authenticatable para {@see Gate::forUser()}.
+     *
+     * No es una entidad de dominio que cruce la frontera Service→Controller: es el
+     * sujeto autenticado, requisito estándar de Laravel para evaluar policies. La
+     * autorización en sí opera sobre el DTO de dominio (Opción A — DTO estricto).
      */
-    public function resolveAuthenticatable(string $id): ?User
+    public function resolveActorAuthenticatable(string $id): ?User
     {
         return $this->userRepository->findAuthenticatableByKey($id);
     }

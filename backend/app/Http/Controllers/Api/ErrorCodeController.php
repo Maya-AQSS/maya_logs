@@ -60,10 +60,11 @@ class ErrorCodeController extends Controller
 
     public function update(UpdateErrorCodeRequest $request, int $id): JsonResponse
     {
-        // Model lookup vía service: solo para el policy gate
-        $errorCode = $this->errorCodeService->findModelOrFail($id);
-
-        $this->authorize('update', $errorCode);
+        // La autorización depende solo del contexto JWT (permisos del actor),
+        // no del registro concreto: se autoriza por clase y ningún modelo cruza
+        // la frontera Service→Controller (Opción A — DTO estricto). El Service
+        // valida la existencia del recurso (404) al actualizar por id.
+        $this->authorize('update', ErrorCode::class);
 
         $dto = $this->errorCodeService->update($id, $request->validated());
 
@@ -72,10 +73,7 @@ class ErrorCodeController extends Controller
 
     public function destroy(int $id): JsonResponse
     {
-        // Model lookup vía service: solo para el policy gate
-        $errorCode = $this->errorCodeService->findModelOrFail($id);
-
-        $this->authorize('delete', $errorCode);
+        $this->authorize('delete', ErrorCode::class);
 
         $this->errorCodeService->delete($id);
 

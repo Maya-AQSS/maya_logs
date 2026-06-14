@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\ArchivedLog;
 use App\Models\User;
 use App\Policies\Concerns\ResolvesJwtContext;
 use Illuminate\Auth\Access\Response;
@@ -14,6 +13,11 @@ use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
 /**
  * Mutaciones sobre logs archivados: permisos desde {@code GET /me}
  * ({@code extra.permissions}), coherente con middleware de rutas.
+ *
+ * La autorización depende solo del contexto JWT (permisos del actor), no del
+ * registro concreto, por lo que el controlador autoriza por clase
+ * ({@code authorize('update', ArchivedLog::class)}) y ningún modelo Eloquent
+ * cruza la frontera Service→Controller (Opción A — DTO estricto).
  */
 class ArchivedLogPolicy
 {
@@ -28,12 +32,12 @@ class ArchivedLogPolicy
         private readonly UserProfileServiceInterface $profileService,
     ) {}
 
-    public function update(?User $user, ArchivedLog $archivedLog): Response
+    public function update(?User $user): Response
     {
         return $this->responseForSlug(self::UPDATE_PERMISSION_CODE);
     }
 
-    public function delete(?User $user, ArchivedLog $archivedLog): Response
+    public function delete(?User $user): Response
     {
         return $this->responseForSlug(self::DELETE_PERMISSION_CODE);
     }

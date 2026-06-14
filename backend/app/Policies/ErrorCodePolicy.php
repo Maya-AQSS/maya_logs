@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Models\ErrorCode;
 use App\Models\User;
 use App\Policies\Concerns\ResolvesJwtContext;
 use Illuminate\Auth\Access\Response;
@@ -39,12 +38,12 @@ class ErrorCodePolicy
         return $this->responseForSlug(self::CREATE_PERMISSION_CODE);
     }
 
-    public function update(?User $user, ErrorCode $errorCode): Response
+    public function update(?User $user): Response
     {
         return $this->responseForSlug(self::UPDATE_PERMISSION_CODE);
     }
 
-    public function delete(?User $user, ErrorCode $errorCode): Response
+    public function delete(?User $user): Response
     {
         return $this->responseForSlug(self::DELETE_PERMISSION_CODE);
     }

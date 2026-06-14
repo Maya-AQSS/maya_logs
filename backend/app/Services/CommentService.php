@@ -35,18 +35,13 @@ final class CommentService implements CommentServiceInterface
         private readonly ArchivedLogRepositoryInterface $archivedLogRepository,
     ) {}
 
-    public function findOrFail(int $id): CommentDto
-    {
-        return CommentDto::fromModel($this->findModelOrFail($id));
-    }
-
     /**
      * Sin telemetría en listados (evita ruido); solo se publica a maya.logs si falla la carga por id.
      */
-    public function findModelOrFail(int $id): Comment
+    public function findOrFail(int $id): CommentDto
     {
         try {
-            return $this->commentRepository->findOrFail($id);
+            return CommentDto::fromModel($this->commentRepository->findOrFail($id));
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,

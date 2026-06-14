@@ -60,10 +60,14 @@ class ArchivedLogService implements ArchivedLogServiceInterface
 
     public function findOrFail(int $id): ArchivedLogDto
     {
-        return ArchivedLogDto::fromModel($this->findModelOrFail($id));
+        return ArchivedLogDto::fromModel($this->loadModelOrFail($id));
     }
 
-    public function findModelOrFail(int $id): ArchivedLog
+    /**
+     * Resuelve el modelo desde el repositorio (uso interno del Service); nunca
+     * cruza la frontera Service→Controller (Opción A — DTO estricto).
+     */
+    private function loadModelOrFail(int $id): ArchivedLog
     {
         try {
             return $this->archivedLogRepository->findOrFail($id);
@@ -80,22 +84,24 @@ class ArchivedLogService implements ArchivedLogServiceInterface
     }
 
     /**
-     * Actualiza los campos de un log archivado.
+     * Actualiza los campos de un log archivado y devuelve el DTO resultante.
      *
      * El actor en auditoría es `archived_by_id` (subject JWT), coherente con {@see ArchivedLogPolicy}.
      * Si los valores ya coinciden con lo enviado (no-op / doble envío), no se persiste ni se emite
      * {@see ArchivedLogFieldsWereUpdated} (evita duplicar filas en maya.audit).
      */
-    public function updateArchivedFields(ArchivedLog $archivedLog, array $fields): void
+    public function updateArchivedFields(int $id, array $fields): ArchivedLogDto
     {
         try {
+            $archivedLog = $this->loadModelOrFail($id);
+
             $sanitized = array_map(
                 static fn ($value) => is_string($value) ? (blank($value) ? null : trim($value)) : $value,
                 $fields
             );
 
             if ($sanitized === [] || ! $this->archivedLogSanitizedDiffersFromModel($archivedLog, $sanitized)) {
-                return;
+                return ArchivedLogDto::fromModel($archivedLog);
             }
 
             $previousValue = [];
@@ -111,12 +117,14 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 $previousValue,
                 $sanitized,
             );
+
+            return ArchivedLogDto::fromModel($archivedLog);
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,
                 'medium',
                 'LAR-LOG-001',
-                ['archived_log_id' => $archivedLog->id],
+                ['archived_log_id' => $id],
                 MessagingConfig::appSlug(),
             );
             throw $e;
@@ -124,14 +132,15 @@ class ArchivedLogService implements ArchivedLogServiceInterface
     }
 
     /**
-     * Elimina un log archivado.
+     * Elimina un log archivado por su id.
      *
      * Solo se emite {@see ArchivedLogWasDeleted} si el soft delete se aplicó (evita duplicar audit
      * si {@see ArchivedLogRepositoryInterface::delete} no modifica filas).
      */
-    public function delete(ArchivedLog $archivedLog): void
+    public function delete(int $id): void
     {
         try {
+            $archivedLog = $this->loadModelOrFail($id);
             $archivedLogId = $archivedLog->id;
             $archivedByUserId = (string) $archivedLog->archived_by_id;
 
@@ -145,7 +154,7 @@ class ArchivedLogService implements ArchivedLogServiceInterface
                 $e,
                 'medium',
                 'LAR-LOG-002',
-                ['archived_log_id' => $archivedLog->id],
+                ['archived_log_id' => $id],
                 MessagingConfig::appSlug(),
             );
             throw $e;

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ListArchivedLogsRequest;
 use App\Http\Requests\Api\UpdateArchivedLogRequest;
 use App\Http\Resources\ArchivedLogResource;
+use App\Models\ArchivedLog;
 use App\Services\Contracts\ArchivedLogServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Maya\Http\Concerns\RespondsWithEnvelope;
@@ -44,31 +45,25 @@ class ArchivedLogController extends Controller
 
     public function update(UpdateArchivedLogRequest $request, int $id): JsonResponse
     {
-        $archivedLog = $this->archivedLogService->findModelOrFail($id);
-
-        $this->authorize('update', $archivedLog);
+        // La autorización depende solo del contexto JWT (permisos del actor),
+        // no del registro concreto: se autoriza por clase y ningún modelo cruza
+        // la frontera Service→Controller (Opción A — DTO estricto).
+        $this->authorize('update', ArchivedLog::class);
 
         $validatedFields = $this->archivedLogService->validateAndFilterFields(
             $request->validated(),
         );
 
-        $this->archivedLogService->updateArchivedFields(
-            $archivedLog,
-            $validatedFields,
-        );
-
-        $dto = $this->archivedLogService->findOrFail($id);
+        $dto = $this->archivedLogService->updateArchivedFields($id, $validatedFields);
 
         return $this->okData(new ArchivedLogResource($dto));
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $archivedLog = $this->archivedLogService->findModelOrFail($id);
+        $this->authorize('delete', ArchivedLog::class);
 
-        $this->authorize('delete', $archivedLog);
-
-        $this->archivedLogService->delete($archivedLog);
+        $this->archivedLogService->delete($id);
 
         return response()->json(null, 204);
     }

@@ -51,17 +51,8 @@ class ErrorCodeService implements ErrorCodeServiceInterface
 
     public function findOrFail(int $id): ErrorCodeDto
     {
-        return ErrorCodeDto::fromModel($this->findModelOrFail($id));
-    }
-
-    /**
-     * Sin telemetría en listados (evita ruido); solo se publica a maya.logs si falla la carga por id.
-     * Público solo para el policy gate del controlador; para el read path usar {@see self::findOrFail()}.
-     */
-    public function findModelOrFail(int $id): ErrorCode
-    {
         try {
-            return $this->errorCodeRepository->findOrFail($id);
+            return ErrorCodeDto::fromModel($this->errorCodeRepository->findOrFail($id));
         } catch (Throwable $e) {
             $this->resilientLogPublisher->publishFromThrowable(
                 $e,

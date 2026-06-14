@@ -17,10 +17,10 @@ final readonly class CommentDto
         public ?string $updatedAt,
         public ?UserRefDto $user,
         public bool $userLoaded,
-        // The Resource needs the raw Comment for Gate::check() (policy gates work on
-        // the Eloquent model). We keep a reference to preserve `can_edit` / `can_delete`
-        // semantics without re-querying.
-        public Comment $source,
+        // Autor del comentario (`comments.user_id`). Lo necesita {@see CommentPolicy}
+        // para decidir update/delete sin que el modelo Eloquent cruce la frontera
+        // Service→Controller (Opción A — DTO estricto).
+        public ?string $authorId,
     ) {}
 
     public static function fromModel(Comment $m): self
@@ -38,7 +38,7 @@ final readonly class CommentDto
                 ? UserRefDto::fromModel($m->user)
                 : null,
             userLoaded: $userLoaded,
-            source: $m,
+            authorId: $m->user_id !== null ? (string) $m->user_id : null,
         );
     }
 }

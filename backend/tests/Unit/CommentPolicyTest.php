@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Dtos\CommentDto;
 use App\Models\ArchivedLog;
-use App\Models\Comment;
 use App\Models\ErrorCode;
 use App\Models\User;
 use App\Policies\CommentPolicy;
@@ -12,8 +12,9 @@ use Illuminate\Http\Request;
 use Maya\Profile\Dtos\UserProfileDto;
 use Maya\Profile\Enums\Locale;
 use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     $this->profileService = Mockery::mock(UserProfileServiceInterface::class);
@@ -25,7 +26,7 @@ afterEach(function () {
 
 function makeCommentPolicy(array $jwtUser): CommentPolicy
 {
-    $request = new Request();
+    $request = new Request;
     $request->attributes->set('jwt_user', $jwtUser);
 
     return new CommentPolicy($request, test()->profileService);
@@ -42,12 +43,27 @@ function makeCommentProfile(array $permissions): UserProfileDto
     );
 }
 
+/**
+ * La policy opera sobre el DTO (Opción A — DTO estricto), no sobre el modelo.
+ */
+function makeCommentDto(?string $authorId, string $commentableType): CommentDto
+{
+    return new CommentDto(
+        id: 1,
+        content: '<p>x</p>',
+        commentableType: $commentableType,
+        commentableId: 1,
+        createdAt: null,
+        updatedAt: null,
+        user: null,
+        userLoaded: false,
+        authorId: $authorId,
+    );
+}
+
 it('allows delete when user is comment author without delete slug', function () {
     $user = User::factory()->create(['id' => 'user-1']);
-    $comment = new Comment([
-        'user_id' => 'user-1',
-        'commentable_type' => ArchivedLog::class,
-    ]);
+    $comment = makeCommentDto('user-1', ArchivedLog::class);
 
     $policy = makeCommentPolicy(['id' => 'user-1']);
 
@@ -56,10 +72,7 @@ it('allows delete when user is comment author without delete slug', function () 
 
 it('allows delete when user has archived-logs.comment.delete but is not author', function () {
     $user = User::factory()->create(['id' => 'user-1']);
-    $comment = new Comment([
-        'user_id' => 'other-user',
-        'commentable_type' => ArchivedLog::class,
-    ]);
+    $comment = makeCommentDto('other-user', ArchivedLog::class);
 
     test()->profileService->shouldReceive('getProfile')->once()->andReturn(
         makeCommentProfile(['archived-logs.comment.delete']),
@@ -72,10 +85,7 @@ it('allows delete when user has archived-logs.comment.delete but is not author',
 
 it('allows delete when user has error-code.comment.delete but is not author', function () {
     $user = User::factory()->create(['id' => 'user-1']);
-    $comment = new Comment([
-        'user_id' => 'other-user',
-        'commentable_type' => ErrorCode::class,
-    ]);
+    $comment = makeCommentDto('other-user', ErrorCode::class);
 
     test()->profileService->shouldReceive('getProfile')->once()->andReturn(
         makeCommentProfile(['error-code.comment.delete']),
@@ -88,10 +98,7 @@ it('allows delete when user has error-code.comment.delete but is not author', fu
 
 it('denies delete when not author and missing delete slug', function () {
     $user = User::factory()->create(['id' => 'user-1']);
-    $comment = new Comment([
-        'user_id' => 'other-user',
-        'commentable_type' => ArchivedLog::class,
-    ]);
+    $comment = makeCommentDto('other-user', ArchivedLog::class);
 
     test()->profileService->shouldReceive('getProfile')->once()->andReturn(
         makeCommentProfile([]),
@@ -104,7 +111,7 @@ it('denies delete when not author and missing delete slug', function () {
 
 it('allows update only for comment author', function () {
     $user = User::factory()->create();
-    $comment = new Comment(['user_id' => $user->id]);
+    $comment = makeCommentDto($user->id, ArchivedLog::class);
 
     $policy = makeCommentPolicy(['id' => $user->id]);
 
@@ -114,7 +121,7 @@ it('allows update only for comment author', function () {
 it('denies update when not comment author', function () {
     $user = User::factory()->create();
     $other = User::factory()->create();
-    $comment = new Comment(['user_id' => $other->id]);
+    $comment = makeCommentDto($other->id, ArchivedLog::class);
 
     $policy = makeCommentPolicy(['id' => $user->id]);
 

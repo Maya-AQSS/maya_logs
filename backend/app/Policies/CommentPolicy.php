@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Dtos\CommentDto;
 use App\Models\ArchivedLog;
-use App\Models\Comment;
 use App\Models\ErrorCode;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -15,6 +15,9 @@ use Maya\Profile\Services\Contracts\UserProfileServiceInterface;
  * Editar: solo el autor ({@code user_id}).
  * Borrar: el autor del comentario o quien tenga el slug de módulo
  * ({@code archived-logs.comment.delete}, {@code error-code.comment.delete}, etc.).
+ *
+ * La policy opera sobre {@see CommentDto} (no sobre el modelo Eloquent): ningún
+ * modelo cruza la frontera Service→Controller (Opción A — DTO estricto).
  */
 class CommentPolicy
 {
@@ -27,23 +30,23 @@ class CommentPolicy
         private readonly UserProfileServiceInterface $profileService,
     ) {}
 
-    public function delete(User $user, Comment $comment): bool
+    public function delete(User $user, CommentDto $comment): bool
     {
-        if ($user->id === $comment->user_id) {
+        if ($user->id === $comment->authorId) {
             return true;
         }
 
         return $this->userHasDeletePermission($comment);
     }
 
-    public function update(User $user, Comment $comment): bool
+    public function update(User $user, CommentDto $comment): bool
     {
-        return $user->id === $comment->user_id;
+        return $user->id === $comment->authorId;
     }
 
-    private function userHasDeletePermission(Comment $comment): bool
+    private function userHasDeletePermission(CommentDto $comment): bool
     {
-        $slug = match ($comment->commentable_type) {
+        $slug = match ($comment->commentableType) {
             ArchivedLog::class => self::ARCHIVED_LOG_COMMENT_DELETE,
             ErrorCode::class => self::ERROR_CODE_COMMENT_DELETE,
             default => null,
