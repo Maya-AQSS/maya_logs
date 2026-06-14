@@ -19,7 +19,7 @@ class DashboardController extends Controller
 
     public function index(): JsonResponse
     {
-        $dto = new DashboardSummaryDto(
+        $dto = DashboardSummaryDto::fromAggregates(
             severityCards: $this->logService->dashboardSeverityCards(),
             applicationTotals: $this->logService->dashboardApplicationTotals(),
         );
