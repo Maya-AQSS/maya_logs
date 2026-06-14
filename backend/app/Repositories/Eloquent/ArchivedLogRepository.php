@@ -79,18 +79,15 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
     /**
      * Apply severity ranking to the query.
      *
-     * Delegates severity ranking business logic to the domain service.
-     * This method exists to preserve the Repository pattern while keeping
-     * domain logic in the Service layer.
+     * La regla de dominio (jerarquía de severidad) la aporta {@see SeverityRankingService};
+     * la construcción del SQL (CASE/ORDER BY) vive en el scope del modelo
+     * {@see ArchivedLog::scopeOrderBySeverityRank()}, manteniendo Eloquent fuera del Service.
      */
     private function applySeverityRankOrder(Builder $query, string $direction): Builder
     {
-        // Domain logic moved to SeverityRankingService; this delegate pattern
-        // maintains Repository method contract while enforcing architecture.
-        // The service is injected at the service layer level.
-        $rankingService = app(SeverityRankingService::class);
+        $severityHierarchy = app(SeverityRankingService::class)->severityHierarchy();
 
-        return $rankingService->applyRankOrder($query, $direction);
+        return $query->orderBySeverityRank($severityHierarchy, $direction);
     }
 
     /**

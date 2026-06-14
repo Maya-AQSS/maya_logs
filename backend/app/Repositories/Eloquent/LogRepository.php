@@ -10,6 +10,7 @@ use App\Enums\Severity;
 use App\Models\ArchivedLog;
 use App\Models\Log;
 use App\Repositories\Contracts\LogRepositoryInterface;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -348,5 +349,22 @@ class LogRepository implements LogRepositoryInterface
     public function isInTransaction(): bool
     {
         return DB::transactionLevel() > 0;
+    }
+
+    /**
+     * Cuenta los logs con alguna de las severidades dadas creados desde $since (inclusive).
+     *
+     * @param  list<string>  $severities
+     */
+    public function countBySeveritiesSince(array $severities, CarbonInterface $since): int
+    {
+        if ($severities === []) {
+            return 0;
+        }
+
+        return Log::query()
+            ->whereIn('severity', $severities)
+            ->where('created_at', '>=', $since)
+            ->count();
     }
 }

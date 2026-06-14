@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\ArchivedLog;
 
 /**
  * Domain service for severity ranking logic.
  *
  * Encapsulates business rules for sorting ArchivedLogs by severity level.
  * Severity hierarchy: critical → high → medium → low → other
+ *
+ * Esta clase mantiene SOLO la regla de dominio pura (la jerarquía y la validación
+ * de dirección). La construcción del fragmento SQL (CASE/ORDER BY) vive en la capa
+ * Eloquent — {@see ArchivedLog::scopeOrderBySeverityRank()}.
  */
 final class SeverityRankingService
 {
@@ -22,31 +26,13 @@ final class SeverityRankingService
     private const SEVERITY_HIERARCHY = ['critical', 'high', 'medium', 'low', 'other'];
 
     /**
-     * Apply severity ranking to a query builder.
+     * Devuelve la jerarquía de severidad ordenada de mayor a menor prioridad.
      *
-     * Orders results by the business severity hierarchy (critical→high→medium→low→other),
-     * then by archived_at and id for stable pagination.
-     *
-     * @param  string  $direction  'asc' or 'desc' (applies to the rank order)
-     * @return Builder with applied severity ordering
+     * @return list<string>
      */
-    public function applyRankOrder(Builder $query, string $direction): Builder
+    public function severityHierarchy(): array
     {
-        $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
-
-        // Build CASE statement for severity ranking
-        $caseStatement = 'CASE severity ';
-        $bindings = [];
-        foreach (self::SEVERITY_HIERARCHY as $rank => $severity) {
-            $caseStatement .= 'WHEN ? THEN '.($rank + 1).' ';
-            $bindings[] = $severity;
-        }
-        $caseStatement .= 'ELSE '.(count(self::SEVERITY_HIERARCHY) + 1).' END '.$dir;
-
-        return $query
-            ->orderByRaw($caseStatement, $bindings)
-            ->orderByDesc('archived_at')
-            ->orderByDesc('id');
+        return self::SEVERITY_HIERARCHY;
     }
 
     /**

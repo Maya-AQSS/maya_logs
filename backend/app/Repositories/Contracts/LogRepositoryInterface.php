@@ -7,6 +7,7 @@ namespace App\Repositories\Contracts;
 use App\Dtos\LogDto;
 use App\Dtos\LogFilterDto;
 use App\Models\Log;
+use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -77,4 +78,11 @@ interface LogRepositoryInterface
      * Indica si hay una transacción activa en la BD.
      */
     public function isInTransaction(): bool;
+
+    /**
+     * Cuenta los logs con alguna de las severidades dadas creados desde $since (inclusive).
+     *
+     * @param  list<string>  $severities
+     */
+    public function countBySeveritiesSince(array $severities, CarbonInterface $since): int;
 }

@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Notifications\Rules;
 
-use App\Models\Log;
+use App\Repositories\Contracts\LogRepositoryInterface;
 use Illuminate\Support\Facades\Log as LogFacade;
 use Maya\Messaging\Publishers\NotificationPublisher;
 use Throwable;
 
 class ErrorSpikeRule implements ScheduledNotificationRule
 {
+    public function __construct(
+        private readonly LogRepositoryInterface $logRepository,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $params
      */
@@ -21,11 +25,11 @@ class ErrorSpikeRule implements ScheduledNotificationRule
             $threshold = (int) ($params['threshold'] ?? config('logs.error_spike_threshold', 10));
             $windowStart = now()->subSeconds($windowSeconds);
 
-            // Count critical and high severity logs in the window
-            $errorCount = Log::query()
-                ->whereIn('severity', ['critical', 'high'])
-                ->where('created_at', '>=', $windowStart)
-                ->count();
+            // Count critical and high severity logs in the window (data access via repo).
+            $errorCount = $this->logRepository->countBySeveritiesSince(
+                ['critical', 'high'],
+                $windowStart,
+            );
 
             if ($errorCount >= $threshold) {
                 $this->publishAlert($publisher, $errorCount, $severity);

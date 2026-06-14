@@ -86,6 +86,35 @@ class ArchivedLog extends Model
         return $query->with(['application', 'archivedBy', 'errorCode'])->withCount('comments');
     }
 
+    /**
+     * Ordena por una jerarquía de severidad (la regla de dominio la aporta el Service:
+     * lista ordenada de mayor a menor prioridad), seguida de archived_at e id para
+     * paginación estable. La construcción del CASE/ORDER BY SQL vive aquí, en la capa
+     * Eloquent, no en el Service.
+     *
+     * @param  Builder<ArchivedLog>  $query
+     * @param  list<string>  $severityHierarchy  severidades ordenadas de mayor a menor prioridad
+     * @param  string  $direction  'asc' o 'desc' (aplica al rango de severidad)
+     * @return Builder<ArchivedLog>
+     */
+    public function scopeOrderBySeverityRank(Builder $query, array $severityHierarchy, string $direction): Builder
+    {
+        $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+
+        $caseStatement = 'CASE severity ';
+        $bindings = [];
+        foreach ($severityHierarchy as $rank => $severity) {
+            $caseStatement .= 'WHEN ? THEN '.($rank + 1).' ';
+            $bindings[] = $severity;
+        }
+        $caseStatement .= 'ELSE '.(count($severityHierarchy) + 1).' END '.$dir;
+
+        return $query
+            ->orderByRaw($caseStatement, $bindings)
+            ->orderByDesc('archived_at')
+            ->orderByDesc('id');
+    }
+
     public function getMetadataFormattedAttribute(): ?string
     {
         if (! is_array($this->metadata) || $this->metadata === []) {
