@@ -12,6 +12,12 @@ jobs:
   backend:
     name: Backend (Pest + SQLite)
     runs-on: ubuntu-latest
+    # APP_ENV=testing exime el boot-guard de credenciales AMQP de
+    # shared-messaging-laravel (MessagingServiceProvider) durante
+    # `package:discover` del composer install, donde no hay .env con
+    # RABBITMQ_USER/PASSWORD. La suite Pest ya corre en env testing.
+    env:
+      APP_ENV: testing
     defaults:
       run:
         working-directory: backend

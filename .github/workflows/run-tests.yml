@@ -11,6 +11,10 @@ jobs:
     name: Feature & Unit tests — PostgreSQL 18
     runs-on: ubuntu-latest
 
+    # Exime el boot-guard AMQP durante package:discover (sin RABBITMQ_* en CI).
+    env:
+      APP_ENV: testing
+
     services:
       # Contenedor PostgreSQL 18 que levanta GitHub Actions automáticamente.
       # Los health-checks garantizan que el contenedor esté listo antes de

@@ -10,6 +10,9 @@ jobs:
   pint:
     name: Pint code style + declare_strict_types
     runs-on: ubuntu-latest
+    # APP_ENV=testing exime el boot-guard AMQP durante package:discover (sin .env).
+    env:
+      APP_ENV: testing
     defaults:
       run:
         working-directory: backend
