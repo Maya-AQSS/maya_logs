@@ -24,11 +24,18 @@ class ErrorCodeController extends Controller
 
     public function index(ListErrorCodesRequest $request): JsonResponse
     {
+        $validated = $request->validated();
+
+        $search = isset($validated['search']) ? (string) $validated['search'] : '';
+        $applicationId = $validated['application_id'] ?? null;
+        $sortBy = isset($validated['sort_by']) ? (string) $validated['sort_by'] : '';
+        $sortDir = isset($validated['sort_dir']) ? (string) $validated['sort_dir'] : '';
+
         $page = $this->errorCodeService->searchAndFilter(
-            search: $request->string('search')->toString() ?: null,
-            filterApp: $request->input('application_id') ? (int) $request->input('application_id') : null,
-            sortBy: $request->string('sort_by')->toString() ?: null,
-            sortDir: $request->string('sort_dir')->toString() ?: null,
+            search: $search !== '' ? $search : null,
+            filterApp: $applicationId !== null ? (int) $applicationId : null,
+            sortBy: $sortBy !== '' ? $sortBy : null,
+            sortDir: $sortDir !== '' ? $sortDir : null,
             perPage: $request->getPerPage(),
         );
 

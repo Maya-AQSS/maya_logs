@@ -22,20 +22,14 @@ class ArchivedLogController extends Controller
 
     public function index(ListArchivedLogsRequest $request): JsonResponse
     {
-        $perPage = (int) $request->integer('per_page', 15);
-        $severity = $request->input('severity');
-        if (is_string($severity)) {
-            $severity = array_filter(array_map('trim', explode(',', $severity)), fn (string $v): bool => $v !== '');
-        }
-
         $page = $this->archivedLogService->searchAndFilter(
-            severities: is_array($severity) && $severity !== [] ? array_values($severity) : null,
-            applicationId: $request->filled('application_id') ? (int) $request->input('application_id') : null,
-            dateFrom: $request->string('date_from')->toString() ?: null,
-            dateTo: $request->string('date_to')->toString() ?: null,
-            sortBy: $request->string('sort_by')->toString() ?: null,
-            sortDir: $request->string('sort_dir')->toString() ?: 'desc',
-            perPage: $perPage > 0 ? $perPage : 15,
+            severities: $request->getParsedSeverity(),
+            applicationId: $request->getApplicationId(),
+            dateFrom: $request->getDateFrom(),
+            dateTo: $request->getDateTo(),
+            sortBy: $request->getSortBy(),
+            sortDir: $request->getSortDir(),
+            perPage: $request->getPerPage(),
         );
 
         return $this->paginated($page, ArchivedLogResource::class, $request);

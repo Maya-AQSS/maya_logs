@@ -42,4 +42,74 @@ class ListArchivedLogsRequest extends FormRequest
             'date_to' => $to,
         ], fn ($v) => $v !== null));
     }
+
+    /**
+     * Parsea el campo severity, que puede llegar como string CSV o como array,
+     * de forma idéntica a {@see ListLogsRequest::getParsedSeverity()}.
+     *
+     * @return list<string>|null
+     */
+    public function getParsedSeverity(): ?array
+    {
+        $severity = $this->validated('severity');
+
+        if ($severity === null) {
+            return null;
+        }
+
+        if (is_array($severity)) {
+            $values = array_values(array_filter(array_map('trim', $severity), fn (string $v): bool => $v !== ''));
+
+            return $values !== [] ? $values : null;
+        }
+
+        $values = array_values(array_filter(
+            array_map('trim', explode(',', (string) $severity)),
+            fn (string $v): bool => $v !== '',
+        ));
+
+        return $values !== [] ? $values : null;
+    }
+
+    public function getApplicationId(): ?int
+    {
+        $applicationId = $this->validated('application_id');
+
+        return $applicationId !== null ? (int) $applicationId : null;
+    }
+
+    public function getDateFrom(): ?string
+    {
+        $value = $this->validated('date_from');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function getDateTo(): ?string
+    {
+        $value = $this->validated('date_to');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function getSortBy(): ?string
+    {
+        $value = $this->validated('sort_by');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function getSortDir(): string
+    {
+        $value = $this->validated('sort_dir');
+
+        return is_string($value) && $value !== '' ? $value : 'desc';
+    }
+
+    public function getPerPage(): int
+    {
+        $perPage = (int) ($this->validated('per_page') ?? 15);
+
+        return $perPage > 0 ? $perPage : 15;
+    }
 }
