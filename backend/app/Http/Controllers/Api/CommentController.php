@@ -33,7 +33,7 @@ class CommentController extends Controller
         // service/repo (excepción de capas aceptada, solo para authorize).
         $userModel = $this->panelUserService->resolveAuthenticatable($user->id);
         if ($userModel === null) {
-            abort(403, 'Unauthorized');
+            abort(403, __('api.auth.forbidden'));
         }
 
         GateFacade::forUser($userModel)->authorize('update', $comment);
@@ -55,7 +55,7 @@ class CommentController extends Controller
         // service/repo (excepción de capas aceptada, solo para authorize).
         $userModel = $this->panelUserService->resolveAuthenticatable($user->id);
         if ($userModel === null) {
-            abort(403, 'Unauthorized');
+            abort(403, __('api.auth.forbidden'));
         }
 
         GateFacade::forUser($userModel)->authorize('delete', $comment);
