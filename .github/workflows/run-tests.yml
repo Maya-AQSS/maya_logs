@@ -12,8 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     # Exime el boot-guard AMQP durante package:discover (sin RABBITMQ_* en CI).
+    # Además, .env.example interpola ${HOST_PREFIX}/${DOMAIN_SUFFIX}/${MAYA_SLOT*}
+    # (los inyecta el slot de dev); sin definirlas, APP_URL/REVERB_HOST quedan
+    # malformados ("Invalid URI: Host is malformed") y el boot de artisan peta.
+    # Los tests corren sobre sqlite (phpunit.xml), así que basta con valores
+    # válidos para la interpolación.
     env:
       APP_ENV: testing
+      APP_URL: http://localhost
+      HOST_PREFIX: ""
+      DOMAIN_SUFFIX: test
+      MAYA_SLOT: maya
+      MAYA_SLOT_DB: ci
 
     # El código Laravel vive en backend/; sin esto composer corre en la raíz
     # del repo y no encuentra composer.json.
