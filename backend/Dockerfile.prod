@@ -1,0 +1,111 @@
+# syntax=docker/dockerfile:1.7
+# ─── Etapa 1: vendor (composer en build, sin scripts, sin dev) ───────────────
+FROM composer:2.9 AS vendor
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+COPY composer.local.dist.json ./composer.local.dist.json
+
+# `--no-scripts` evita ejecutar artisan en una etapa sin el código fuente.
+# Las dependencias `path:` de composer.local.json no aplican en prod (sin override).
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    COMPOSER_CACHE_DIR=/tmp/composer-cache \
+    composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --no-scripts \
+        --prefer-dist \
+        --optimize-autoloader
+
+# ─── Etapa 2: runtime (php-fpm con extensiones, sin pcov) ────────────────────
+FROM php:8.4-fpm-alpine AS runtime
+
+# Dependencias del sistema. linux-headers requerido por ext-sockets (worker
+# AMQP de RabbitMQ usa php-amqplib que necesita sockets).
+RUN apk add --no-cache \
+        bash \
+        curl \
+        libpng \
+        libxml2 \
+        oniguruma \
+        postgresql-libs \
+        tini \
+        tzdata \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        libpng-dev \
+        libxml2-dev \
+        oniguruma-dev \
+        postgresql-dev \
+        linux-headers \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        sockets \
+    && PHPREDIS_VERSION=6.2.0 \
+    && curl -fsSL "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz" | tar -xz -C /tmp \
+    && cd /tmp/phpredis-${PHPREDIS_VERSION} \
+    && phpize && ./configure --enable-redis && make -j"$(nproc)" && make install \
+    && docker-php-ext-enable redis \
+    && cd / && rm -rf /tmp/phpredis-${PHPREDIS_VERSION} \
+    && apk del .build-deps
+
+# Configuración PHP de producción (opcache JIT, expose_php off).
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.enable_cli=0'; \
+        echo 'opcache.memory_consumption=256'; \
+        echo 'opcache.max_accelerated_files=20000'; \
+        echo 'opcache.validate_timestamps=0'; \
+        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.jit_buffer_size=64M'; \
+        echo 'opcache.jit=1255'; \
+        echo 'expose_php=Off'; \
+    } > "$PHP_INI_DIR/conf.d/zz-opcache-prod.ini"
+
+# Usuario no-root estable. www-data ya existe en la imagen base (uid 82).
+ENV APP_UID=82 \
+    APP_GID=82 \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    CONTAINER_ROLE=api
+
+WORKDIR /var/www/html
+
+# Copiar vendor primero (cacheable) y luego el código.
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
+
+# Ajustar permisos del runtime. storage/ y bootstrap/cache se montan como
+# emptyDir desde el chart (readOnlyRootFilesystem). Mantenemos el owner para
+# fallback en builds que no apliquen el chart.
+RUN mkdir -p storage/framework/cache/data \
+             storage/framework/sessions \
+             storage/framework/views \
+             storage/logs \
+             bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+# Entrypoint de producción (role-based: api | worker | scheduler | reverb).
+COPY docker-entrypoint.prod.sh /usr/local/bin/docker-entrypoint.prod.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.prod.sh
+
+# php-fpm escucha en 9000 (FastCGI); sidecar nginx del chart hace proxy en 8000.
+# reverb escucha en 8080 cuando CONTAINER_ROLE=reverb.
+EXPOSE 8000 9000 8080
+
+USER www-data
+
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.prod.sh"]
+# CMD por defecto: api → php-fpm en foreground. El entrypoint puede
+# sobrescribirlo según CONTAINER_ROLE (worker, scheduler, reverb).
+CMD ["php-fpm", "--nodaemonize"]

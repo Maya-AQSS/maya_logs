@@ -1,10 +1,61 @@
+# Mantén la build de producción reproducible y pequeña.
+# Las dependencias se instalan en la etapa `vendor` desde composer.lock.
+
 vendor/
 node_modules/
+
+# Entorno y secretos (los inyecta Kubernetes en runtime vía Secret/ConfigMap).
 .env
+.env.*
+!.env.example
+composer.local.json
+composer.local.dist.json.lock
+
+# Git / VCS
 .git/
+.gitignore
+.gitattributes
+
+# Storage runtime (lo monta el chart como emptyDir).
 storage/logs/*
+!storage/logs/.gitkeep
 storage/framework/cache/*
+!storage/framework/cache/.gitkeep
 storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
 storage/framework/views/*
-bootstrap/cache/services.php
-bootstrap/cache/packages.php
+!storage/framework/views/.gitkeep
+storage/framework/testing/*
+!storage/framework/testing/.gitkeep
+bootstrap/cache/*.php
+
+# Pruebas y reportes (no necesarios en runtime de prod).
+tests/
+phpunit.xml
+phpunit-pgsql.xml
+pint.json
+coverage/
+.phpunit.result.cache
+.phpunit.cache/
+
+# Documentación interna y artefactos de auditoría.
+README.md
+errores.md
+errores
+traducciones.md
+AUDIT_REPORT.md
+changes.md
+ER.md
+SCHEDULED_RULES_GUIDE.md
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker dev (se sustituye por Dockerfile.prod)
+Dockerfile
+docker-entrypoint.sh
