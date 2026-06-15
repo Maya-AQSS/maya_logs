@@ -5,10 +5,9 @@ FROM composer:2.9 AS vendor
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-COPY composer.local.dist.json ./composer.local.dist.json
 
 # `--no-scripts` evita ejecutar artisan en una etapa sin el código fuente.
-# Las dependencias `path:` de composer.local.json no aplican en prod (sin override).
+# `composer.local.json`/`*.dist.json` son dev-only y están excluidos por .dockerignore.
 RUN --mount=type=cache,target=/tmp/composer-cache \
     COMPOSER_CACHE_DIR=/tmp/composer-cache \
     composer install \
@@ -31,6 +30,7 @@ RUN apk add --no-cache \
         libxml2 \
         oniguruma \
         postgresql-libs \
+        procps \
         tini \
         tzdata \
     && apk add --no-cache --virtual .build-deps \
@@ -88,20 +88,22 @@ COPY . .
 # Ajustar permisos del runtime. storage/ y bootstrap/cache se montan como
 # emptyDir desde el chart (readOnlyRootFilesystem). Mantenemos el owner para
 # fallback en builds que no apliquen el chart.
+# Eliminamos composer.local.dist.json/composer.local.json: son artefactos dev-only.
 RUN mkdir -p storage/framework/cache/data \
              storage/framework/sessions \
              storage/framework/views \
              storage/logs \
              bootstrap/cache \
+    && rm -f composer.local.json composer.local.dist.json \
     && chown -R www-data:www-data storage bootstrap/cache
 
 # Entrypoint de producción (role-based: api | worker | scheduler | reverb).
 COPY docker-entrypoint.prod.sh /usr/local/bin/docker-entrypoint.prod.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.prod.sh
 
-# php-fpm escucha en 9000 (FastCGI); sidecar nginx del chart hace proxy en 8000.
+# php-fpm escucha en 9000 (FastCGI); sidecar nginx del chart hace proxy.
 # reverb escucha en 8080 cuando CONTAINER_ROLE=reverb.
-EXPOSE 8000 9000 8080
+EXPOSE 9000 8080
 
 USER www-data
 

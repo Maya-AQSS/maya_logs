@@ -16,11 +16,19 @@ rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php \
       bootstrap/cache/packages.php bootstrap/cache/services.php 2>/dev/null || true
 
 # Regenerar caché de paquetes (tras copiar vendor en build).
+# `package:discover` puede no encontrar nada nuevo — tolerable.
 php artisan package:discover --ansi >/dev/null 2>&1 || true
 
-# Cachear config y rutas con la env final del pod.
-php artisan config:cache --ansi >/dev/null 2>&1 || true
-php artisan route:cache --ansi >/dev/null 2>&1 || true
+# Cachear config y rutas con la env final del pod. Un fallo aquí indica env
+# inválido o credenciales incompletas: abortar antes de servir tráfico.
+if ! php artisan config:cache --ansi; then
+    echo "[entrypoint] config:cache FAILED — aborting" >&2
+    exit 1
+fi
+if ! php artisan route:cache --ansi; then
+    echo "[entrypoint] route:cache FAILED — aborting" >&2
+    exit 1
+fi
 
 case "$ROLE" in
     api)

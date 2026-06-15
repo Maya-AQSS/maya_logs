@@ -60,9 +60,15 @@ spec:
             cidr: 172.29.71.0/24
         - ipBlock:
             cidr: 172.29.70.0/24
-    # Pod-to-pod intra-clúster (Redis, RabbitMQ, Keycloak, maya-authz en otros NS)
+    # Pod-to-pod intra-clúster: SOLO los namespaces esperados (Redis, RabbitMQ,
+    # Keycloak en maya-infra; vistas FDW vienen por IP). Si necesitas un nuevo
+    # NS aliado, añádelo a `networkPolicy.egressNamespaces` en values.yaml.
     - to:
-        - namespaceSelector: {}
+{{- range .Values.networkPolicy.egressNamespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . | quote }}
+{{- end }}
 ---
 # Ingress al backend desde Traefik (kube-system) y desde namespaces aliados.
 apiVersion: networking.k8s.io/v1

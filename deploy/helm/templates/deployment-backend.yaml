@@ -23,6 +23,7 @@ spec:
         {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" $component) | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.backend.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -32,6 +33,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: default
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
@@ -48,6 +50,23 @@ spec:
             - name: fpm
               containerPort: {{ .Values.backend.fpmPort }}
               protocol: TCP
+          # Probe TCP directo a php-fpm: si el proceso se cuelga (worker
+          # deadlock, opcache corrupto), nginx puede seguir vivo y la HTTP probe
+          # del sidecar no detectaría el cuelgue.
+          livenessProbe:
+            tcpSocket:
+              port: fpm
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: fpm
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
           securityContext:
@@ -75,7 +94,7 @@ spec:
               cpu: 200m
               memory: 64Mi
           securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+            {{- toYaml .Values.nginxSidecarSecurityContext | nindent 12 }}
           lifecycle:
             {{- include "maya-logs.preStop" . | nindent 12 }}
           volumeMounts:

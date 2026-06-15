@@ -6,10 +6,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "maya-logs.componentLabels" (dict "component" "frontend" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    # Forzar entrypoint TLS en Traefik. Sin esto, un cliente que llegue al
+    # entrypoint :80 recibe respuesta plaintext.
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   tls:
@@ -26,7 +30,7 @@ spec:
               service:
                 name: {{ include "maya-logs.componentName" (dict "component" "frontend") }}
                 port:
-                  number: 80
+                  number: {{ .Values.frontend.containerPort }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -35,10 +39,12 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "maya-logs.componentLabels" (dict "component" "api" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   tls:

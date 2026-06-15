@@ -31,7 +31,7 @@ spec:
     {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "frontend") | nindent 4 }}
   ports:
     - name: http
-      port: 80
+      port: {{ .Values.frontend.containerPort }}
       targetPort: http
       protocol: TCP
 ---

@@ -148,18 +148,22 @@ reverb:
     periodSeconds: 10
 
 # ─── Migración (Job pre-upgrade) ──────────────────────────────────────────
+# Importante: la imagen es la MISMA que el backend (incluye artisan + migrations).
 migrate:
   enabled: true
   image:
     repository: maya/maya-logs-backend
-    tag: ""
+    tag: ""  # default → .Values.image.tag
   # `--force` requerido en producción para saltar el prompt.
   command:
     - php
     - artisan
     - migrate
     - --force
-  backoffLimit: 1
+  # backoffLimit: 0 evita reintentos automáticos — una migración parcialmente
+  # aplicada por un blip de red puede dejar el esquema en estado intermedio.
+  # Operación manual: tras fallo, revisar migrations y relanzar `helm upgrade`.
+  backoffLimit: 0
   activeDeadlineSeconds: 600
   resources:
     requests:
@@ -223,7 +227,7 @@ config:
   fdwNotificationRulesHost: "172.29.71.252"
   fdwNotificationRulesPort: "5432"
   fdwNotificationRulesDatabase: maya_dashboard
-  fdwNotificationRulesUsername: maya
+  # USERNAME se inyecta vía Secret (no ConfigMap) — ver `secret.data` abajo.
   fdwNotificationRulesSchema: public
   fdwNotificationRulesTable: v_notification_rules
   # ─── FDW: permisos de usuario (maya_authorization) ───
@@ -232,7 +236,7 @@ config:
   fdwUserPermissionsHost: "172.29.71.252"
   fdwUserPermissionsPort: "5432"
   fdwUserPermissionsDatabase: maya_auth
-  fdwUserPermissionsUsername: maya
+  # USERNAME se inyecta vía Secret (no ConfigMap) — ver `secret.data` abajo.
   fdwUserPermissionsSchema: public
   fdwUserPermissionsRemoteView: v_portal_user_permissions
   # ─── Redis (in-cluster) ───
@@ -296,13 +300,20 @@ secret:
   # Contendrá claves con valores placeholder "CHANGE-ME-*" — el operador
   # debe sobrescribirlo en su `values.prod.yaml` (fuera de git) o con --set.
   name: maya-logs-secret
+  # Falla el `helm install/upgrade` si secret.data tiene placeholders "CHANGE-ME-*".
+  # Permite el escape para dry-run/CI con --set secret.allowPlaceholders=true.
+  allowPlaceholders: false
   data:
     APP_KEY: "CHANGE-ME-base64-app-key"
     DB_PASSWORD: "CHANGE-ME-db-password"
     DB_PANEL_PASSWORD: "CHANGE-ME-db-panel-password"
     REDIS_PASSWORD: "CHANGE-ME-redis-password"
     RABBITMQ_PASSWORD: "CHANGE-ME-rabbitmq-password"
+    # FDW usernames también van en el Secret: aunque no son críticos, exponerlos
+    # en el ConfigMap permite enumeración de cuentas de servicio adyacentes.
+    FDW_NOTIFICATION_RULES_USERNAME: "CHANGE-ME-fdw-dashboard-user"
     FDW_NOTIFICATION_RULES_PASSWORD: "CHANGE-ME-fdw-dashboard-password"
+    FDW_USER_PERMISSIONS_USERNAME: "CHANGE-ME-fdw-authz-user"
     FDW_USER_PERMISSIONS_PASSWORD: "CHANGE-ME-fdw-authz-password"
     KEYCLOAK_CLIENT_SECRET: "CHANGE-ME-keycloak-client-secret"
     REVERB_APP_KEY: "CHANGE-ME-reverb-app-key"
@@ -311,9 +322,16 @@ secret:
 # ─── NetworkPolicy (defensa en profundidad) ───────────────────────────────
 networkPolicy:
   enabled: true
-  # Namespaces autorizados para east-west (dashboard agrega widgets de logs).
+  # Namespaces autorizados para INGRESS (dashboard agrega widgets de logs).
   allowedNamespaces:
     - maya-dashboard
+  # Namespaces autorizados para EGRESS pod-to-pod. Limita el blast radius si
+  # un pod en maya-logs queda comprometido: solo podrá hablar con estos NS,
+  # no con kube-system u otros tenants.
+  egressNamespaces:
+    - maya-infra            # Redis, RabbitMQ, Keycloak
+    - maya-authorization    # east-west API authz (opcional, vía FDW)
+    - maya-dashboard        # east-west API dashboard (FDW de reglas)
 
 # ─── PodSecurity (runAsNonRoot, drop ALL, readOnlyRootFS) ─────────────────
 podSecurityContext:
@@ -328,6 +346,19 @@ containerSecurityContext:
   runAsNonRoot: true
   runAsUser: 82
   runAsGroup: 82
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Sidecar nginx del backend (imagen `nginx:1.29-alpine`): su usuario interno es
+# `nginx` (uid 101), no www-data (82). Necesita su propio securityContext para
+# evitar choque entre el `user` directive del nginx.conf y `runAsUser: 82`.
+nginxSidecarSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  runAsGroup: 101
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
   capabilities:

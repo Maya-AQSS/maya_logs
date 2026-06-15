@@ -37,18 +37,18 @@ data:
   DB_PANEL_USERNAME: {{ .Values.config.dbPanelUsername | quote }}
 
   # FDW: vista de reglas de notificación en maya_dashboard (read-only).
+  # USERNAME/PASSWORD se inyectan vía Secret (envFrom secretRef).
   FDW_NOTIFICATION_RULES_HOST: {{ .Values.config.fdwNotificationRulesHost | quote }}
   FDW_NOTIFICATION_RULES_PORT: {{ .Values.config.fdwNotificationRulesPort | quote }}
   FDW_NOTIFICATION_RULES_DATABASE: {{ .Values.config.fdwNotificationRulesDatabase | quote }}
-  FDW_NOTIFICATION_RULES_USERNAME: {{ .Values.config.fdwNotificationRulesUsername | quote }}
   FDW_NOTIFICATION_RULES_SCHEMA: {{ .Values.config.fdwNotificationRulesSchema | quote }}
   FDW_NOTIFICATION_RULES_TABLE: {{ .Values.config.fdwNotificationRulesTable | quote }}
 
   # FDW: vista de permisos resueltos en maya_authorization (read-only).
+  # USERNAME/PASSWORD se inyectan vía Secret (envFrom secretRef).
   FDW_USER_PERMISSIONS_HOST: {{ .Values.config.fdwUserPermissionsHost | quote }}
   FDW_USER_PERMISSIONS_PORT: {{ .Values.config.fdwUserPermissionsPort | quote }}
   FDW_USER_PERMISSIONS_DATABASE: {{ .Values.config.fdwUserPermissionsDatabase | quote }}
-  FDW_USER_PERMISSIONS_USERNAME: {{ .Values.config.fdwUserPermissionsUsername | quote }}
   FDW_USER_PERMISSIONS_SCHEMA: {{ .Values.config.fdwUserPermissionsSchema | quote }}
   FDW_USER_PERMISSIONS_REMOTE_VIEW: {{ .Values.config.fdwUserPermissionsRemoteView | quote }}
 
@@ -110,9 +110,11 @@ data:
         root /var/www/html/public;
         index index.php;
         charset utf-8;
+        server_tokens off;
 
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         client_max_body_size 25m;
 
         location = /healthz {

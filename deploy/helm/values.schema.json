@@ -47,7 +47,11 @@
     "scheduler": {
       "type": "object",
       "properties": {
-        "enabled": {"type": "boolean"}
+        "enabled": {
+          "type": "boolean",
+          "enum": [false],
+          "description": "scheduler aun no implementado en maya_logs (no hay deployment-scheduler.yaml); activarlo silenciosamente no-opea"
+        }
       },
       "description": "maya_logs prepara el rol scheduler para EvaluateNotificationRules; por defecto false"
     },
@@ -138,10 +142,15 @@
         },
         "corsAllowedOrigins": {
           "type": "string",
-          "pattern": "^https://",
-          "description": "Lista CSV; debe forzar https://"
+          "pattern": "^https://[^,]+(,https://[^,]+)*$",
+          "description": "Lista CSV; CADA elemento debe empezar por https://"
         },
-        "trustedProxies": {"type": "string", "minLength": 1},
+        "trustedProxies": {
+          "type": "string",
+          "minLength": 1,
+          "not": {"pattern": "^\\*$"},
+          "description": "Debe ser un CIDR (o lista CSV de CIDRs). Nunca '*' — spoofing de X-Forwarded-For = log poisoning"
+        },
         "workerLogStack": {
           "type": "string",
           "not": {"pattern": "rabbit"},
@@ -175,7 +184,11 @@
       "properties": {
         "runAsNonRoot": {"type": "boolean", "enum": [true]},
         "allowPrivilegeEscalation": {"type": "boolean", "enum": [false]},
-        "readOnlyRootFilesystem": {"type": "boolean"}
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "enum": [true],
+          "description": "Hardening obligatorio — pods en prod NUNCA con rootfs escribible"
+        }
       }
     }
   }

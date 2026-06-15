@@ -28,6 +28,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -41,10 +42,13 @@ spec:
             - |
               set -e
               cd /var/www/html
-              # Limpiar cualquier caché del build y regenerar con env del Job
-              rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php
+              # Limpiar TODOS los cachés del build (alineado con entrypoint prod).
+              # services.php/packages.php pueden registrar providers obsoletos si
+              # el contenedor base trae binarios cacheados de un release previo.
+              rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php \
+                    bootstrap/cache/packages.php bootstrap/cache/services.php
               php artisan package:discover --ansi || true
-              php artisan config:cache --ansi || true
+              php artisan config:cache --ansi
               echo "[migrate] running: {{ join " " .Values.migrate.command }}"
               exec {{ join " " .Values.migrate.command }}
           envFrom:
