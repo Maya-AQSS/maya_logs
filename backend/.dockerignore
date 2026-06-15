@@ -56,7 +56,3 @@ SCHEDULED_RULES_GUIDE.md
 *.swo
 .DS_Store
 Thumbs.db
-
-# Docker dev (se sustituye por Dockerfile.prod)
-Dockerfile
-docker-entrypoint.sh
