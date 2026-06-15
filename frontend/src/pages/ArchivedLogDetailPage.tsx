@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 import {
   Alert,
   Button,
@@ -9,28 +10,23 @@ import {
   TextArea,
   TextInput,
 } from '@ceedcv-maya/shared-ui-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  deleteArchivedLog,
-  fetchArchivedLog,
-  updateArchivedLog,
-} from '../api/archivedLogs';
+import { deleteArchivedLog, fetchArchivedLog, updateArchivedLog } from '../api/archivedLogs';
 import { ArchivedLogDetailView } from '../components/archived-logs';
-import { PermissionGate } from '../components/layout/PermissionGate';
 import { CommentThread } from '../components/comments';
+import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
 import {
+  type ArchivedLogEditInput,
   archivedLogEditSchema,
   emptyArchivedLogEdit,
-  type ArchivedLogEditInput,
 } from '../schemas/archivedLog';
 import type { ArchivedLog } from '../types/logs';
-import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
-import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 
 const useArchivedLogDetailQuery = createDataHook<number, ArchivedLog>({
   queryKey: (id) => ['archived-log', id],
@@ -99,7 +95,8 @@ export function ArchivedLogDetailPage() {
       : String(logQuery.error)
     : null;
 
-  const notFound = !validId || (logQuery.isError && errorMessage != null && /404/.test(errorMessage));
+  const notFound =
+    !validId || (logQuery.isError && errorMessage != null && /404/.test(errorMessage));
   const otherError = logQuery.isError && errorMessage != null && !/404/.test(errorMessage);
 
   const log = logQuery.data ?? null;
@@ -148,8 +145,15 @@ export function ArchivedLogDetailPage() {
     return (
       <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
         <div className="px-4 py-6 sm:px-6 lg:px-8">
-          <PageTitle title={t('detail.title')} onBack={() => goBack()} backLabel={t('actions.back')} />
-          <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
+          <PageTitle
+            title={t('detail.title')}
+            onBack={() => goBack()}
+            backLabel={t('actions.back')}
+          />
+          <Card
+            padding="lg"
+            className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted"
+          >
             {t('detail.notFound')}
           </Card>
         </div>
@@ -159,164 +163,186 @@ export function ArchivedLogDetailPage() {
 
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.archivedLogsShow}>
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle
-        title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
-        onBack={() => goBack()}
-        backLabel={t('actions.back')}
-        actions={
-          log && !editing ? (
-            <>
-              {canUpdate && (
-                <Button variant="outline" size="sm" onClick={onStartEdit}>
-                  {t('actions.edit')}
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                  {t('actions.delete')}
-                </Button>
-              )}
-            </>
-          ) : undefined
-        }
-      />
-
-      {deleteError && (
-        <Alert tone="danger" className="mt-4">{deleteError}</Alert>
-      )}
-
-      {otherError && errorMessage && (
-        <Alert tone="danger" className="mt-4">{t('detail.loadError', { message: errorMessage })}
-        </Alert>
-      )}
-
-      {logQuery.isLoading && !log && (
-        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
-          {t('status.loading')}
-        </Card>
-      )}
-
-      {log && (
-        <div className="mt-4 space-y-4">
-          <ArchivedLogDetailView log={log} />
-
-          <Card padding="md">
-            <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
-              {t('detail.editableInfo')}
-            </h2>
-
-            {editing ? (
-              <form className="mt-3 space-y-4" onSubmit={onSubmit} noValidate>
-                <div>
-                  <FieldLabel htmlFor="archived-log-description">
-                    {t('tables.description')}
-                  </FieldLabel>
-                  <TextArea
-                    id="archived-log-description"
-                    fieldSize="comfortable"
-                    rows={4}
-                    disabled={saving}
-                    {...register('description')}
-                  />
-                  {errors.description && (
-                    <p className="mt-1 text-xs text-state-danger">{errors.description.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <FieldLabel htmlFor="archived-log-url-tutorial">
-                    {t('detail.fields.urlTutorial')}
-                  </FieldLabel>
-                  <TextInput
-                    id="archived-log-url-tutorial"
-                    type="url"
-                    fieldSize="comfortable"
-                    disabled={saving}
-                    placeholder="https://…"
-                    {...register('url_tutorial')}
-                  />
-                  {errors.url_tutorial && (
-                    <p className="mt-1 text-xs text-state-danger">{errors.url_tutorial.message}</p>
-                  )}
-                </div>
-
-                {saveError && (
-                  <Alert tone="danger" className="mt-4">{saveError}</Alert>
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <PageTitle
+          title={log ? t('detail.titleWithId', { id: log.id }) : t('detail.title')}
+          onBack={() => goBack()}
+          backLabel={t('actions.back')}
+          actions={
+            log && !editing ? (
+              <>
+                {canUpdate && (
+                  <Button variant="outline" size="sm" onClick={onStartEdit}>
+                    {t('actions.edit')}
+                  </Button>
                 )}
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="secondary" size="sm" onClick={onCancelEdit} disabled={saving}>
-                    {t('actions.cancel')}
+                {canDelete && (
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                    {t('actions.delete')}
                   </Button>
-                  <Button type="submit" variant="primary" size="sm" disabled={saving} loading={saving}>
-                    {saving ? '…' : t('actions.save')}
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <dl className="mt-3 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-                    {t('tables.description')}
-                  </dt>
-                  <dd className="mt-1 rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary whitespace-pre-wrap break-words shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary">
-                    {log.description && log.description.trim() !== '' ? (
-                      log.description
-                    ) : (
-                      <span className="italic text-text-muted dark:text-text-dark-muted">
-                        {t('detail.fields.noDescription')}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
-                    {t('detail.fields.urlTutorial')}
-                  </dt>
-                  <dd className="mt-1 rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg">
-                    {log.url_tutorial && log.url_tutorial.trim() !== '' ? (
-                      <a
-                        href={log.url_tutorial}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-odoo-purple hover:underline dark:text-odoo-dark-purple break-all"
-                      >
-                        {log.url_tutorial}
-                      </a>
-                    ) : (
-                      <span className="italic text-text-muted dark:text-text-dark-muted">
-                        {t('detail.fields.noUrl')}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            )}
-          </Card>
+                )}
+              </>
+            ) : undefined
+          }
+        />
 
-          <Card padding="md">
-            <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
-              {t('detail.comments')}
-            </h2>
-            <div className="mt-3">
-              <CommentThread commentableType="archived-logs" commentableId={log.id} />
-            </div>
-          </Card>
-        </div>
-      )}
+        {deleteError && (
+          <Alert tone="danger" className="mt-4">
+            {deleteError}
+          </Alert>
+        )}
 
-      <ConfirmDialog
-        open={confirmDelete}
-        title={t('confirmations.delete.title')}
-        description={t('confirmations.delete.message')}
-        confirmLabel={t('actions.delete')}
-        variant="danger"
-        loading={deleting}
-        onConfirm={onDelete}
-        onCancel={() => !deleting && setConfirmDelete(false)}
-      />
-    </div>
+        {otherError && errorMessage && (
+          <Alert tone="danger" className="mt-4">
+            {t('detail.loadError', { message: errorMessage })}
+          </Alert>
+        )}
+
+        {logQuery.isLoading && !log && (
+          <Card
+            padding="lg"
+            className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted"
+          >
+            {t('status.loading')}
+          </Card>
+        )}
+
+        {log && (
+          <div className="mt-4 space-y-4">
+            <ArchivedLogDetailView log={log} />
+
+            <Card padding="md">
+              <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
+                {t('detail.editableInfo')}
+              </h2>
+
+              {editing ? (
+                <form className="mt-3 space-y-4" onSubmit={onSubmit} noValidate>
+                  <div>
+                    <FieldLabel htmlFor="archived-log-description">
+                      {t('tables.description')}
+                    </FieldLabel>
+                    <TextArea
+                      id="archived-log-description"
+                      fieldSize="comfortable"
+                      rows={4}
+                      disabled={saving}
+                      {...register('description')}
+                    />
+                    {errors.description && (
+                      <p className="mt-1 text-xs text-state-danger">{errors.description.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <FieldLabel htmlFor="archived-log-url-tutorial">
+                      {t('detail.fields.urlTutorial')}
+                    </FieldLabel>
+                    <TextInput
+                      id="archived-log-url-tutorial"
+                      type="url"
+                      fieldSize="comfortable"
+                      disabled={saving}
+                      placeholder="https://…"
+                      {...register('url_tutorial')}
+                    />
+                    {errors.url_tutorial && (
+                      <p className="mt-1 text-xs text-state-danger">
+                        {errors.url_tutorial.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {saveError && (
+                    <Alert tone="danger" className="mt-4">
+                      {saveError}
+                    </Alert>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={onCancelEdit}
+                      disabled={saving}
+                    >
+                      {t('actions.cancel')}
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      disabled={saving}
+                      loading={saving}
+                    >
+                      {saving ? '…' : t('actions.save')}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <dl className="mt-3 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                  <div>
+                    <dt className="text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
+                      {t('tables.description')}
+                    </dt>
+                    <dd className="mt-1 rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm text-text-primary whitespace-pre-wrap break-words shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg dark:text-text-dark-primary">
+                      {log.description && log.description.trim() !== '' ? (
+                        log.description
+                      ) : (
+                        <span className="italic text-text-muted dark:text-text-dark-muted">
+                          {t('detail.fields.noDescription')}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-text-secondary dark:text-text-dark-secondary">
+                      {t('detail.fields.urlTutorial')}
+                    </dt>
+                    <dd className="mt-1 rounded-lg border border-ui-border bg-ui-body px-3 py-2.5 text-sm shadow-inner dark:border-ui-dark-border dark:bg-ui-dark-bg">
+                      {log.url_tutorial && log.url_tutorial.trim() !== '' ? (
+                        <a
+                          href={log.url_tutorial}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-odoo-purple hover:underline dark:text-odoo-dark-purple break-all"
+                        >
+                          {log.url_tutorial}
+                        </a>
+                      ) : (
+                        <span className="italic text-text-muted dark:text-text-dark-muted">
+                          {t('detail.fields.noUrl')}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </Card>
+
+            <Card padding="md">
+              <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
+                {t('detail.comments')}
+              </h2>
+              <div className="mt-3">
+                <CommentThread commentableType="archived-logs" commentableId={log.id} />
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <ConfirmDialog
+          open={confirmDelete}
+          title={t('confirmations.delete.title')}
+          description={t('confirmations.delete.message')}
+          confirmLabel={t('actions.delete')}
+          variant="danger"
+          loading={deleting}
+          onConfirm={onDelete}
+          onCancel={() => !deleting && setConfirmDelete(false)}
+        />
+      </div>
     </PermissionGate>
   );
 }

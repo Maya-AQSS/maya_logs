@@ -1,4 +1,4 @@
-export { SeverityBadge } from './SeverityBadge';
+export type { SeverityCardPalette, SeverityKey } from './palette';
 export {
   SEVERITY_BADGE_CLASSES,
   SEVERITY_CARD_CLASSES,
@@ -8,4 +8,4 @@ export {
   severityCardPaletteFor,
   severityLabel,
 } from './palette';
-export type { SeverityCardPalette, SeverityKey } from './palette';
+export { SeverityBadge } from './SeverityBadge';

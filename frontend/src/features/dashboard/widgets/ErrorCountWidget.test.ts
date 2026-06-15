@@ -5,9 +5,24 @@ describe('ErrorCountWidget', () => {
   describe('resolveUniqueErrorCount', () => {
     it('deduplica por app + error_code_id cuando existe', () => {
       const logs = [
-        { id: 1, message: 'A', application: { id: 1, name: 'App' }, error_code: { id: 7, code: 'E', name: 'E' } },
-        { id: 2, message: 'A', application: { id: 1, name: 'App' }, error_code: { id: 7, code: 'E', name: 'E' } },
-        { id: 3, message: 'A', application: { id: 2, name: 'App2' }, error_code: { id: 7, code: 'E', name: 'E' } },
+        {
+          id: 1,
+          message: 'A',
+          application: { id: 1, name: 'App' },
+          error_code: { id: 7, code: 'E', name: 'E' },
+        },
+        {
+          id: 2,
+          message: 'A',
+          application: { id: 1, name: 'App' },
+          error_code: { id: 7, code: 'E', name: 'E' },
+        },
+        {
+          id: 3,
+          message: 'A',
+          application: { id: 2, name: 'App2' },
+          error_code: { id: 7, code: 'E', name: 'E' },
+        },
       ] as any;
 
       expect(resolveUniqueErrorCount(logs)).toBe(2);

@@ -1,4 +1,4 @@
-import { test, expect, loginViaKeycloak } from './fixtures/auth';
+import { expect, loginViaKeycloak, test } from './fixtures/auth';
 
 test.describe('Autenticación Keycloak', () => {
   test('redirige al SSO cuando no hay sesión', async ({ page }) => {

@@ -32,17 +32,17 @@ vi.mock('../auth/oidcAdapter', () => ({
   triggerSignIn: vi.fn(),
 }));
 
+import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
+import { ApiHttpError, apiFetchJson, apiGetJson, buildApiUrl } from './http';
 import {
   archiveLog,
   fetchLog,
   fetchLogs,
   fetchLogsStream,
   getLogsStreamEndpoint,
-  resolveLog,
   type LogsFilters,
+  resolveLog,
 } from './logs';
-import { ApiHttpError, apiFetchJson, apiGetJson, buildApiUrl } from './http';
-import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
 
 describe('logs API', () => {
   afterEach(() => {
@@ -155,7 +155,13 @@ describe('logs API', () => {
     });
 
     it('propaga la respuesta paginada del fetcher', async () => {
-      const expected = { data: [{ id: 1 } as any], total: 1, current_page: 1, last_page: 1, per_page: 25 };
+      const expected = {
+        data: [{ id: 1 } as any],
+        total: 1,
+        current_page: 1,
+        last_page: 1,
+        per_page: 25,
+      };
       vi.mocked(apiGetJson).mockResolvedValue(expected as any);
 
       const result = await fetchLogs();
@@ -167,7 +173,10 @@ describe('logs API', () => {
   // ─── fetchLog ───────────────────────────────────────────────────
   describe('fetchLog', () => {
     it('GET /logs/{id} con id numérico', async () => {
-      vi.mocked(apiGetJson).mockResolvedValue({ data: { id: 42 }, meta: { archived_log_id: null } });
+      vi.mocked(apiGetJson).mockResolvedValue({
+        data: { id: 42 },
+        meta: { archived_log_id: null },
+      });
 
       await fetchLog(42);
 
@@ -188,7 +197,10 @@ describe('logs API', () => {
   // ─── archiveLog ─────────────────────────────────────────────────
   describe('archiveLog', () => {
     it('POST /logs/{id}/archive con body vacío', async () => {
-      vi.mocked(apiFetchJson).mockResolvedValue({ data: { archived_log_id: 7 }, meta: { already_archived: false } });
+      vi.mocked(apiFetchJson).mockResolvedValue({
+        data: { archived_log_id: 7 },
+        meta: { already_archived: false },
+      });
 
       await archiveLog(42);
 

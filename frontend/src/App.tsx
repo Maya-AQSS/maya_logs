@@ -1,9 +1,9 @@
-import { lazy, Suspense } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Navigate, Route, Routes } from 'react-router-dom';
 import { resolveServiceUrl } from '@ceedcv-maya/shared-auth-react';
 import { MayaAppShell } from '@ceedcv-maya/shared-layout-react';
 import { PlaceholderPage, SkeletonPage } from '@ceedcv-maya/shared-ui-react';
+import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { useNavItems } from './components/layout';
 import { LOGS_PERMISSIONS } from './permissions';
 
@@ -29,9 +29,7 @@ const ErrorCodesPage = lazy(() =>
 const LogDetailPage = lazy(() =>
   import('./pages/LogDetailPage').then((m) => ({ default: m.LogDetailPage })),
 );
-const LogsPage = lazy(() =>
-  import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })),
-);
+const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })));
 
 const DASHBOARD_URL = resolveServiceUrl(
   import.meta.env.VITE_DASHBOARD_URL as string | undefined,

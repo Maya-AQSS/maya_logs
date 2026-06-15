@@ -1,17 +1,17 @@
-import { useCallback, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { PageTitle } from '@ceedcv-maya/shared-ui-react';
 import {
   DashboardEditToggleButton,
   DashboardEditToolbar,
   DashboardSkeleton,
-  WidgetGrid,
-  useDashboardLayoutLocal,
   type LayoutItem,
   type SkeletonBlock,
+  useDashboardLayoutLocal,
+  WidgetGrid,
 } from '@ceedcv-maya/shared-dashboard-react';
-import { useUserProfile } from '../../user-profile';
+import { PageTitle } from '@ceedcv-maya/shared-ui-react';
+import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LOGS_PERMISSIONS } from '../../../permissions';
+import { useUserProfile } from '../../user-profile';
 import { DEFAULT_LAYOUT, WIDGET_REGISTRY } from '../widgets/registry';
 
 const STORAGE_KEY = 'maya:logs:dashboard-layout';

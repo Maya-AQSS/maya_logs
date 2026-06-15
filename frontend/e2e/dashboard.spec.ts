@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures/auth';
+import { expect, test } from './fixtures/auth';
 
 test.describe('Dashboard', () => {
   test('dashboard carga con métricas y nav visible', async ({ authenticatedPage: page }) => {

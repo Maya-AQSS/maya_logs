@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useMemo } from 'react';
 import { createDataHook } from '@ceedcv-maya/shared-auth-react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { fetchLogs } from '../../../api/logs';
 import { useLogStream } from '../../../hooks';
 import { resolveUniqueErrorCount } from './errorCount';
@@ -86,9 +86,7 @@ function ErrorCountWidget() {
       aria-label={t('widgets.errorCount.title')}
     >
       <div className="h-full flex flex-col items-center justify-center text-center px-2">
-        <span
-          className="text-5xl sm:text-6xl font-extrabold leading-none text-gradient-danger"
-        >
+        <span className="text-5xl sm:text-6xl font-extrabold leading-none text-gradient-danger">
           {data ?? 0}
         </span>
         <span className="mt-2 text-xs uppercase tracking-wider font-semibold text-text-secondary dark:text-text-dark-secondary">

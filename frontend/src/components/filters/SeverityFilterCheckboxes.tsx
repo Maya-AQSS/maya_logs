@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@ceedcv-maya/shared-ui-react';
+import { useTranslation } from 'react-i18next';
 import { LOG_SEVERITY_KEYS } from '../../types/logs';
 import { severityLabel } from '../severity';
 import { filterLabelClass } from './fieldStyles';

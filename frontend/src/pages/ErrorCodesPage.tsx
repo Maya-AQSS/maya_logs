@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { createDataHook, type PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
+import { buildBackState, useServerTable } from '@ceedcv-maya/shared-hooks-react';
 import {
   Alert,
   Card,
+  type ColumnDef,
   DataTable,
   FilterField,
   PageTitle,
@@ -9,17 +11,15 @@ import {
   Select,
   TextInput,
   useTablePreferences,
-  type ColumnDef,
 } from '@ceedcv-maya/shared-ui-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildBackState, useServerTable } from '@ceedcv-maya/shared-hooks-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { type ApplicationScope, fetchApplications } from '../api/applications';
+import { type ErrorCodesFilters as ApiErrorCodesFilters, fetchErrorCodes } from '../api/errorCodes';
 import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
-import { fetchApplications, type ApplicationScope } from '../api/applications';
-import { fetchErrorCodes, type ErrorCodesFilters as ApiErrorCodesFilters } from '../api/errorCodes';
-import { createDataHook, type PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
 import type { ApplicationRef, ErrorCode } from '../types/logs';
 
 interface ErrorCodesTableFilters {
@@ -97,9 +97,7 @@ export function ErrorCodesPage() {
         id: 'file',
         header: t('columns.file'),
         sortable: true,
-        cell: (ec) => (
-          <span className="font-mono text-xs break-all">{ec.file ?? '-'}</span>
-        ),
+        cell: (ec) => <span className="font-mono text-xs break-all">{ec.file ?? '-'}</span>,
       },
       {
         id: 'line',
@@ -113,12 +111,22 @@ export function ErrorCodesPage() {
 
   const pagination = errorCodesQuery.data;
   const errorCodes = pagination?.data ?? [];
-  const meta = pagination ? { current_page: pagination.current_page, last_page: pagination.last_page, from: pagination.from, to: pagination.to, total: pagination.total } : null;
+  const meta = pagination
+    ? {
+        current_page: pagination.current_page,
+        last_page: pagination.last_page,
+        from: pagination.from,
+        to: pagination.to,
+        total: pagination.total,
+      }
+    : null;
   const startIndex = meta && meta.from != null ? meta.from : 0;
   const endIndex = meta && meta.to != null ? meta.to : 0;
   const total = meta?.total ?? 0;
   const errorMessage = errorCodesQuery.error
-    ? (errorCodesQuery.error instanceof Error ? errorCodesQuery.error.message : String(errorCodesQuery.error))
+    ? errorCodesQuery.error instanceof Error
+      ? errorCodesQuery.error.message
+      : String(errorCodesQuery.error)
     : null;
 
   const filtersPanel = (
@@ -132,11 +140,16 @@ export function ErrorCodesPage() {
           onChange={(e) => table.setFilter('search', e.target.value)}
         />
       </FilterField>
-      <FilterField label={tCommon('filters.applicationLabel')} htmlFor="error-codes-filter-application">
+      <FilterField
+        label={tCommon('filters.applicationLabel')}
+        htmlFor="error-codes-filter-application"
+      >
         <Select
           id="error-codes-filter-application"
           value={table.filters.application_id ?? ''}
-          onChange={(e) => table.setFilter('application_id', e.target.value === '' ? undefined : e.target.value)}
+          onChange={(e) =>
+            table.setFilter('application_id', e.target.value === '' ? undefined : e.target.value)
+          }
         >
           <option value="">{t('filters.applicationAll')}</option>
           {applications.map((app) => (
@@ -174,7 +187,10 @@ export function ErrorCodesPage() {
         )}
 
         {errorCodesQuery.isLoading && !pagination && (
-          <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
+          <Card
+            padding="lg"
+            className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted"
+          >
             {t('status.loading')}
           </Card>
         )}
@@ -199,7 +215,9 @@ export function ErrorCodesPage() {
                 onSortChange={table.onSortChange}
                 pageSize={table.pageSize}
                 onPageSizeChange={table.onPageSizeChange}
-                onRowClick={(ec) => navigate(`/error-codes/${ec.id}`, { state: buildBackState(location) })}
+                onRowClick={(ec) =>
+                  navigate(`/error-codes/${ec.id}`, { state: buildBackState(location) })
+                }
                 emptyMessage={t('emptyFiltered')}
               />
             </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorCodeFormSchema, emptyErrorCodeForm } from './errorCode';
+import { emptyErrorCodeForm, errorCodeFormSchema } from './errorCode';
 
 describe('errorCodeFormSchema', () => {
   it('acepta un formulario válido completo', () => {

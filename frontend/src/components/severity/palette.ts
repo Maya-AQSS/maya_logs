@@ -69,13 +69,16 @@ export function severityCardPaletteFor(key: string): SeverityCardPalette {
     return SEVERITY_CARD_ALL;
   }
 
-  return (SEVERITY_CARD_CLASSES as Record<string, SeverityCardPalette>)[key] ?? SEVERITY_CARD_DEFAULT;
+  return (
+    (SEVERITY_CARD_CLASSES as Record<string, SeverityCardPalette>)[key] ?? SEVERITY_CARD_DEFAULT
+  );
 }
 
 export function severityBadgeClassFor(severity: string | null | undefined): string {
   if (!severity) return 'text-text-muted dark:text-text-dark-muted';
   return (
-    (SEVERITY_BADGE_CLASSES as Record<string, string>)[severity] ?? 'text-text-muted dark:text-text-dark-muted'
+    (SEVERITY_BADGE_CLASSES as Record<string, string>)[severity] ??
+    'text-text-muted dark:text-text-dark-muted'
   );
 }
 

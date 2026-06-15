@@ -31,17 +31,11 @@ export function SeverityCard({
 
   return (
     <Link to={href} className={cls}>
-      <p
-        className={`text-xs uppercase tracking-wide font-medium ${palette.text} opacity-80`}
-      >
+      <p className={`text-xs uppercase tracking-wide font-medium ${palette.text} opacity-80`}>
         {title}
       </p>
-      <p className={`text-3xl font-bold mt-1 leading-none ${palette.text}`}>
-        {unresolvedCount}
-      </p>
-      <div
-        className={`mt-3 flex items-center justify-between text-xs ${palette.text}`}
-      >
+      <p className={`text-3xl font-bold mt-1 leading-none ${palette.text}`}>{unresolvedCount}</p>
+      <div className={`mt-3 flex items-center justify-between text-xs ${palette.text}`}>
         <span className="opacity-70">{unresolvedLabel}</span>
         <span className="opacity-60">
           {resolvedLabel}: <strong>{resolvedCount}</strong>

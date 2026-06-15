@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures/auth';
+import { expect, test } from './fixtures/auth';
 
 test.describe('Archived Logs', () => {
   test('listado de archived renderiza', async ({ authenticatedPage: page }) => {

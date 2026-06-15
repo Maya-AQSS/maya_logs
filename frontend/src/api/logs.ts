@@ -1,12 +1,12 @@
 import {
-  buildQueryString,
   type ApiEnvelope,
+  buildQueryString,
   type PaginatedResponse,
   type SortDir,
 } from '@ceedcv-maya/shared-auth-react';
+import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
 import type { Log, LogStreamPayload } from '../types/logs';
 import { ApiHttpError, apiFetchJson, apiGetJson, buildApiUrl, getBearerToken } from './http';
-import { appendBearerAuthorization, triggerSignIn } from '../auth/oidcAdapter';
 
 export type { Log, LogSeverity, LogStreamItem, LogStreamPayload } from '../types/logs';
 

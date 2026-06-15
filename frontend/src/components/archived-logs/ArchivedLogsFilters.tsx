@@ -1,6 +1,6 @@
+import { Button, Card, DatePicker, FieldLabel } from '@ceedcv-maya/shared-ui-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, DatePicker, FieldLabel } from '@ceedcv-maya/shared-ui-react';
 import type { ApplicationRef } from '../../types/logs';
 import { ApplicationSelect, filterLabelClass, SeverityFilterCheckboxes } from '../filters';
 
@@ -61,7 +61,10 @@ export function ArchivedLogsFilters({
         <span>
           {t('filters.title')}
           {hasActiveFilters && (
-            <span className="ml-2 inline-flex items-center justify-center w-2 h-2 rounded-full bg-odoo-purple" aria-hidden="true" />
+            <span
+              className="ml-2 inline-flex items-center justify-center w-2 h-2 rounded-full bg-odoo-purple"
+              aria-hidden="true"
+            />
           )}
         </span>
         <ChevronIcon open={isOpen} />

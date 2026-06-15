@@ -1,7 +1,9 @@
-import { test, expect } from './fixtures/auth';
+import { expect, test } from './fixtures/auth';
 
 test.describe('Logs · listado y filtros', () => {
-  test('muestra la tabla de logs y permite filtrar por severidad', async ({ authenticatedPage: page }) => {
+  test('muestra la tabla de logs y permite filtrar por severidad', async ({
+    authenticatedPage: page,
+  }) => {
     await page.goto('/logs');
 
     await expect(page.getByRole('heading', { name: /logs/i }).first()).toBeVisible();
@@ -13,9 +15,14 @@ test.describe('Logs · listado y filtros', () => {
     }
   });
 
-  test('abre el detalle de un log y permite volver al listado', async ({ authenticatedPage: page }) => {
+  test('abre el detalle de un log y permite volver al listado', async ({
+    authenticatedPage: page,
+  }) => {
     await page.goto('/logs');
-    const firstRow = page.getByRole('link').filter({ hasText: /ver|detalle|open/i }).first();
+    const firstRow = page
+      .getByRole('link')
+      .filter({ hasText: /ver|detalle|open/i })
+      .first();
     if (await firstRow.count()) {
       await firstRow.click();
       await expect(page).toHaveURL(/\/logs\/\d+/);

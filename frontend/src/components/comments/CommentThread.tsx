@@ -1,28 +1,24 @@
+import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
+import { Alert, Button, Card, ConfirmDialog } from '@ceedcv-maya/shared-ui-react';
 import { useCallback, useState } from 'react';
-import { Alert, Button, Card } from '@ceedcv-maya/shared-ui-react';
 import { useTranslation } from 'react-i18next';
 import {
+  type CommentableKind,
   createComment,
   deleteComment,
   fetchComments,
   updateComment,
-  type CommentableKind,
 } from '../../api/comments';
-import type { Comment } from '../../types/logs';
 import { useUserProfile } from '../../features/user-profile';
 import { LOGS_PERMISSIONS } from '../../permissions';
-import { ConfirmDialog } from '@ceedcv-maya/shared-ui-react';
-import { createDataHook, createMutationHook } from '@ceedcv-maya/shared-auth-react';
+import type { Comment } from '../../types/logs';
 
 type CommentThreadProps = {
   commentableType: CommentableKind;
   commentableId: number;
 };
 
-const useCommentsQuery = createDataHook<
-  { type: CommentableKind; id: number },
-  Comment[]
->({
+const useCommentsQuery = createDataHook<{ type: CommentableKind; id: number }, Comment[]>({
   queryKey: ({ type, id }) => ['comments', type, id],
   fetcher: ({ type, id }) => fetchComments(type, id),
   defaultOptions: { staleTime: 0 },
@@ -193,21 +189,26 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
       {/* Mensajes (arriba, con scroll) — patrón de DMS */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
         {loadErrorMessage && (
-          <Alert tone="danger">{t('listLoadError', { message: loadErrorMessage })}
-          </Alert>
+          <Alert tone="danger">{t('listLoadError', { message: loadErrorMessage })}</Alert>
         )}
 
-        {deleteError && (
-          <Alert tone="danger">{deleteError}</Alert>
-        )}
+        {deleteError && <Alert tone="danger">{deleteError}</Alert>}
         {commentsQuery.isLoading && (
-          <Card padding="lg" radius="xl" className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary">
+          <Card
+            padding="lg"
+            radius="xl"
+            className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary"
+          >
             {t('status.loading')}
           </Card>
         )}
 
         {!commentsQuery.isLoading && comments.length === 0 && (
-          <Card padding="lg" radius="xl" className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary">
+          <Card
+            padding="lg"
+            radius="xl"
+            className="border-dashed text-center text-sm text-text-secondary dark:text-text-dark-secondary"
+          >
             {t('empty')}
           </Card>
         )}
@@ -217,68 +218,77 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
           return (
             <Card key={comment.id} padding="md" radius="xl" asChild>
               <article>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-text-primary dark:text-text-dark-primary">
-                    {comment.user?.name ?? t('unknownUser')}
-                  </p>
-                  <p className="text-xs text-text-secondary dark:text-text-dark-secondary">
-                    {formatTimestamp(comment.created_at)}
-                  </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary dark:text-text-dark-primary">
+                      {comment.user?.name ?? t('unknownUser')}
+                    </p>
+                    <p className="text-xs text-text-secondary dark:text-text-dark-secondary">
+                      {formatTimestamp(comment.created_at)}
+                    </p>
+                  </div>
+                  {!isEditing && (comment.can_edit || comment.can_delete) && (
+                    <div className="flex gap-2">
+                      {comment.can_edit && (
+                        <Button variant="ghost" size="xs" onClick={() => onStartEdit(comment)}>
+                          {t('actions.edit')}
+                        </Button>
+                      )}
+                      {comment.can_delete && (
+                        <Button
+                          variant="danger"
+                          size="xs"
+                          onClick={() => setDeleteTargetId(comment.id)}
+                        >
+                          {t('actions.delete')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {!isEditing && (comment.can_edit || comment.can_delete) && (
-                  <div className="flex gap-2">
-                    {comment.can_edit && (
-                      <Button variant="ghost" size="xs" onClick={() => onStartEdit(comment)}>
-                        {t('actions.edit')}
-                      </Button>
+
+                {isEditing ? (
+                  <div className="mt-3 space-y-3">
+                    <textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      disabled={editingBusy}
+                      rows={3}
+                      className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+                    />
+                    {editingError && (
+                      <p
+                        role="alert"
+                        className="rounded-lg border border-danger-light bg-danger-light/30 px-3 py-2 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger"
+                      >
+                        {editingError}
+                      </p>
                     )}
-                    {comment.can_delete && (
-                      <Button variant="danger" size="xs" onClick={() => setDeleteTargetId(comment.id)}>
-                        {t('actions.delete')}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={onUpdate}
+                        disabled={editingBusy}
+                        loading={editingBusy}
+                      >
+                        {editingBusy ? t('busy') : t('actions.refresh')}
                       </Button>
-                    )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={onCancelEdit}
+                        disabled={editingBusy}
+                      >
+                        {t('actions.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 whitespace-pre-wrap break-words text-sm text-text-primary dark:text-text-dark-primary">
+                    {htmlToText(comment.content)}
                   </div>
                 )}
-              </div>
-
-              {isEditing ? (
-                <div className="mt-3 space-y-3">
-                  <textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    disabled={editingBusy}
-                    rows={3}
-                    className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
-                  />
-                  {editingError && (
-                    <p
-                      role="alert"
-                      className="rounded-lg border border-danger-light bg-danger-light/30 px-3 py-2 text-sm text-danger-dark dark:border-danger/40 dark:bg-danger/10 dark:text-danger"
-                    >
-                      {editingError}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={onUpdate}
-                      disabled={editingBusy}
-                      loading={editingBusy}
-                    >
-                      {editingBusy ? t('busy') : t('actions.refresh')}
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={onCancelEdit} disabled={editingBusy}>
-                      {t('actions.cancel')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-3 whitespace-pre-wrap break-words text-sm text-text-primary dark:text-text-dark-primary">
-                  {htmlToText(comment.content)}
-                </div>
-              )}
               </article>
             </Card>
           );
@@ -312,7 +322,13 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
             </p>
           )}
           <div className="flex justify-end">
-            <Button variant="primary" size="sm" onClick={onCreate} disabled={creating} loading={creating}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onCreate}
+              disabled={creating}
+              loading={creating}
+            >
               {creating ? t('busy') : t('actions.save')}
             </Button>
           </div>

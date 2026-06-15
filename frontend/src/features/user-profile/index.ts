@@ -6,8 +6,8 @@
  */
 import {
   profileDisplayInitials,
-  useUserProfile as useSharedUserProfile,
   type UserProfileContextValue,
+  useUserProfile as useSharedUserProfile,
 } from '@ceedcv-maya/shared-profile-react';
 import type { MeProfile } from '../../types/users';
 
@@ -17,5 +17,5 @@ export function useUserProfile(): UserProfileContextValue<MeProfile> {
   return useSharedUserProfile<MeProfile>();
 }
 
-export { profileDisplayInitials };
 export type { UserProfileContextValue };
+export { profileDisplayInitials };

@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { fetchDashboard } from '../../../api/dashboard';
 import { SeverityCard } from '../../../components/dashboard';
 import { severityLabel } from '../../../components/severity';

@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures/auth';
+import { expect, test } from './fixtures/auth';
 
 test.describe('Error Codes · CRUD', () => {
   test('listado accesible y botón de creación visible', async ({ authenticatedPage: page }) => {

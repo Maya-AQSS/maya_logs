@@ -66,10 +66,13 @@ export function useLogStream(options: UseLogStreamOptions = {}): UseLogStreamRes
       setStatus('error');
     } finally {
       if (mountedRef.current && timerRef.current === null) {
-        timerRef.current = setTimeout(() => {
-          timerRef.current = null;
-          tickRef.current();
-        }, Math.max(1000, intervalMs));
+        timerRef.current = setTimeout(
+          () => {
+            timerRef.current = null;
+            tickRef.current();
+          },
+          Math.max(1000, intervalMs),
+        );
       }
     }
   }, [intervalMs]);

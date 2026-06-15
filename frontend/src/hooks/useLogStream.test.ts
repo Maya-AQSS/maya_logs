@@ -1,5 +1,5 @@
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
 
 vi.mock('../api/logs', () => ({
   fetchLogsStream: vi.fn(),
@@ -78,15 +78,21 @@ describe('useLogStream', () => {
     renderHook(() => useLogStream({ intervalMs: 3000 }));
 
     // Primer fetch en mount
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
 
     // Segundo fetch tras intervalMs
-    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(2);
 
     // Tercero
-    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(3);
   });
 
@@ -95,22 +101,30 @@ describe('useLogStream', () => {
 
     renderHook(() => useLogStream({ intervalMs: 100 }));
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
 
     // No re-fetch antes de 1000ms
-    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
 
     // Sí re-fetch tras 1000ms (el mínimo)
-    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(2);
   });
 
   it('cuando enabled=false no hace fetch y pasa a status="closed"', async () => {
     const { result } = renderHook(() => useLogStream({ enabled: false }));
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     expect(mockFetchLogsStream).not.toHaveBeenCalled();
     expect(result.current.status).toBe('closed');
@@ -121,7 +135,9 @@ describe('useLogStream', () => {
 
     const { result } = renderHook(() => useLogStream({ intervalMs: 60_000 }));
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
 
     await act(async () => {
@@ -137,12 +153,16 @@ describe('useLogStream', () => {
 
     const { unmount } = renderHook(() => useLogStream({ intervalMs: 1000 }));
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
 
     unmount();
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
     // Sin nuevos fetches tras desmontar
     expect(mockFetchLogsStream).toHaveBeenCalledTimes(1);
   });
@@ -154,13 +174,19 @@ describe('useLogStream', () => {
 
     const { result } = renderHook(() => useLogStream({ intervalMs: 1000 }));
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(result.current.status).toBe('error');
     expect(result.current.error).toBe('boom');
 
     // Avanzar el timer del polling + dejar que la promesa exitosa se resuelva
-    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     expect(result.current.status).toBe('open');
     expect(result.current.payload).toEqual([{ id: 7, severity: 'low' }]);

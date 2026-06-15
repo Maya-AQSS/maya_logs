@@ -20,12 +20,8 @@
       "@ceedcv-maya/shared-sidebar-react": [
         "./node_modules/@ceedcv-maya/shared-sidebar-react/src/index.ts"
       ],
-      "@ceedcv-maya/shared-ui-react": [
-        "./node_modules/@ceedcv-maya/shared-ui-react/src/index.ts"
-      ]
+      "@ceedcv-maya/shared-ui-react": ["./node_modules/@ceedcv-maya/shared-ui-react/src/index.ts"]
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

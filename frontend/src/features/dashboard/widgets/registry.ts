@@ -1,8 +1,8 @@
 import type { LayoutItem, WidgetRegistry } from '@ceedcv-maya/shared-dashboard-react';
-import RecentLogsWidget from './RecentLogsWidget';
-import ErrorCountWidget from './ErrorCountWidget';
-import SeverityCardsWidget from './SeverityCardsWidget';
 import ApplicationTotalsWidget from './ApplicationTotalsWidget';
+import ErrorCountWidget from './ErrorCountWidget';
+import RecentLogsWidget from './RecentLogsWidget';
+import SeverityCardsWidget from './SeverityCardsWidget';
 
 /**
  * Widget catalog for the maya_logs dashboard. The keys must match the `i`

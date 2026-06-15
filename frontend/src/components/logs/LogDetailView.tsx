@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useLocale } from '@ceedcv-maya/shared-i18n-react';
-import type { Log } from '../../types/logs';
 import { formatDateTime } from '@ceedcv-maya/shared-ui-react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import type { Log } from '../../types/logs';
 import { SeverityBadge } from '../severity';
 
 type LogDetailViewProps = {
@@ -68,13 +68,9 @@ export function LogDetailView({ log, archivedLogId }: LogDetailViewProps) {
 
       <Field label={t('tables.date')}>{formatDateTime(log.created_at, dateLocale)}</Field>
 
-      {log.file !== null && (
-        <Field label={t('detail.fields.file')}>{log.file}</Field>
-      )}
+      {log.file !== null && <Field label={t('detail.fields.file')}>{log.file}</Field>}
 
-      {log.line !== null && (
-        <Field label={t('detail.fields.line')}>{String(log.line)}</Field>
-      )}
+      {log.line !== null && <Field label={t('detail.fields.line')}>{String(log.line)}</Field>}
 
       {archivedLogId !== null && (
         <div className="md:col-span-2 rounded-lg border border-ui-border bg-ui-card px-4 py-3 text-sm text-text-secondary dark:border-ui-dark-border dark:bg-ui-dark-card dark:text-text-dark-secondary flex items-center justify-between gap-3">

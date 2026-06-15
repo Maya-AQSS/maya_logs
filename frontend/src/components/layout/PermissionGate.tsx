@@ -1,6 +1,6 @@
+import { PermissionGate as SharedPermissionGate } from '@ceedcv-maya/shared-profile-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PermissionGate as SharedPermissionGate } from '@ceedcv-maya/shared-profile-react';
 
 type PermissionGateProps = {
   permission: string;

@@ -1,7 +1,7 @@
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { fetchDashboard } from '../../../api/dashboard';
 import { ApplicationTile } from '@ceedcv-maya/shared-ui-react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { fetchDashboard } from '../../../api/dashboard';
 
 function hrefForApplication(id: number): string {
   return `/logs?application_id=${id}`;

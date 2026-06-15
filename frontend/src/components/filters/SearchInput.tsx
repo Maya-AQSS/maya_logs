@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
 import { SearchInput as SharedSearchInput } from '@ceedcv-maya/shared-ui-react';
+import { useTranslation } from 'react-i18next';
 
 type SearchInputProps = {
   value: string;

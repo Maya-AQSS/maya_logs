@@ -1,5 +1,5 @@
-import type { SelectHTMLAttributes } from 'react';
 import { FieldLabel, Select } from '@ceedcv-maya/shared-ui-react';
+import type { SelectHTMLAttributes } from 'react';
 import { filterLabelClass } from './fieldStyles';
 
 /**

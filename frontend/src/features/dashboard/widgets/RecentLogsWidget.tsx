@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
 import { createDataHook, type PaginatedResponse } from '@ceedcv-maya/shared-auth-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { fetchLogs } from '../../../api/logs';
 import { SeverityBadge } from '../../../components/severity';
-import { useUserProfile } from '../../user-profile';
-import type { Log } from '../../../types/logs';
 import { useLogStream } from '../../../hooks';
 import { LOGS_PERMISSIONS } from '../../../permissions';
+import type { Log } from '../../../types/logs';
+import { useUserProfile } from '../../user-profile';
 
 const PAGE_SIZE = 5;
 

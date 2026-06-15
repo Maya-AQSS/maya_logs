@@ -1,35 +1,38 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  createDataHook,
+  type PaginatedResponse,
+  type SortDir,
+} from '@ceedcv-maya/shared-auth-react';
 import { buildBackState } from '@ceedcv-maya/shared-hooks-react';
+import { useLocale } from '@ceedcv-maya/shared-i18n-react';
 import {
   Alert,
+  type ColumnDef,
   DataTable,
   DatePicker,
   FilterField,
+  formatDateTime,
   MultiSelect,
   PageTitle,
   Pagination,
   Select,
+  type SortState,
   TextInput,
   useTablePreferences,
-  type ColumnDef,
-  type SortState,
 } from '@ceedcv-maya/shared-ui-react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocale } from '@ceedcv-maya/shared-i18n-react';
-import { useSearchParams } from 'react-router-dom';
-import { fetchApplications, type ApplicationScope } from '../api/applications';
-import { fetchLogs, type LogsFilters as ApiLogsFilters, type LogsSortBy } from '../api/logs';
-import type { LogsFiltersState } from '../components/logs';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { type ApplicationScope, fetchApplications } from '../api/applications';
+import { type LogsFilters as ApiLogsFilters, fetchLogs, type LogsSortBy } from '../api/logs';
 import { PermissionGate } from '../components/layout/PermissionGate';
+import type { LogsFiltersState } from '../components/logs';
 import { SeverityBadge, severityLabel } from '../components/severity';
 import { useUserProfile } from '../features/user-profile';
 import { useLogStream } from '../hooks';
 import { LOGS_PERMISSIONS } from '../permissions';
-import { createDataHook, type PaginatedResponse, type SortDir } from '@ceedcv-maya/shared-auth-react';
 import type { ApplicationRef, Log } from '../types/logs';
 import { LOG_SEVERITY_KEYS } from '../types/logs';
-import { formatDateTime } from '@ceedcv-maya/shared-ui-react';
 
 export type LogsSortKey = 'application' | 'severity' | 'created_at';
 
@@ -266,9 +269,7 @@ export function LogsPage() {
       {
         id: 'message',
         header: t('columns.message'),
-        cell: (l) => (
-          <span className="block break-words max-w-md">{truncate(l.message, 120)}</span>
-        ),
+        cell: (l) => <span className="block break-words max-w-md">{truncate(l.message, 120)}</span>,
       },
       {
         id: 'errorCode',
@@ -302,13 +303,23 @@ export function LogsPage() {
 
   const pagination = logsQuery.data;
   const logs = pagination?.data ?? [];
-  const meta = pagination ? { current_page: pagination.current_page, last_page: pagination.last_page, from: pagination.from, to: pagination.to, total: pagination.total } : null;
+  const meta = pagination
+    ? {
+        current_page: pagination.current_page,
+        last_page: pagination.last_page,
+        from: pagination.from,
+        to: pagination.to,
+        total: pagination.total,
+      }
+    : null;
   const startIndex = meta && meta.from != null ? meta.from : 0;
   const endIndex = meta && meta.to != null ? meta.to : 0;
   const total = meta?.total ?? 0;
   const activeCount = countActiveFilters(filters);
   const errorMessage = logsQuery.error
-    ? (logsQuery.error instanceof Error ? logsQuery.error.message : String(logsQuery.error))
+    ? logsQuery.error instanceof Error
+      ? logsQuery.error.message
+      : String(logsQuery.error)
     : null;
 
   const filtersPanel = (
@@ -384,57 +395,58 @@ export function LogsPage() {
 
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.index}>
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle title={t('nav.dashboard')} />
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <PageTitle title={t('nav.dashboard')} />
 
-      {logsQuery.isError && errorMessage && (
-        <Alert tone="danger" className="mt-4">{t('loadError', { message: errorMessage })}
-        </Alert>
-      )}
+        {logsQuery.isError && errorMessage && (
+          <Alert tone="danger" className="mt-4">
+            {t('loadError', { message: errorMessage })}
+          </Alert>
+        )}
 
-      <div className="mt-3">
-        <DataTable
-          title={t('table.activeTitle', { defaultValue: 'Logs activos' })}
-          columns={columns}
-          rows={logs}
-          rowKey={(l) => l.id}
-          loading={logsQuery.isLoading || logsQuery.isFetching}
-          hiddenColumnIds={hiddenIds}
-          onToggleHiddenColumn={toggleHidden}
-          filtersStorageKey="maya:logs:logs-table"
-          filtersPanel={filtersPanel}
-          filtersActiveCount={activeCount}
-          onClearFilters={resetFilters}
-          filtersDefaultOpen={false}
-          sortBy={sortState}
-          onSortChange={onSortChange}
-          pageSize={pageSize}
-          onPageSizeChange={(size) => {
-            setPageSize(size)
-            setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1))
-          }}
-          onRowClick={
-            canOpenDetail
-              ? (l) => navigate(`/logs/${l.id}`, { state: buildBackState(location) })
-              : undefined
-          }
-          emptyMessage={t('table.emptyText')}
-        />
-      </div>
-      {meta && (
-        <div className="mt-4">
-          <Pagination
-            currentPage={meta.current_page}
-            totalPages={meta.last_page}
-            onChange={changePage}
-            ariaLabel={tCommon('pagination.ariaLabel')}
-            prevLabel={tCommon('pagination.previous')}
-            nextLabel={tCommon('pagination.next')}
-            info={tCommon('pagination.rangeOf', { from: startIndex, to: endIndex, total })}
+        <div className="mt-3">
+          <DataTable
+            title={t('table.activeTitle', { defaultValue: 'Logs activos' })}
+            columns={columns}
+            rows={logs}
+            rowKey={(l) => l.id}
+            loading={logsQuery.isLoading || logsQuery.isFetching}
+            hiddenColumnIds={hiddenIds}
+            onToggleHiddenColumn={toggleHidden}
+            filtersStorageKey="maya:logs:logs-table"
+            filtersPanel={filtersPanel}
+            filtersActiveCount={activeCount}
+            onClearFilters={resetFilters}
+            filtersDefaultOpen={false}
+            sortBy={sortState}
+            onSortChange={onSortChange}
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setSearchParams(writeFiltersToUrl(filters, sortBy, sortDir, 1));
+            }}
+            onRowClick={
+              canOpenDetail
+                ? (l) => navigate(`/logs/${l.id}`, { state: buildBackState(location) })
+                : undefined
+            }
+            emptyMessage={t('table.emptyText')}
           />
         </div>
-      )}
-    </div>
+        {meta && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={meta.current_page}
+              totalPages={meta.last_page}
+              onChange={changePage}
+              ariaLabel={tCommon('pagination.ariaLabel')}
+              prevLabel={tCommon('pagination.previous')}
+              nextLabel={tCommon('pagination.next')}
+              info={tCommon('pagination.rangeOf', { from: startIndex, to: endIndex, total })}
+            />
+          </div>
+        )}
+      </div>
     </PermissionGate>
   );
 }

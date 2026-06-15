@@ -13,6 +13,8 @@ const api = createApplicationsApi<ApplicationScope>({ apiGetJson });
  * de logs devuelve solo `{id, name}` (ApplicationRefResource) — se re-tipa al
  * ApplicationRef local. Gap del paquete documentado; el runtime es idéntico.
  */
-export async function fetchApplications(scope: ApplicationScope = 'all'): Promise<ApplicationRef[]> {
+export async function fetchApplications(
+  scope: ApplicationScope = 'all',
+): Promise<ApplicationRef[]> {
   return (await api.fetchApplications(scope)) as unknown as ApplicationRef[];
 }

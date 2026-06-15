@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 /**
  * Form-level schema for `ArchivedLogDetailPage` edit form.
@@ -14,11 +14,11 @@ export const archivedLogEditSchema = z.object({
     .optional()
     .default('')
     .refine((v) => v === '' || /^https?:\/\/.+/i.test(v), 'URL inválida'),
-})
+});
 
-export type ArchivedLogEditInput = z.infer<typeof archivedLogEditSchema>
+export type ArchivedLogEditInput = z.infer<typeof archivedLogEditSchema>;
 
 export const emptyArchivedLogEdit: ArchivedLogEditInput = {
   description: '',
   url_tutorial: '',
-}
+};

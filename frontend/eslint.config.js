@@ -1,1 +1,1 @@
-export { default } from '../../maya_infra/configs/eslint/eslint.config.base.js'
+export { default } from '../../maya_infra/configs/eslint/eslint.config.base.js';

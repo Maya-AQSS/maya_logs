@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 /**
  * Form-level schema mirroring `StoreErrorCodeRequest` /
@@ -23,9 +23,9 @@ export const errorCodeFormSchema = z.object({
     .refine((v) => v === '' || /^\d+$/.test(v), 'Solo números enteros')
     .refine((v) => v === '' || Number(v) >= 1, 'Mínimo 1'),
   description: z.string().max(5000).optional().default(''),
-})
+});
 
-export type ErrorCodeFormInput = z.infer<typeof errorCodeFormSchema>
+export type ErrorCodeFormInput = z.infer<typeof errorCodeFormSchema>;
 
 export const emptyErrorCodeForm: ErrorCodeFormInput = {
   application_id: '',
@@ -34,4 +34,4 @@ export const emptyErrorCodeForm: ErrorCodeFormInput = {
   file: '',
   line: '',
   description: '',
-}
+};

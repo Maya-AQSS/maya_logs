@@ -1,28 +1,28 @@
+import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
+import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@ceedcv-maya/shared-ui-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Card, ConfirmDialog, PageTitle } from '@ceedcv-maya/shared-ui-react';
 import { useParams } from 'react-router-dom';
-import { useBackNavigation } from '@ceedcv-maya/shared-hooks-react';
 import { fetchApplications } from '../api/applications';
 import {
   deleteErrorCode,
+  type ErrorCodePayload,
   fetchErrorCode,
   updateErrorCode,
-  type ErrorCodePayload,
 } from '../api/errorCodes';
 import { CommentThread } from '../components/comments';
+import { ErrorCodeForm } from '../components/error-codes';
 import { PermissionGate } from '../components/layout/PermissionGate';
 import { useUserProfile } from '../features/user-profile';
 import { LOGS_PERMISSIONS } from '../permissions';
-import { ErrorCodeForm } from '../components/error-codes';
-import type { ApplicationRef, ErrorCode } from '../types/logs';
 import {
-  errorCodeFormSchema,
-  emptyErrorCodeForm,
   type ErrorCodeFormInput,
+  emptyErrorCodeForm,
+  errorCodeFormSchema,
 } from '../schemas/errorCode';
+import type { ApplicationRef, ErrorCode } from '../types/logs';
 
 type State =
   | { status: 'loading'; data: ErrorCode | null }
@@ -179,7 +179,10 @@ export function ErrorCodeDetailPage() {
             onBack={() => goBack()}
             backLabel={t('common:actions.back')}
           />
-          <Card padding="lg" className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted">
+          <Card
+            padding="lg"
+            className="mt-4 border-dashed text-center text-sm text-text-muted dark:text-text-dark-muted"
+          >
             {t('errorCodes:notFound')}
           </Card>
         </div>
@@ -191,118 +194,125 @@ export function ErrorCodeDetailPage() {
 
   return (
     <PermissionGate permission={LOGS_PERMISSIONS.errorCodeShow}>
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
-      <PageTitle
-        title={ec ? t('errorCodes:detailTitleWithCode', { code: ec.code }) : t('errorCodes:detailTitle')}
-        onBack={() => goBack()}
-        backLabel={t('common:actions.back')}
-        actions={
-          ec && !editing ? (
-            <>
-              {canUpdate && (
-                <Button variant="outline" size="sm" onClick={onStartEdit}>
-                  {t('common:actions.edit')}
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                  {t('common:actions.delete')}
-                </Button>
-              )}
-            </>
-          ) : undefined
-        }
-      />
-
-      {deleteError && (
-        <Alert tone="danger" className="mt-4">
-          {deleteError}
-        </Alert>
-      )}
-
-      {state.status === 'error' && (
-        <Alert tone="danger" className="mt-4">
-          {t('errorCodes:loadErrorDetail', { error: state.error })}
-        </Alert>
-      )}
-
-      {state.status === 'loading' && !ec && (
-        <Card padding="lg" className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted">
-          {t('common:status.loading')}
-        </Card>
-      )}
-
-      {ec && (
-        <div className="mt-4 space-y-4">
-          <Card padding="md">
-            <FormProvider {...methods}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void onSubmit();
-                }}
-              >
-                <ErrorCodeForm
-                  applications={applications}
-                  disabled={!editing || saving}
-                  codeReadOnly
-                  applicationReadOnly
-                />
-
-                {editing && saveError && (
-                  <Alert tone="danger" className="mt-4">
-                    {saveError}
-                  </Alert>
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <PageTitle
+          title={
+            ec
+              ? t('errorCodes:detailTitleWithCode', { code: ec.code })
+              : t('errorCodes:detailTitle')
+          }
+          onBack={() => goBack()}
+          backLabel={t('common:actions.back')}
+          actions={
+            ec && !editing ? (
+              <>
+                {canUpdate && (
+                  <Button variant="outline" size="sm" onClick={onStartEdit}>
+                    {t('common:actions.edit')}
+                  </Button>
                 )}
-
-                {editing && (
-                  <div className="mt-4 flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={onCancelEdit}
-                      disabled={saving}
-                    >
-                      {t('common:actions.cancel')}
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      size="sm"
-                      disabled={saving}
-                      loading={saving}
-                    >
-                      {saving ? '…' : t('common:actions.save')}
-                    </Button>
-                  </div>
+                {canDelete && (
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                    {t('common:actions.delete')}
+                  </Button>
                 )}
-              </form>
-            </FormProvider>
-          </Card>
+              </>
+            ) : undefined
+          }
+        />
 
-          <Card padding="md">
-            <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
-              {t('comments:title')}
-            </h2>
-            <div className="mt-3">
-              <CommentThread commentableType="error-codes" commentableId={ec.id} />
-            </div>
-          </Card>
-        </div>
-      )}
+        {deleteError && (
+          <Alert tone="danger" className="mt-4">
+            {deleteError}
+          </Alert>
+        )}
 
-      <ConfirmDialog
-        open={confirmDelete}
-        title={t('errorCodes:deleteTitle')}
-        description={t('errorCodes:deleteConfirmDescription')}
-        confirmLabel={t('common:actions.delete')}
-        variant="danger"
-        loading={deleting}
-        onConfirm={onDelete}
-        onCancel={() => !deleting && setConfirmDelete(false)}
-      />
-    </div>
+        {state.status === 'error' && (
+          <Alert tone="danger" className="mt-4">
+            {t('errorCodes:loadErrorDetail', { error: state.error })}
+          </Alert>
+        )}
+
+        {state.status === 'loading' && !ec && (
+          <Card
+            padding="lg"
+            className="mt-4 text-center text-sm text-text-muted dark:text-text-dark-muted"
+          >
+            {t('common:status.loading')}
+          </Card>
+        )}
+
+        {ec && (
+          <div className="mt-4 space-y-4">
+            <Card padding="md">
+              <FormProvider {...methods}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void onSubmit();
+                  }}
+                >
+                  <ErrorCodeForm
+                    applications={applications}
+                    disabled={!editing || saving}
+                    codeReadOnly
+                    applicationReadOnly
+                  />
+
+                  {editing && saveError && (
+                    <Alert tone="danger" className="mt-4">
+                      {saveError}
+                    </Alert>
+                  )}
+
+                  {editing && (
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={onCancelEdit}
+                        disabled={saving}
+                      >
+                        {t('common:actions.cancel')}
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="sm"
+                        disabled={saving}
+                        loading={saving}
+                      >
+                        {saving ? '…' : t('common:actions.save')}
+                      </Button>
+                    </div>
+                  )}
+                </form>
+              </FormProvider>
+            </Card>
+
+            <Card padding="md">
+              <h2 className="text-base font-semibold text-text-primary dark:text-text-dark-primary">
+                {t('comments:title')}
+              </h2>
+              <div className="mt-3">
+                <CommentThread commentableType="error-codes" commentableId={ec.id} />
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <ConfirmDialog
+          open={confirmDelete}
+          title={t('errorCodes:deleteTitle')}
+          description={t('errorCodes:deleteConfirmDescription')}
+          confirmLabel={t('common:actions.delete')}
+          variant="danger"
+          loading={deleting}
+          onConfirm={onDelete}
+          onCancel={() => !deleting && setConfirmDelete(false)}
+        />
+      </div>
     </PermissionGate>
   );
 }

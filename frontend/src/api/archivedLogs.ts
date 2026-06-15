@@ -1,6 +1,6 @@
 import {
-  buildQueryString,
   type ApiEnvelope,
+  buildQueryString,
   type PaginatedResponse,
   type SortDir,
 } from '@ceedcv-maya/shared-auth-react';
@@ -36,7 +36,9 @@ export type ArchivedLogUpdatePayload = {
  * Verificado: ningún call site produce esos valores (application_id del backend
  * siempre > 0, per_page/page > 0, sin filtros booleanos).
  */
-export async function fetchArchivedLogs(filters: ArchivedLogsFilters = {}): Promise<PaginatedResponse<ArchivedLog>> {
+export async function fetchArchivedLogs(
+  filters: ArchivedLogsFilters = {},
+): Promise<PaginatedResponse<ArchivedLog>> {
   return apiGetJson<PaginatedResponse<ArchivedLog>>(`archived-logs${buildQueryString(filters)}`);
 }
 
@@ -47,7 +49,10 @@ export async function fetchArchivedLog(id: number): Promise<ArchivedLog> {
 }
 
 /** PATCH /api/v1/archived-logs/{id} — actualiza campos editables (description, url_tutorial). */
-export async function updateArchivedLog(id: number, payload: ArchivedLogUpdatePayload): Promise<ArchivedLog> {
+export async function updateArchivedLog(
+  id: number,
+  payload: ArchivedLogUpdatePayload,
+): Promise<ArchivedLog> {
   const body = await apiFetchJson<ApiEnvelope<ArchivedLog>>(`archived-logs/${id}`, {
     method: 'PATCH',
     body: payload,

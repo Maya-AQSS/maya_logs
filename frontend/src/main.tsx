@@ -4,8 +4,8 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './index.css';
 import './i18n';
-import App from './App.tsx';
 import { MayaProviders } from '@ceedcv-maya/shared-layout-react';
+import App from './App.tsx';
 import { fetchMe } from './api/auth';
 import { oidcAuthService } from './auth/oidcAdapter';
 

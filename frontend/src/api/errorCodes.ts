@@ -1,6 +1,6 @@
 import {
-  buildQueryString,
   type ApiEnvelope,
+  buildQueryString,
   type PaginatedResponse,
 } from '@ceedcv-maya/shared-auth-react';
 import type { ErrorCode } from '../types/logs';
@@ -35,7 +35,9 @@ export type ErrorCodePayload = {
  * esos valores (application_id del backend siempre > 0, per_page/page > 0, sin
  * filtros booleanos).
  */
-export async function fetchErrorCodes(filters: ErrorCodesFilters = {}): Promise<PaginatedResponse<ErrorCode>> {
+export async function fetchErrorCodes(
+  filters: ErrorCodesFilters = {},
+): Promise<PaginatedResponse<ErrorCode>> {
   return apiGetJson<PaginatedResponse<ErrorCode>>(`error-codes${buildQueryString(filters)}`);
 }
 
@@ -55,7 +57,10 @@ export async function createErrorCode(payload: ErrorCodePayload): Promise<ErrorC
 }
 
 /** PATCH /api/v1/error-codes/{id}. */
-export async function updateErrorCode(id: number, payload: Partial<ErrorCodePayload>): Promise<ErrorCode> {
+export async function updateErrorCode(
+  id: number,
+  payload: Partial<ErrorCodePayload>,
+): Promise<ErrorCode> {
   const body = await apiFetchJson<ApiEnvelope<ErrorCode>>(`error-codes/${id}`, {
     method: 'PATCH',
     body: payload,
