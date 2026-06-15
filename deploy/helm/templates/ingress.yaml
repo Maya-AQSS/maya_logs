@@ -1,0 +1,93 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "frontend") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "frontend" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.frontend.host | quote }}
+      secretName: {{ .Values.ingress.frontend.tlsSecretName | quote }}
+  rules:
+    - host: {{ .Values.ingress.frontend.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "maya-logs.componentName" (dict "component" "frontend") }}
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "api") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "api" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.api.host | quote }}
+      secretName: {{ .Values.ingress.api.tlsSecretName | quote }}
+  rules:
+    - host: {{ .Values.ingress.api.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "maya-logs.componentName" (dict "component" "backend") }}
+                port:
+                  number: {{ .Values.backend.httpPort }}
+{{- if .Values.reverb.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "reverb") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "reverb" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+  annotations:
+    # Traefik soporta WebSocket de forma nativa; explicitar para auditabilidad.
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.reverb.host | quote }}
+      secretName: {{ .Values.ingress.reverb.tlsSecretName | quote }}
+  rules:
+    - host: {{ .Values.ingress.reverb.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "maya-logs.componentName" (dict "component" "reverb") }}
+                port:
+                  number: {{ .Values.reverb.containerPort }}
+{{- end }}
+{{- end -}}

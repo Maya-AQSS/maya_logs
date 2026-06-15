@@ -1,0 +1,56 @@
+{{- if .Values.backend.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "backend") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "backend" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "backend") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.backend.httpPort }}
+      targetPort: http
+      protocol: TCP
+---
+{{- end }}
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "frontend") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "frontend" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "frontend") | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+{{- end }}
+{{- if .Values.reverb.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" "reverb") }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" "reverb" "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "reverb") | nindent 4 }}
+  ports:
+    - name: ws
+      port: {{ .Values.reverb.containerPort }}
+      targetPort: ws
+      protocol: TCP
+{{- end -}}

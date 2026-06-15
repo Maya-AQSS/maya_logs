@@ -1,0 +1,63 @@
+{{- if .Values.migrate.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-migrate
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    # Ejecuta en cada upgrade ANTES de actualizar los pods, asegurando esquema
+    # listo cuando arranca el nuevo backend. ATÓMICO + forward-only.
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrate.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrate.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        {{- include "maya-logs.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "maya-logs.image" (dict "root" .Values "componentImage" .Values.migrate.image) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Sobrescribe el entrypoint role-based: ejecuta artisan migrate
+          # directamente y termina.
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              cd /var/www/html
+              # Limpiar cualquier caché del build y regenerar con env del Job
+              rm -f bootstrap/cache/config.php bootstrap/cache/routes-v7.php
+              php artisan package:discover --ansi || true
+              php artisan config:cache --ansi || true
+              echo "[migrate] running: {{ join " " .Values.migrate.command }}"
+              exec {{ join " " .Values.migrate.command }}
+          envFrom:
+            {{- include "maya-logs.envFrom" . | nindent 12 }}
+          env:
+            - name: CONTAINER_ROLE
+              value: migrate
+          resources:
+            {{- toYaml .Values.migrate.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            {{- include "maya-logs.runtimeVolumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "maya-logs.runtimeVolumes" . | nindent 8 }}
+{{- end -}}

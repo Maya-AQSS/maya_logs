@@ -1,0 +1,53 @@
+═══════════════════════════════════════════════════════════════════════════════
+  Maya Logs — release "{{ .Release.Name }}" desplegada en {{ .Release.Namespace }}
+═══════════════════════════════════════════════════════════════════════════════
+
+Imagen: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default "(no-tag)" }}
+Chart : {{ .Chart.Name }}-{{ .Chart.Version }} (appVersion {{ .Chart.AppVersion }})
+
+──── URLs (interno, vía Traefik + MetalLB + CA interna) ──────────────────────
+ Frontend : https://{{ .Values.ingress.frontend.host }}
+ API      : https://{{ .Values.ingress.api.host }}
+ Reverb WS: wss://{{ .Values.ingress.reverb.host }}
+
+──── East-west (DNS de clúster) ──────────────────────────────────────────────
+ Backend  : http://maya-logs-backend.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.backend.httpPort }}
+
+──── Worker AMQP ─────────────────────────────────────────────────────────────
+ Comando  : php artisan {{ join " " .Values.worker.command }}
+ Queue    : logs.ingest (exchange topic maya.logs)
+ LOG_STACK: {{ .Values.config.workerLogStack | quote }}  (sin rabbit — evita loop)
+
+──── Smoke tests recomendados (desde la WSL en la red interna) ───────────────
+ 1. Pods Ready:
+      kubectl -n {{ .Release.Namespace }} get pods
+ 2. Migración completada:
+      kubectl -n {{ .Release.Namespace }} get jobs
+      kubectl -n {{ .Release.Namespace }} logs job/{{ include "maya-logs.fullname" . }}-migrate
+ 3. Salud:
+      kubectl -n {{ .Release.Namespace }} exec deploy/maya-logs-backend -c nginx -- wget -qO- http://localhost:{{ .Values.backend.httpPort }}/api/v1/health/ready
+ 4. TLS:
+      curl -k https://{{ .Values.ingress.api.host }}/api/v1/health/live
+{{- if .Values.secret.externalName }}
+
+⚠️  El chart NO crea el Secret; usa el externo "{{ .Values.secret.externalName }}".
+   Comprobar que existe en el namespace:
+      kubectl -n {{ .Release.Namespace }} get secret {{ .Values.secret.externalName }}
+{{- else }}
+
+⚠️  El chart creó un Secret con placeholders ({{ include "maya-logs.secretName" . }}).
+   En producción sobrescríbelo INMEDIATAMENTE con valores reales:
+      kubectl -n {{ .Release.Namespace }} create secret generic {{ include "maya-logs.secretName" . }} \\
+        --dry-run=client -o yaml \\
+        --from-literal=APP_KEY="base64:<...>" \\
+        --from-literal=DB_PASSWORD="<...>" \\
+        --from-literal=DB_PANEL_PASSWORD="<...>" \\
+        --from-literal=REDIS_PASSWORD="<...>" \\
+        --from-literal=RABBITMQ_PASSWORD="<...>" \\
+        --from-literal=FDW_NOTIFICATION_RULES_PASSWORD="<...>" \\
+        --from-literal=FDW_USER_PERMISSIONS_PASSWORD="<...>" \\
+        --from-literal=KEYCLOAK_CLIENT_SECRET="<...>" \\
+        --from-literal=REVERB_APP_KEY="$(openssl rand -hex 16)" \\
+        --from-literal=REVERB_APP_SECRET="$(openssl rand -hex 32)" \\
+      | kubectl apply -f -
+{{- end }}

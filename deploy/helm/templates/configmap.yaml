@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+data:
+  APP_NAME: {{ .Values.config.appName | quote }}
+  APP_ENV: {{ .Values.config.appEnv | quote }}
+  APP_DEBUG: {{ .Values.config.appDebug | quote }}
+  APP_URL: {{ .Values.config.appUrl | quote }}
+  APP_LOCALE: {{ .Values.config.appLocale | quote }}
+  APP_FALLBACK_LOCALE: {{ .Values.config.appFallbackLocale | quote }}
+  AUTH_GUARD: {{ .Values.config.authGuard | quote }}
+
+  LOG_CHANNEL: {{ .Values.config.logChannel | quote }}
+  LOG_STACK: {{ .Values.config.logStack | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  LOG_RABBIT_LEVEL: {{ .Values.config.logRabbitLevel | quote }}
+
+  SESSION_SECURE_COOKIE: {{ .Values.config.sessionSecureCookie | quote }}
+  SESSION_SAME_SITE: {{ .Values.config.sessionSameSite | quote }}
+  SESSION_DRIVER: {{ .Values.config.sessionDriver | quote }}
+  SESSION_LIFETIME: {{ .Values.config.sessionLifetime | quote }}
+  SESSION_ENCRYPT: {{ .Values.config.sessionEncrypt | quote }}
+
+  CACHE_STORE: {{ .Values.config.cacheStore | quote }}
+  QUEUE_CONNECTION: {{ .Values.config.queueConnection | quote }}
+  BROADCAST_CONNECTION: {{ .Values.config.broadcastConnection | quote }}
+
+  DB_CONNECTION: {{ .Values.config.dbConnection | quote }}
+  DB_HOST: {{ .Values.config.dbHost | quote }}
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_DATABASE: {{ .Values.config.dbDatabase | quote }}
+  DB_USERNAME: {{ .Values.config.dbUsername | quote }}
+  DB_PANEL_USERNAME: {{ .Values.config.dbPanelUsername | quote }}
+
+  # FDW: vista de reglas de notificación en maya_dashboard (read-only).
+  FDW_NOTIFICATION_RULES_HOST: {{ .Values.config.fdwNotificationRulesHost | quote }}
+  FDW_NOTIFICATION_RULES_PORT: {{ .Values.config.fdwNotificationRulesPort | quote }}
+  FDW_NOTIFICATION_RULES_DATABASE: {{ .Values.config.fdwNotificationRulesDatabase | quote }}
+  FDW_NOTIFICATION_RULES_USERNAME: {{ .Values.config.fdwNotificationRulesUsername | quote }}
+  FDW_NOTIFICATION_RULES_SCHEMA: {{ .Values.config.fdwNotificationRulesSchema | quote }}
+  FDW_NOTIFICATION_RULES_TABLE: {{ .Values.config.fdwNotificationRulesTable | quote }}
+
+  # FDW: vista de permisos resueltos en maya_authorization (read-only).
+  FDW_USER_PERMISSIONS_HOST: {{ .Values.config.fdwUserPermissionsHost | quote }}
+  FDW_USER_PERMISSIONS_PORT: {{ .Values.config.fdwUserPermissionsPort | quote }}
+  FDW_USER_PERMISSIONS_DATABASE: {{ .Values.config.fdwUserPermissionsDatabase | quote }}
+  FDW_USER_PERMISSIONS_USERNAME: {{ .Values.config.fdwUserPermissionsUsername | quote }}
+  FDW_USER_PERMISSIONS_SCHEMA: {{ .Values.config.fdwUserPermissionsSchema | quote }}
+  FDW_USER_PERMISSIONS_REMOTE_VIEW: {{ .Values.config.fdwUserPermissionsRemoteView | quote }}
+
+  REDIS_CLIENT: {{ .Values.config.redisClient | quote }}
+  REDIS_HOST: {{ .Values.config.redisHost | quote }}
+  REDIS_PORT: {{ .Values.config.redisPort | quote }}
+
+  RABBITMQ_HOST: {{ .Values.config.rabbitmqHost | quote }}
+  RABBITMQ_PORT: {{ .Values.config.rabbitmqPort | quote }}
+  RABBITMQ_USER: {{ .Values.config.rabbitmqUser | quote }}
+  RABBITMQ_VHOST: {{ .Values.config.rabbitmqVhost | quote }}
+  MAYA_MESSAGING_APP: {{ .Values.config.mayaMessagingApp | quote }}
+
+  KEYCLOAK_URL: {{ .Values.config.keycloakUrl | quote }}
+  KEYCLOAK_REALM: {{ .Values.config.keycloakRealm | quote }}
+  KEYCLOAK_CLIENT_ID: {{ .Values.config.keycloakClientId | quote }}
+  KEYCLOAK_PUBLIC_URL: {{ .Values.config.keycloakPublicUrl | quote }}
+
+  JWKS_URL: {{ .Values.config.jwksUrl | quote }}
+  JWT_ISSUER: {{ .Values.config.jwtIssuer | quote }}
+  JWT_AUDIENCE: {{ .Values.config.jwtAudience | quote }}
+  JWKS_CACHE_TTL: {{ .Values.config.jwksCacheTtl | quote }}
+
+  CORS_ALLOWED_ORIGINS: {{ .Values.config.corsAllowedOrigins | quote }}
+
+  MAIL_MAILER: {{ .Values.config.mailMailer | quote }}
+
+  REVERB_APP_ID: {{ .Values.config.reverbAppId | quote }}
+  REVERB_HOST: {{ .Values.config.reverbHost | quote }}
+  REVERB_PORT: {{ .Values.config.reverbPort | quote }}
+  REVERB_SCHEME: {{ .Values.config.reverbScheme | quote }}
+  REVERB_SERVER_HOST: {{ .Values.config.reverbServerHost | quote }}
+  REVERB_SERVER_PORT: {{ .Values.config.reverbServerPort | quote }}
+
+  # Detección de picos de errores en `EvaluateNotificationRules`.
+  LOGS_ERROR_SPIKE_WINDOW_SECONDS: {{ .Values.config.logsErrorSpikeWindowSeconds | quote }}
+  LOGS_ERROR_SPIKE_THRESHOLD: {{ .Values.config.logsErrorSpikeThreshold | quote }}
+
+  # Lista CSV consumida por shared-http-laravel CommonMiddleware
+  # (limita trustProxies — sustituye al '*' del default).
+  TRUSTED_PROXIES: {{ .Values.config.trustedProxies | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-nginx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+data:
+  default.conf: |
+    upstream php-fpm {
+        server 127.0.0.1:{{ .Values.backend.fpmPort }};
+    }
+
+    server {
+        listen {{ .Values.backend.httpPort }};
+        server_name _;
+        root /var/www/html/public;
+        index index.php;
+        charset utf-8;
+
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        client_max_body_size 25m;
+
+        location = /healthz {
+            access_log off;
+            return 200 "ok\n";
+        }
+
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        location ~ \.php$ {
+            fastcgi_pass php-fpm;
+            fastcgi_index index.php;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param HTTPS on;
+            fastcgi_read_timeout 60;
+        }
+
+        location ~ /\.(?!well-known).* {
+            deny all;
+        }
+    }

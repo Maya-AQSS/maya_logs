@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "maya-logs Helm values",
+  "type": "object",
+  "required": ["image", "ingress", "config", "secret"],
+  "properties": {
+    "image": {
+      "type": "object",
+      "required": ["registry", "repository", "pullPolicy"],
+      "properties": {
+        "registry": {"type": "string", "minLength": 1},
+        "repository": {"type": "string", "minLength": 1},
+        "tag": {"type": "string"},
+        "pullPolicy": {"type": "string", "enum": ["Always", "IfNotPresent", "Never"]},
+        "pullSecrets": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "replicas": {"type": "integer", "minimum": 1},
+        "fpmPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "httpPort": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "resources": {"type": "object"}
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "replicas": {"type": "integer", "minimum": 1},
+        "containerPort": {"type": "integer", "minimum": 1, "maximum": 65535}
+      }
+    },
+    "worker": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "replicas": {"type": "integer", "minimum": 1, "maximum": 1},
+        "command": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "scheduler": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"}
+      },
+      "description": "maya_logs prepara el rol scheduler para EvaluateNotificationRules; por defecto false"
+    },
+    "reverb": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "replicas": {"type": "integer", "minimum": 1, "maximum": 1},
+        "containerPort": {"type": "integer", "minimum": 1, "maximum": 65535}
+      }
+    },
+    "migrate": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "command": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean", "enum": [false]}
+      },
+      "description": "maya_logs no requiere PVC"
+    },
+    "ingress": {
+      "type": "object",
+      "required": ["enabled", "frontend", "api", "reverb"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "className": {"type": "string"},
+        "frontend": {
+          "type": "object",
+          "required": ["host"],
+          "properties": {
+            "host": {"type": "string", "pattern": "^[a-z0-9.-]+$"}
+          }
+        },
+        "api": {
+          "type": "object",
+          "required": ["host"],
+          "properties": {
+            "host": {"type": "string", "pattern": "^[a-z0-9.-]+$"}
+          }
+        },
+        "reverb": {
+          "type": "object",
+          "required": ["host"],
+          "properties": {
+            "host": {"type": "string", "pattern": "^[a-z0-9.-]+$"}
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "appEnv",
+        "appDebug",
+        "sessionSecureCookie",
+        "dbHost",
+        "dbDatabase",
+        "dbUsername",
+        "keycloakUrl",
+        "jwksUrl",
+        "jwtIssuer",
+        "logStack"
+      ],
+      "properties": {
+        "appEnv": {
+          "type": "string",
+          "enum": ["production"],
+          "description": "Solo se permite production en este chart"
+        },
+        "appDebug": {"type": "string", "enum": ["false"]},
+        "sessionSecureCookie": {"type": "string", "enum": ["true"]},
+        "dbHost": {"type": "string", "minLength": 1},
+        "dbPort": {"type": "string"},
+        "dbDatabase": {"type": "string", "minLength": 1},
+        "dbUsername": {"type": "string", "minLength": 1},
+        "keycloakUrl": {"type": "string", "format": "uri"},
+        "jwksUrl": {"type": "string", "format": "uri"},
+        "jwtIssuer": {"type": "string", "format": "uri"},
+        "logStack": {
+          "type": "string",
+          "not": {"pattern": "rabbit"},
+          "description": "logs ES el sumidero rabbit — su LOG_STACK NUNCA debe incluir rabbit (loop)"
+        },
+        "corsAllowedOrigins": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Lista CSV; debe forzar https://"
+        },
+        "trustedProxies": {"type": "string", "minLength": 1},
+        "workerLogStack": {
+          "type": "string",
+          "not": {"pattern": "rabbit"},
+          "description": "Worker NUNCA debe emitir por rabbit (consumidor de la propia cola)"
+        },
+        "fdwNotificationRulesHost": {"type": "string", "minLength": 1},
+        "fdwUserPermissionsHost": {"type": "string", "minLength": 1}
+      }
+    },
+    "secret": {
+      "type": "object",
+      "properties": {
+        "externalName": {"type": "string"},
+        "name": {"type": "string"},
+        "data": {"type": "object"}
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "allowedNamespaces": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "podSecurityContext": {"type": "object"},
+    "containerSecurityContext": {
+      "type": "object",
+      "properties": {
+        "runAsNonRoot": {"type": "boolean", "enum": [true]},
+        "allowPrivilegeEscalation": {"type": "boolean", "enum": [false]},
+        "readOnlyRootFilesystem": {"type": "boolean"}
+      }
+    }
+  }
+}

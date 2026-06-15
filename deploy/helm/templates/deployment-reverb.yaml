@@ -1,0 +1,58 @@
+{{- if .Values.reverb.enabled -}}
+{{- $component := "reverb" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "maya-logs.componentName" (dict "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.componentLabels" (dict "component" $component "Chart" .Chart "Release" .Release "Values" .Values) | nindent 4 }}
+spec:
+  replicas: {{ .Values.reverb.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" $component) | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.reverbTerminationGracePeriodSeconds }}
+      containers:
+        - name: reverb
+          image: {{ include "maya-logs.image" (dict "root" .Values "componentImage" .Values.reverb.image) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CONTAINER_ROLE
+              value: {{ .Values.reverb.containerRole | quote }}
+          envFrom:
+            {{- include "maya-logs.envFrom" . | nindent 12 }}
+          ports:
+            - name: ws
+              containerPort: {{ .Values.reverb.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.reverb.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.reverb.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.reverb.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          lifecycle:
+            {{- include "maya-logs.preStop" . | nindent 12 }}
+          volumeMounts:
+            {{- include "maya-logs.runtimeVolumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "maya-logs.runtimeVolumes" . | nindent 8 }}
+{{- end -}}

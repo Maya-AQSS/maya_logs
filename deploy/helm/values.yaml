@@ -1,0 +1,340 @@
+# ─── Valores por defecto para maya-logs ───────────────────────────────────
+# Sobrescribir con `-f values.prod.yaml` o `--set` desde la WSL.
+# NO commitear credenciales reales aquí — ver `secret.external` abajo.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Etiquetas globales aplicadas a TODOS los recursos.
+commonLabels:
+  app.kubernetes.io/part-of: maya
+  app.kubernetes.io/component: logs
+
+image:
+  registry: gitea.ceedcv.es
+  repository: maya/maya-logs
+  # tag se establece por --set image.tag=<sha-git>; el chart no lo hardcodea.
+  tag: ""
+  pullPolicy: IfNotPresent
+  # Secret para pull desde el registry de Gitea. Creado fuera del chart:
+  #   kubectl -n maya-logs create secret docker-registry regcred \
+  #     --docker-server=gitea.ceedcv.es --docker-username=<u> --docker-password=<t>
+  pullSecrets:
+    - regcred
+
+# ─── Backend (php-fpm + nginx sidecar, expone 8000 al cluster) ─────────────
+backend:
+  enabled: true
+  replicas: 2
+  image:
+    repository: maya/maya-logs-backend
+    tag: ""  # default → .Values.image.tag
+  # FastCGI port donde php-fpm escucha (interno al pod).
+  fpmPort: 9000
+  # Puerto HTTP expuesto por el sidecar nginx hacia el Service.
+  httpPort: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  livenessProbe:
+    httpGet:
+      path: /api/v1/health/live
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /api/v1/health/ready
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# ─── Frontend (nginx estático sirviendo el bundle Vite) ────────────────────
+frontend:
+  enabled: true
+  replicas: 2
+  image:
+    repository: maya/maya-logs-frontend
+    tag: ""  # default → .Values.image.tag
+  containerPort: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 3
+  readinessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+
+# ─── Worker (logs:consume sobre RabbitMQ) ────────────────────────────────
+# Consume el exchange topic `maya.logs` (queue `logs.ingest`) y persiste
+# entradas en `log_mgmt_db`. Singleton — escalar requiere coordinación
+# (varios consumidores sobre la misma queue es posible, pero el orden de
+# proceso no se garantiza y los detectores de spikes ven N veces el mismo
+# evento si no hay deduplicación).
+worker:
+  enabled: true
+  replicas: 1
+  image:
+    repository: maya/maya-logs-backend  # misma imagen que backend
+    tag: ""
+  command: ["logs:consume"]  # entrypoint pasa estos args a `php artisan`
+  containerRole: worker
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ─── Scheduler (no aplica en maya_logs por ahora) ─────────────────────────
+# maya_logs define `EvaluateNotificationRules` como comando programable. Por
+# ahora se mantiene apagado; al activarse, se ejecutará schedule:work en el
+# rol `scheduler`. Singleton.
+scheduler:
+  enabled: false
+
+# ─── Reverb (WebSockets) ──────────────────────────────────────────────────
+reverb:
+  enabled: true
+  replicas: 1  # singleton salvo scaling con Redis
+  image:
+    repository: maya/maya-logs-backend
+    tag: ""
+  containerPort: 8080
+  containerRole: reverb
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  livenessProbe:
+    tcpSocket:
+      port: ws
+    initialDelaySeconds: 15
+    periodSeconds: 20
+  readinessProbe:
+    tcpSocket:
+      port: ws
+    initialDelaySeconds: 10
+    periodSeconds: 10
+
+# ─── Migración (Job pre-upgrade) ──────────────────────────────────────────
+migrate:
+  enabled: true
+  image:
+    repository: maya/maya-logs-backend
+    tag: ""
+  # `--force` requerido en producción para saltar el prompt.
+  command:
+    - php
+    - artisan
+    - migrate
+    - --force
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ─── Storage (no aplica en maya_logs) ─────────────────────────────────────
+storage:
+  enabled: false
+
+# ─── Ingress (Traefik + MetalLB + CA interna) ─────────────────────────────
+ingress:
+  enabled: true
+  className: traefik
+  # Anotación cert-manager si hay ClusterIssuer; déjalo vacío y monta TLS
+  # como Secret externo si la CA interna emite a mano.
+  annotations: {}
+    # cert-manager.io/cluster-issuer: ca-interna-ceedcv
+  frontend:
+    host: logs.ceedcv.es
+    tlsSecretName: maya-logs-frontend-tls
+  api:
+    host: logs-api.ceedcv.es
+    tlsSecretName: maya-logs-api-tls
+  reverb:
+    host: logs-reverb.ceedcv.es
+    tlsSecretName: maya-logs-reverb-tls
+
+# ─── Configuración no sensible (genera ConfigMap) ─────────────────────────
+config:
+  appName: "Log Management"
+  appEnv: production           # FORZADO — no permitir local/dev en prod
+  appDebug: "false"            # FORZADO
+  appUrl: https://logs-api.ceedcv.es
+  appLocale: es
+  appFallbackLocale: es
+  logChannel: stack
+  # logs ES el sumidero de logs por rabbit del resto del ecosistema —
+  # su propio API/worker NO debe reenviar logs por rabbit (loop infinito).
+  logStack: "daily"
+  logLevel: warning
+  logRabbitLevel: warning
+  sessionSecureCookie: "true"  # FORZADO en prod
+  sessionSameSite: lax
+  sessionEncrypt: "true"
+  authGuard: api
+  # ─── DB (Patroni VIP) ───
+  dbConnection: pgsql
+  dbHost: "172.29.71.252"
+  dbPort: "5432"
+  dbDatabase: log_mgmt_db
+  dbUsername: log_mgmt_user        # credenciales en Secret
+  # Usuario panel (permisos mínimos para queries de lectura)
+  dbPanelUsername: panel_user
+  # ─── FDW: reglas de notificación (maya_dashboard) ───
+  # maya_logs consume `v_notification_rules` desde maya_dashboard vía
+  # postgres_fdw para evaluar reglas programadas de spikes de errores.
+  fdwNotificationRulesHost: "172.29.71.252"
+  fdwNotificationRulesPort: "5432"
+  fdwNotificationRulesDatabase: maya_dashboard
+  fdwNotificationRulesUsername: maya
+  fdwNotificationRulesSchema: public
+  fdwNotificationRulesTable: v_notification_rules
+  # ─── FDW: permisos de usuario (maya_authorization) ───
+  # maya_logs consume `v_portal_user_permissions` desde maya_authorization
+  # para resolver permisos por usuario sin llamadas HTTP este-oeste.
+  fdwUserPermissionsHost: "172.29.71.252"
+  fdwUserPermissionsPort: "5432"
+  fdwUserPermissionsDatabase: maya_auth
+  fdwUserPermissionsUsername: maya
+  fdwUserPermissionsSchema: public
+  fdwUserPermissionsRemoteView: v_portal_user_permissions
+  # ─── Redis (in-cluster) ───
+  redisClient: phpredis
+  redisHost: redis.maya-infra.svc.cluster.local
+  redisPort: "6379"
+  # ─── RabbitMQ (in-cluster) ───
+  rabbitmqHost: rabbitmq.maya-infra.svc.cluster.local
+  rabbitmqPort: "5672"
+  rabbitmqUser: maya_logs
+  rabbitmqVhost: /maya
+  mayaMessagingApp: maya-logs
+  # ─── Cache / Queue / Session ───
+  cacheStore: redis
+  queueConnection: rabbitmq    # publica/consume vía AMQP
+  sessionDriver: redis
+  sessionLifetime: "120"
+  # ─── Keycloak (realm maya) ───
+  keycloakUrl: http://keycloak.maya-infra.svc.cluster.local:8080
+  keycloakRealm: maya
+  keycloakClientId: maya-logs
+  keycloakPublicUrl: https://keycloak.ceedcv.es
+  # ─── JWT / JWKS ───
+  jwksUrl: http://keycloak.maya-infra.svc.cluster.local:8080/realms/maya/protocol/openid-connect/certs
+  jwtIssuer: https://keycloak.ceedcv.es/realms/maya
+  jwtAudience: maya-logs
+  jwksCacheTtl: "3600"
+  # ─── CORS (lista explícita, solo HTTPS) ───
+  # logs es consumido por su propio frontend y por widgets de dashboard.
+  corsAllowedOrigins: https://logs.ceedcv.es,https://dashboard.ceedcv.es
+  # ─── Mail ───
+  mailMailer: log
+  # ─── Reverb ───
+  reverbAppId: maya-logs
+  reverbHost: logs-reverb.ceedcv.es
+  reverbPort: "443"
+  reverbScheme: https
+  reverbServerHost: "0.0.0.0"
+  reverbServerPort: "8080"
+  broadcastConnection: reverb
+  # ─── Trusted proxies (Traefik del clúster) ───
+  # Limitar a CIDR de la red interna donde corre Traefik. Acepta lista
+  # separada por comas. shared-http-laravel CommonMiddleware leerá esto.
+  trustedProxies: "172.29.71.0/24,10.42.0.0/16"
+  # Override de LOG_STACK para el worker AMQP. logs consume rabbit; su
+  # worker NUNCA debe re-emitir por rabbit (loop infinito sobre la queue).
+  workerLogStack: "daily"
+  # ─── Error Spike Detection ────────────────────────────────────────────
+  # Ventana de análisis y umbral para alertas por picos de logs críticos.
+  logsErrorSpikeWindowSeconds: "60"
+  logsErrorSpikeThreshold: "10"
+
+# ─── Secret externo (placeholders; valores reales vía kubectl create) ─────
+# El chart genera una plantilla con placeholders para documentar las claves.
+# En producción se RECOMIENDA crear el Secret fuera del chart (kubectl create
+# secret) o vía Sealed Secrets, y referenciarlo con `secret.externalName`.
+secret:
+  # Si se define, el chart NO crea el Secret y referencia el externo.
+  externalName: ""           # ej. "maya-logs-secret"
+  # Nombre del Secret que crea el chart si externalName está vacío.
+  # Contendrá claves con valores placeholder "CHANGE-ME-*" — el operador
+  # debe sobrescribirlo en su `values.prod.yaml` (fuera de git) o con --set.
+  name: maya-logs-secret
+  data:
+    APP_KEY: "CHANGE-ME-base64-app-key"
+    DB_PASSWORD: "CHANGE-ME-db-password"
+    DB_PANEL_PASSWORD: "CHANGE-ME-db-panel-password"
+    REDIS_PASSWORD: "CHANGE-ME-redis-password"
+    RABBITMQ_PASSWORD: "CHANGE-ME-rabbitmq-password"
+    FDW_NOTIFICATION_RULES_PASSWORD: "CHANGE-ME-fdw-dashboard-password"
+    FDW_USER_PERMISSIONS_PASSWORD: "CHANGE-ME-fdw-authz-password"
+    KEYCLOAK_CLIENT_SECRET: "CHANGE-ME-keycloak-client-secret"
+    REVERB_APP_KEY: "CHANGE-ME-reverb-app-key"
+    REVERB_APP_SECRET: "CHANGE-ME-reverb-app-secret"
+
+# ─── NetworkPolicy (defensa en profundidad) ───────────────────────────────
+networkPolicy:
+  enabled: true
+  # Namespaces autorizados para east-west (dashboard agrega widgets de logs).
+  allowedNamespaces:
+    - maya-dashboard
+
+# ─── PodSecurity (runAsNonRoot, drop ALL, readOnlyRootFS) ─────────────────
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 82       # www-data en php:8.4-fpm-alpine
+  runAsGroup: 82
+  fsGroup: 82
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 82
+  runAsGroup: 82
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Drenaje suave de pods para deploys sin corte.
+terminationGracePeriodSeconds: 30
+reverbTerminationGracePeriodSeconds: 60
+preStopSleepSeconds: 5

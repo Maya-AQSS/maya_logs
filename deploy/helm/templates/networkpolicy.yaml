@@ -1,0 +1,148 @@
+{{- if .Values.networkPolicy.enabled -}}
+# Deny-all por defecto en el namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# Permitir DNS al kube-dns (necesario para cualquier resolución).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-allow-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Permitir tráfico saliente a la red interna CEEDCV (DB Patroni, Keycloak,
+# RabbitMQ, Redis…). En K3s sin SNAT entre namespaces, las IPs internas son
+# alcanzables; restringimos al rango interno + namespaces del clúster.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-allow-egress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Patroni VIP, infra in-cluster por IP, Synology
+    - to:
+        - ipBlock:
+            cidr: 172.29.71.0/24
+        - ipBlock:
+            cidr: 172.29.70.0/24
+    # Pod-to-pod intra-clúster (Redis, RabbitMQ, Keycloak, maya-authz en otros NS)
+    - to:
+        - namespaceSelector: {}
+---
+# Ingress al backend desde Traefik (kube-system) y desde namespaces aliados.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-allow-backend-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "backend") | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Traefik (kube-system) → backend
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: {{ .Values.backend.httpPort }}
+    # East-west: dashboard agrega widgets de logs vía API.
+    - from:
+{{- range .Values.networkPolicy.allowedNamespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . | quote }}
+{{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.backend.httpPort }}
+{{- if .Values.reverb.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-allow-reverb-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "reverb") | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: {{ .Values.reverb.containerPort }}
+{{- end }}
+{{- if .Values.frontend.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "maya-logs.fullname" . }}-allow-frontend-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "maya-logs.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "maya-logs.componentSelectorLabels" (dict "root" . "component" "frontend") | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: {{ .Values.frontend.containerPort }}
+{{- end }}
+{{- end -}}

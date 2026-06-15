@@ -1,0 +1,25 @@
+apiVersion: v2
+name: maya-logs
+description: |
+  Maya Logs — chart de despliegue en K3s (CEEDCV interno).
+  Provee backend (php-fpm + nginx sidecar), frontend (nginx estático),
+  worker AMQP (logs:consume ← logs.ingest), reverb (WebSockets) y job de
+  migración.
+  Autocontenido: no depende del library chart `maya-common` (aún por publicar
+  en el registry OCI de Gitea); cuando exista se migrará a `dependencies:`.
+type: application
+version: 0.1.0
+appVersion: "0.20.0"
+icon: https://ceedcv.es/favicon.ico
+maintainers:
+  - name: CEEDCV — equipo Maya
+home: https://logs.ceedcv.es
+sources:
+  - https://gitea.ceedcv.es/maya/maya_logs
+kubeVersion: ">=1.27.0-0"
+keywords:
+  - maya
+  - logs
+  - keycloak
+  - laravel
+  - react
