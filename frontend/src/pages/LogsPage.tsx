@@ -289,8 +289,8 @@ export function LogsPage() {
           <span
             className={
               l.resolved
-                ? 'inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success-dark ring-1 ring-inset ring-success/20'
-                : 'inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning-dark ring-1 ring-inset ring-warning/20'
+                ? 'inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success-dark dark:text-success ring-1 ring-inset ring-success/20'
+                : 'inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning-dark dark:text-warning ring-1 ring-inset ring-warning/20'
             }
           >
             {l.resolved ? t('detail.fields.resolved') : t('resolved.unresolved')}

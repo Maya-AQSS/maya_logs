@@ -254,7 +254,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
                       onChange={(e) => setEditingContent(e.target.value)}
                       disabled={editingBusy}
                       rows={3}
-                      className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+                      className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted dark:placeholder:text-text-dark-muted focus:border-ui-border dark:focus:border-ui-dark-border focus:outline-none"
                     />
                     {editingError && (
                       <p
@@ -311,7 +311,7 @@ export function CommentThread({ commentableType, commentableId }: CommentThreadP
             disabled={creating}
             rows={3}
             placeholder={t('placeholder')}
-            className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted focus:border-text-muted focus:outline-none"
+            className="w-full resize-none rounded-lg border border-ui-border dark:border-ui-dark-border bg-white dark:bg-ui-dark-bg px-3 py-2 text-sm text-text-primary dark:text-text-dark-primary placeholder:text-text-muted dark:placeholder:text-text-dark-muted focus:border-ui-border dark:focus:border-ui-dark-border focus:outline-none"
           />
           {createError && (
             <p

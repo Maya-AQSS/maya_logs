@@ -70,7 +70,7 @@ export function LogsFilters({ value, applications, onChange, onReset }: LogsFilt
           {t('filters.title')}
           {hasActiveFilters && (
             <span
-              className="ml-2 inline-flex items-center justify-center w-2 h-2 rounded-full bg-odoo-purple"
+              className="ml-2 inline-flex items-center justify-center w-2 h-2 rounded-full bg-odoo-purple dark:bg-odoo-dark-purple"
               aria-hidden="true"
             />
           )}

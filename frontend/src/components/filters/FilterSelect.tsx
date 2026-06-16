@@ -8,7 +8,7 @@ import { filterLabelClass } from './fieldStyles';
  * esquinas `rounded-lg`, sombra, fondo dark de tarjeta y focus ring Odoo.
  */
 const selectClass =
-  'appearance-none rounded-lg pr-10 shadow-sm dark:bg-ui-dark-card focus:border-odoo-purple focus:outline-none focus:ring-2 focus:ring-odoo-purple/20';
+  'appearance-none rounded-lg pr-10 shadow-sm dark:bg-ui-dark-card focus:border-odoo-purple dark:focus:border-odoo-dark-purple focus:outline-none focus:ring-2 focus:ring-odoo-purple/20 dark:focus:ring-odoo-dark-purple/20';
 
 type FilterSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
