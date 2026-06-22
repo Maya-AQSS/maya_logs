@@ -101,6 +101,26 @@ class ArchivedLogRepository implements ArchivedLogRepositoryInterface
     }
 
     /**
+     * @return array{owner_id: ?string, message: string, id: int}|null
+     */
+    public function findOwnerNotificationData(int $id): ?array
+    {
+        $row = ArchivedLog::query()
+            ->select(['id', 'archived_by_id', 'message'])
+            ->find($id);
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'owner_id' => $row->archived_by_id !== null ? (string) $row->archived_by_id : null,
+            'message' => (string) ($row->message ?? ''),
+            'id' => (int) $row->id,
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $fields
      *
      * No valida actor; debe haberse pasado {@see ArchivedLogPolicy} (p. ej. vía `authorize` en el controlador).

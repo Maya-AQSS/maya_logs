@@ -25,6 +25,14 @@ interface ArchivedLogRepositoryInterface
     public function findOrFail(int $id): ArchivedLog;
 
     /**
+     * Datos escalares para la notificación al propietario de un log archivado.
+     * Evita exponer el modelo Eloquent a la capa Service (Opción A — DTO estricto).
+     *
+     * @return array{owner_id: ?string, message: string, id: int}|null
+     */
+    public function findOwnerNotificationData(int $id): ?array;
+
+    /**
      * @param  array<string, mixed>  $fields
      *
      * La autorización la define {@see ArchivedLogPolicy} (subject JWT === `archived_by_id`).

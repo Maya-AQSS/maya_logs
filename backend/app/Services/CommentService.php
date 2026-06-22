@@ -107,13 +107,12 @@ final class CommentService implements CommentServiceInterface
             return;
         }
 
-        try {
-            $archivedLog = $this->archivedLogRepository->findOrFail($commentableId);
-        } catch (Throwable) {
+        $data = $this->archivedLogRepository->findOwnerNotificationData($commentableId);
+        if ($data === null) {
             return;
         }
 
-        $ownerId = $archivedLog->archived_by_id;
+        $ownerId = $data['owner_id'];
 
         if ($ownerId === null || $ownerId === $commentAuthorId) {
             return;
@@ -122,14 +121,14 @@ final class CommentService implements CommentServiceInterface
         try {
             $this->notificationPublisher->send(
                 type: 'log.comment_added',
-                recipientId: (string) $ownerId,
+                recipientId: $ownerId,
                 title: 'Nuevo comentario en tu log',
-                body: sprintf('Se ha añadido un comentario en el log "%s"', $archivedLog->message ?? ''),
+                body: sprintf('Se ha añadido un comentario en el log "%s"', $data['message']),
                 channels: ['app'],
-                metadata: ['log_id' => $archivedLog->getKey()],
+                metadata: ['log_id' => $data['id']],
                 titleKey: 'notifications.log.comment_added.title',
                 bodyKey: 'notifications.log.comment_added.body',
-                params: ['log_id' => $archivedLog->getKey()],
+                params: ['log_id' => $data['id']],
                 severity: 'info',
             );
         } catch (Throwable $e) {
