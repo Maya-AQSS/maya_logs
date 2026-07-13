@@ -22,6 +22,8 @@ spec:
       labels:
         {{- include "maya-logs.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: migrate
+      annotations:
+        {{- include "maya-logs.vaultAnnotations" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.image.pullSecrets }}
@@ -42,6 +44,10 @@ spec:
             - |
               set -e
               cd /var/www/html
+              # Secretos vía Vault Agent (source-once); no-op sin el fichero.
+              if [ -f /vault/secrets/config ]; then
+                set -a; . /vault/secrets/config; set +a
+              fi
               # Limpiar TODOS los cachés del build (alineado con entrypoint prod).
               # services.php/packages.php pueden registrar providers obsoletos si
               # el contenedor base trae binarios cacheados de un release previo.

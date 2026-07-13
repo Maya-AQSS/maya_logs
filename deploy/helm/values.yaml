@@ -11,16 +11,43 @@ commonLabels:
   app.kubernetes.io/component: logs
 
 image:
-  registry: gitea.ceedcv.es
+  # Registry de producción según IaC (rama helm): ingress registry.ceedcv.es →
+  # backend 172.29.71.240:5000. Los nodos k3s lo resuelven vía registries.yaml.
+  registry: registry.ceedcv.es
   repository: maya/maya-logs
   # tag se establece por --set image.tag=<sha-git>; el chart no lo hardcodea.
   tag: ""
   pullPolicy: IfNotPresent
-  # Secret para pull desde el registry de Gitea. Creado fuera del chart:
+  # Secret para pull desde el registry. Creado fuera del chart:
   #   kubectl -n maya-logs create secret docker-registry regcred \
-  #     --docker-server=gitea.ceedcv.es --docker-username=<u> --docker-password=<t>
+  #     --docker-server=registry.ceedcv.es --docker-username=<u> --docker-password=<t>
   pullSecrets:
-    - regcred
+    - name: regcred
+
+# ─── Vault (inyección de secretos según IaC) ──────────────────────────────
+# El Vault Agent Injector (namespace vault-system) renderiza secret/data/maya-logs
+# en /vault/secrets/config y el entrypoint hace `source`. Requisitos operativos:
+#   1. `vault kv put secret/maya-logs APP_KEY=... DB_PASSWORD=... ...`
+#   2. El rol `vault-k8s-role` debe autorizar la SA `default` del namespace maya-logs.
+# Con vault.enabled=false se vuelve al Secret k8s clásico (secret.* de abajo).
+vault:
+  enabled: true
+  role: vault-k8s-role
+  secretPath: secret/data/maya-logs
+  # Claves leídas desde Vault (deben existir en secret/data/maya-logs).
+  keys:
+    - APP_KEY
+    - DB_PASSWORD
+    - DB_PANEL_PASSWORD
+    - REDIS_PASSWORD
+    - RABBITMQ_PASSWORD
+    - FDW_NOTIFICATION_RULES_USERNAME
+    - FDW_NOTIFICATION_RULES_PASSWORD
+    - FDW_USER_PERMISSIONS_USERNAME
+    - FDW_USER_PERMISSIONS_PASSWORD
+    - KEYCLOAK_CLIENT_SECRET
+    - REVERB_APP_KEY
+    - REVERB_APP_SECRET
 
 # ─── Backend (php-fpm + nginx sidecar, expone 8000 al cluster) ─────────────
 backend:
@@ -183,8 +210,9 @@ ingress:
   className: traefik
   # Anotación cert-manager si hay ClusterIssuer; déjalo vacío y monta TLS
   # como Secret externo si la CA interna emite a mano.
-  annotations: {}
-    # cert-manager.io/cluster-issuer: ca-interna-ceedcv
+  annotations:
+    # CA interna del clúster (ClusterIssuer definido en IaC cert-manager-ca.yaml).
+    cert-manager.io/cluster-issuer: maya-internal-ca
   frontend:
     host: logs.ceedcv.es
     tlsSecretName: maya-logs-frontend-tls
@@ -239,12 +267,12 @@ config:
   # USERNAME se inyecta vía Secret (no ConfigMap) — ver `secret.data` abajo.
   fdwUserPermissionsSchema: public
   fdwUserPermissionsRemoteView: v_portal_user_permissions
-  # ─── Redis (in-cluster) ───
+  # ─── Redis (in-cluster; release redis-cache del maya-app chart en IaC) ───
   redisClient: phpredis
-  redisHost: redis.maya-infra.svc.cluster.local
+  redisHost: redis-cache-maya-app.maya-infra.svc.cluster.local
   redisPort: "6379"
-  # ─── RabbitMQ (in-cluster) ───
-  rabbitmqHost: rabbitmq.maya-infra.svc.cluster.local
+  # ─── RabbitMQ (in-cluster; release rabbitmq en namespace maya-sync) ───
+  rabbitmqHost: rabbitmq-maya-app.maya-sync.svc.cluster.local
   rabbitmqPort: "5672"
   rabbitmqUser: maya_logs
   rabbitmqVhost: /maya
@@ -254,13 +282,13 @@ config:
   queueConnection: rabbitmq    # publica/consume vía AMQP
   sessionDriver: redis
   sessionLifetime: "120"
-  # ─── Keycloak (realm maya) ───
-  keycloakUrl: http://keycloak.maya-infra.svc.cluster.local:8080
+  # ─── Keycloak (realm maya; release keycloak en namespace maya-iam) ───
+  keycloakUrl: http://keycloak-maya-app.maya-iam.svc.cluster.local:8080
   keycloakRealm: maya
   keycloakClientId: maya-logs
   keycloakPublicUrl: https://keycloak.ceedcv.es
   # ─── JWT / JWKS ───
-  jwksUrl: http://keycloak.maya-infra.svc.cluster.local:8080/realms/maya/protocol/openid-connect/certs
+  jwksUrl: http://keycloak-maya-app.maya-iam.svc.cluster.local:8080/realms/maya/protocol/openid-connect/certs
   jwtIssuer: https://keycloak.ceedcv.es/realms/maya
   jwtAudience: maya-logs
   jwksCacheTtl: "3600"
@@ -329,7 +357,9 @@ networkPolicy:
   # un pod en maya-logs queda comprometido: solo podrá hablar con estos NS,
   # no con kube-system u otros tenants.
   egressNamespaces:
-    - maya-infra            # Redis, RabbitMQ, Keycloak
+    - maya-infra            # Redis (release redis-cache del maya-app chart)
+    - maya-sync             # RabbitMQ (release rabbitmq)
+    - maya-iam              # Keycloak (release keycloak)
     - maya-authorization    # east-west API authz (opcional, vía FDW)
     - maya-dashboard        # east-west API dashboard (FDW de reglas)
 

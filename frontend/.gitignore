@@ -12,7 +12,6 @@ dist
 dist-ssr
 .vite
 *.local
-package-lock.json
 
 # Playwright
 /test-results/

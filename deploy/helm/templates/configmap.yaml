@@ -37,7 +37,8 @@ data:
   DB_PANEL_USERNAME: {{ .Values.config.dbPanelUsername | quote }}
 
   # FDW: vista de reglas de notificación en maya_dashboard (read-only).
-  # USERNAME/PASSWORD se inyectan vía Secret (envFrom secretRef).
+  # USERNAME/PASSWORD se inyectan vía Vault (/vault/secrets/config) o, con
+  # vault.enabled=false, vía Secret k8s (envFrom secretRef).
   FDW_NOTIFICATION_RULES_HOST: {{ .Values.config.fdwNotificationRulesHost | quote }}
   FDW_NOTIFICATION_RULES_PORT: {{ .Values.config.fdwNotificationRulesPort | quote }}
   FDW_NOTIFICATION_RULES_DATABASE: {{ .Values.config.fdwNotificationRulesDatabase | quote }}
@@ -45,7 +46,8 @@ data:
   FDW_NOTIFICATION_RULES_TABLE: {{ .Values.config.fdwNotificationRulesTable | quote }}
 
   # FDW: vista de permisos resueltos en maya_authorization (read-only).
-  # USERNAME/PASSWORD se inyectan vía Secret (envFrom secretRef).
+  # USERNAME/PASSWORD se inyectan vía Vault (/vault/secrets/config) o, con
+  # vault.enabled=false, vía Secret k8s (envFrom secretRef).
   FDW_USER_PERMISSIONS_HOST: {{ .Values.config.fdwUserPermissionsHost | quote }}
   FDW_USER_PERMISSIONS_PORT: {{ .Values.config.fdwUserPermissionsPort | quote }}
   FDW_USER_PERMISSIONS_DATABASE: {{ .Values.config.fdwUserPermissionsDatabase | quote }}

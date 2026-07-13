@@ -16,50 +16,67 @@ Despliega `maya_logs` (backend Laravel + frontend React + worker AMQP `logs:cons
 ## Uso (desde WSL en la red interna)
 
 ```bash
-# 1) Construir y publicar imágenes
+# 1) Construir y publicar imágenes en el registry interno (IaC: registry.ceedcv.es)
 cd ../../..  # raíz del repo
 DOCKER_BUILDKIT=1 docker buildx build \
   -f backend/Dockerfile.prod \
-  -t gitea.ceedcv.es/maya/maya-logs-backend:$(git rev-parse --short HEAD) \
+  -t registry.ceedcv.es/maya/maya-logs-backend:$(git rev-parse --short HEAD) \
   backend
 docker buildx build \
   -f frontend/Dockerfile.prod \
   --build-arg VITE_API_URL=https://logs-api.ceedcv.es/api/v1 \
   --build-arg VITE_KEYCLOAK_URL=https://keycloak.ceedcv.es \
   --build-arg VITE_REVERB_HOST=logs-reverb.ceedcv.es \
-  -t gitea.ceedcv.es/maya/maya-logs-frontend:$(git rev-parse --short HEAD) \
+  -t registry.ceedcv.es/maya/maya-logs-frontend:$(git rev-parse --short HEAD) \
   frontend
-docker push gitea.ceedcv.es/maya/maya-logs-backend:$(git rev-parse --short HEAD)
-docker push gitea.ceedcv.es/maya/maya-logs-frontend:$(git rev-parse --short HEAD)
+docker push registry.ceedcv.es/maya/maya-logs-backend:$(git rev-parse --short HEAD)
+docker push registry.ceedcv.es/maya/maya-logs-frontend:$(git rev-parse --short HEAD)
 
-# 2) Crear el Secret real (fuera del chart)
-kubectl -n maya-logs create secret generic maya-logs-secret \
-  --from-literal=APP_KEY="base64:<...>" \
-  --from-literal=DB_PASSWORD="<...>" \
-  --from-literal=DB_PANEL_PASSWORD="<...>" \
-  --from-literal=REDIS_PASSWORD="<...>" \
-  --from-literal=RABBITMQ_PASSWORD="<...>" \
-  --from-literal=FDW_NOTIFICATION_RULES_PASSWORD="<...>" \
-  --from-literal=FDW_USER_PERMISSIONS_PASSWORD="<...>" \
-  --from-literal=KEYCLOAK_CLIENT_SECRET="<...>" \
-  --from-literal=REVERB_APP_KEY="$(openssl rand -hex 16)" \
-  --from-literal=REVERB_APP_SECRET="$(openssl rand -hex 32)"
+# 2) Cargar los secretos en Vault (según IaC — vault.enabled=true por defecto).
+#    El Vault Agent Injector los renderiza en /vault/secrets/config y el
+#    entrypoint hace `source`. Ruta KV: secret/maya-logs.
+vault kv put secret/maya-logs \
+  APP_KEY="base64:<...>" \
+  DB_PASSWORD="<...>" \
+  DB_PANEL_PASSWORD="<...>" \
+  REDIS_PASSWORD="<...>" \
+  RABBITMQ_PASSWORD="<...>" \
+  FDW_NOTIFICATION_RULES_USERNAME="<...>" \
+  FDW_NOTIFICATION_RULES_PASSWORD="<...>" \
+  FDW_USER_PERMISSIONS_USERNAME="<...>" \
+  FDW_USER_PERMISSIONS_PASSWORD="<...>" \
+  KEYCLOAK_CLIENT_SECRET="<...>" \
+  REVERB_APP_KEY="$(openssl rand -hex 16)" \
+  REVERB_APP_SECRET="$(openssl rand -hex 32)"
 
-# 3) Desplegar
+#    Autorizar la ServiceAccount `default` del namespace maya-logs en el rol
+#    `vault-k8s-role` (una vez por app):
+#      vault write auth/kubernetes/role/vault-k8s-role \
+#        bound_service_account_names=default \
+#        bound_service_account_namespaces=maya-logs,maya-iam,maya-sync,... \
+#        policies=maya-app ttl=1h
+
+# 3) Registry pull secret (una vez por namespace)
+kubectl -n maya-logs create secret docker-registry regcred \
+  --docker-server=registry.ceedcv.es --docker-username=<u> --docker-password=<t>
+
+# 4) Desplegar
 helm upgrade --install maya-logs . \
   -n maya-logs --create-namespace \
   -f values.yaml \
   --set image.tag=$(git -C ../.. rev-parse --short HEAD) \
-  --set secret.externalName=maya-logs-secret \
   --atomic --wait --timeout 10m
 ```
+
+> **Fallback sin Vault:** `--set vault.enabled=false` reactiva el Secret k8s
+> clásico. En ese modo, crear el Secret con `kubectl create secret generic
+> maya-logs-secret --from-literal=...` y pasar `--set secret.externalName=maya-logs-secret`.
 
 ## Verificación
 
 ```bash
 helm lint .
-helm template maya-logs . -f values.yaml \
-  --set image.tag=test --set secret.externalName=maya-logs-secret | less
+helm template maya-logs . -f values.yaml --set image.tag=test | less
 ```
 
 ## Notas
@@ -79,8 +96,14 @@ helm template maya-logs . -f values.yaml \
   `v_notification_rules` (maya_dashboard) y `v_portal_user_permissions`
   (maya_authorization) sobre la VIP Patroni `.252`. Las credenciales son
   Secrets independientes (`FDW_*_PASSWORD`).
-- **TLS** vía Secret por host. Si hay `cert-manager` con `ClusterIssuer` de la
-  CA interna, añadir la anotación en `ingress.annotations` y los Secrets se
-  emitirán solos.
-- Cuando exista el library chart `maya-common` en el registry OCI de Gitea, se
+- **Secretos vía Vault** (`vault.enabled=true`, según IaC): el Agent Injector
+  monta `secret/data/maya-logs` en `/vault/secrets/config` y el entrypoint hace
+  `source`. Prerrequisitos: `vault kv put secret/maya-logs ...` y autorizar la
+  SA `default` de este namespace en `vault-k8s-role`.
+- **TLS** vía cert-manager: `ingress.annotations."cert-manager.io/cluster-issuer"`
+  = `maya-internal-ca` (ClusterIssuer definido en el repo IaC). Los Secrets TLS
+  por host se emiten solos.
+- **DNS este-oeste (según IaC)**: Redis → `redis-cache-maya-app.maya-infra`,
+  RabbitMQ → `rabbitmq-maya-app.maya-sync`, Keycloak → `keycloak-maya-app.maya-iam`.
+- Cuando exista el library chart `maya-common` en el registry OCI interno, se
   migrará a `dependencies:` (este chart se quedará como ejemplo autocontenido).

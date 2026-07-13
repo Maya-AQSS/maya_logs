@@ -14,7 +14,11 @@
         "pullPolicy": {"type": "string", "enum": ["Always", "IfNotPresent", "Never"]},
         "pullSecrets": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}}
+          }
         }
       }
     },
