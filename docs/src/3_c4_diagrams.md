@@ -1,7 +1,7 @@
 # 📐 Documentación Visual — Log Management Dashboard
 
 **Proyecto:** Panel de Administración y Gestión de Logs Multi-Aplicación
-**Fecha:** 2026-03-03 · **Actualizado:** 2026-03-14 (stack Laravel + Livewire 3)
+**Fecha:** 2026-03-03 · **Actualizado:** 2026-03-14 (stack React 19 + Vite + Laravel 12 API)
 **Skill:** System Architect — C4 Model + Flujos
 **Estado:** FASE 4 Completada
 
@@ -51,7 +51,9 @@ C4Container
     System_Ext(n8n, "n8n", "Inserta logs en PostgreSQL.")
 
     System_Boundary(dashboard, "Log Management Dashboard") {
-        Container(laravel, "Laravel App", "Laravel 12 + Livewire 3 + Blade", "Sirve vistas SSR reactivas (Livewire).\nGestiona logs, archivado, comentarios,\nError Codes. Rutas web convencionales.\nSin SPA ni build Vite separado.")
+        Container(laravel, "Backend API", "Laravel 12 API (PHP 8.4)", "Expone API REST para CRUD de logs,\narchivos, comentarios, error codes.\nAutenticación JWT (Keycloak).\nProporciona endpoint SSE para actualizaciones.")
+
+        Container(frontend, "Frontend SPA", "React 19 + Vite + TypeScript", "Interfaz de usuario interactiva.\nComponentes React para dashboard, lista de logs,\ndetalle y archivo con comentarios enriquecidos.\nConecta a API Backend + SSE para tiempo real.")
 
         Container(sse_worker, "SSE Worker", "Laravel Artisan Command\n(Supervisor)", "Escucha pg_notify de PostgreSQL\ny emite eventos SSE al navegador\ncuando hay nuevos logs.")
     }
@@ -59,9 +61,10 @@ C4Container
     SystemDb_Ext(postgres, "PostgreSQL", "BD compartida.\nTablas: logs, archived_logs,\ncomments, error_codes, users.")
 
     Rel(admin, auth_ext, "Autentica", "HTTPS")
-    Rel(auth_ext, laravel, "Redirige con sesión", "HTTPS cookie")
-    Rel(admin, laravel, "Navega el panel", "HTTPS / Navegador")
-    Rel(admin, laravel, "Conexión SSE (Dashboard)", "EventSource / HTTPS")
+    Rel(auth_ext, frontend, "Redirige con sesión\n(OAuth2/OIDC)", "HTTPS")
+    Rel(admin, frontend, "Navega el panel", "HTTPS / Navegador")
+    Rel(frontend, laravel, "Llamadas API REST\n(JWT Bearer)", "HTTPS / JSON")
+    Rel(frontend, laravel, "Conexión SSE (Dashboard)", "EventSource / HTTPS")
     Rel(sse_worker, laravel, "Publica actualizaciones SSE", "Proceso Artisan")
     Rel(laravel, postgres, "Lee y escribe\n(Eloquent ORM)", "TCP / SQL")
     Rel(sse_worker, postgres, "Escucha NOTIFY en tabla logs", "TCP / pg_notify")
@@ -70,14 +73,15 @@ C4Container
 
 ---
 
-## 3. Flujo 1 — Archivado de un Log (Livewire Action)
+## 3. Flujo 1 — Archivado de un Log
 
 > Secuencia desde que el admin decide archivar hasta que el log desaparece de la vista activa.
 
 ```mermaid
 sequenceDiagram
     actor Admin
-    participant LW as Livewire LogDetail
+    participant FE as React LogDetail
+    participant API as API Backend
     participant BE as Laravel (Action)
     participant DB as PostgreSQL
 

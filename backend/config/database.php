@@ -3,6 +3,20 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// ─── Conexión FDW a Odoo (maya_erp) ──────────────────────────────────────────
+// Compartida por los catálogos federados (usuarios, equipos, estudios...) que
+// crean las migraciones de ceedcv-maya/shared-profile-laravel. En desarrollo
+// apunta al Postgres de maya_infra con el superusuario; en producción FDW_ODOO_*
+// apunta a la VIP de Patroni con el rol lector maya_fdw_reader.
+$odooFdw = [
+    'host'     => env('FDW_ODOO_HOST', env('DB_HOST', 'maya_infra_postgres')),
+    'port'     => env('FDW_ODOO_PORT', '5432'),
+    'database' => env('FDW_ODOO_DATABASE', 'odoo'),
+    'username' => env('FDW_ODOO_USERNAME', 'maya'),
+    'password' => env('FDW_ODOO_PASSWORD', 'secret'),
+    'schema'   => env('FDW_ODOO_SCHEMA', 'public'),
+];
+
 return [
 
     /*
@@ -158,6 +172,14 @@ return [
     */
 
     'fdw' => [
+        // ─── Fuente Odoo (maya_erp): grupos leídos por las migraciones FDW compartidas ───
+        'users'          => $odooFdw + ['table' => env('FDW_USERS_TABLE', 'v_app_users')],
+        'teams'          => $odooFdw + ['table' => env('FDW_TEAMS_TABLE', 'v_dms_teams')],
+        'team_members'   => $odooFdw + ['table' => env('FDW_TEAM_MEMBERS_TABLE', 'v_dms_team_members')],
+        'studies'        => $odooFdw,
+        'study_types'    => $odooFdw,
+        'course_modules' => $odooFdw,
+        'languages'      => $odooFdw,
         // Reglas de notificación programadas — FDW read-only sobre la vista
         // contrato maya_dashboard.public.v_notification_rules (level B).
         'notification_rules' => [

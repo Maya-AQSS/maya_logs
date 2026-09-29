@@ -151,7 +151,7 @@ Instead, the `traefik_url` field on the Application model serves as the forward/
 
 **Flow**:
 1. **SPA Admin Panel** (React in maya_authorization):
-   - User logs in via Keycloak realm `maya`
+   - User logs in via Keycloak realm `CEED`
    - Keycloak issues JWT bearer token
    - Token sent in `Authorization: Bearer <token>` header
    - Middleware `auth.keycloak` validates JWT and extracts claims
@@ -189,7 +189,7 @@ Instead, the `traefik_url` field on the Application model serves as the forward/
 - Line 22: `documentationUrl: tool.traefik_url || tool.documentation_url` — Maps traefik_url as the forward URL
 - Line 23: `lastUsedAt: validateIsoDate(tool.last_used_at || tool.updated_at)` — Uses updated_at as fallback
 
-**Authentication**: Keycloak auth configured in `/home/ggarrido/development/Desarrollo CEEDCV/maya_dashboard/src/app/authService.js` — uses @maya/shared-auth-react with realm `maya`.
+**Authentication**: Keycloak auth configured in `/home/ggarrido/development/Desarrollo CEEDCV/maya_dashboard/src/app/authService.js` — uses @maya/shared-auth-react with realm `CEED`.
 
 ---
 
