@@ -32,11 +32,12 @@ jobs:
         working-directory: backend
 
     services:
-      # Contenedor PostgreSQL 18 que levanta GitHub Actions automáticamente.
+      # Contenedor PostgreSQL 17 (la versión de producción y de todos los entornos) que
+      # levanta GitHub Actions automáticamente.
       # Los health-checks garantizan que el contenedor esté listo antes de
       # que los pasos siguientes intenten conectarse.
       postgres:
-        image: postgres:18
+        image: postgres:17
         env:
           POSTGRES_DB: testing
           POSTGRES_USER: postgres

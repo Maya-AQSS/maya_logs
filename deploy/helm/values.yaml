@@ -1,4 +1,4 @@
-# maya-logs — values de producción sobre el library chart maya-common (0.2.0).
+# maya-logs — values de producción sobre el library chart maya-common (0.2.1).
 # Solo lo que difiere de los defaults de maya-common (charts/maya-common/values.yaml).
 #
 # Secretos: Vault, ruta secret/data/maya-logs con las claves de vault.keys
@@ -45,6 +45,7 @@ config:
   FDW_NOTIFICATION_RULES_PORT: '5432'
   FDW_NOTIFICATION_RULES_SCHEMA: public
   FDW_NOTIFICATION_RULES_TABLE: v_notification_rules
+  FDW_NOTIFICATION_RULES_USERNAME: maya_fdw_reader
   FDW_ODOO_DATABASE: maya_erp
   FDW_ODOO_HOST: 10.224.237.252
   FDW_ODOO_PORT: '5432'
@@ -54,6 +55,7 @@ config:
   FDW_USER_PERMISSIONS_PORT: '5432'
   FDW_USER_PERMISSIONS_REMOTE_VIEW: v_portal_user_permissions
   FDW_USER_PERMISSIONS_SCHEMA: public
+  FDW_USER_PERMISSIONS_USERNAME: maya_fdw_reader
   JWKS_CACHE_TTL: '3600'
   JWKS_URL: http://keycloak-maya-app.maya-iam.svc.cluster.local:8080/realms/CEED/protocol/openid-connect/certs
   JWT_AUDIENCE: maya-logs
