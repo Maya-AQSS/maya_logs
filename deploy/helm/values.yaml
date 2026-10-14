@@ -1,10 +1,10 @@
-# maya-logs — values de producción sobre el library chart maya-common (0.2.1).
+# maya-logs — values de producción sobre el library chart maya-common (0.2.2).
 # Solo lo que difiere de los defaults de maya-common (charts/maya-common/values.yaml).
 #
 # Secretos: Vault, ruta secret/data/maya-logs con las claves de vault.keys
 # (REDIS_PASSWORD = SESSION_PASS de secret/data/redis; FDW_*_PASSWORD = contraseña
 # del rol lector maya_fdw_reader). image.tag lo fija helmfile (misma versión que el chart).
-# Hosts: logs.ceedcv.es (SPA) y api.logs.ceedcv.es (API y WebSocket en /app).
+# Hosts: logs.ceedcv (SPA) y api.logs.ceedcv (API y WebSocket en /app).
 
 image:
   registry: 10.224.237.240:5000
@@ -28,12 +28,12 @@ config:
   APP_FALLBACK_LOCALE: es
   APP_LOCALE: es
   APP_NAME: Log Management
-  APP_URL: https://api.logs.ceedcv.es
+  APP_URL: https://api.logs.ceedcv
   AUTH_GUARD: api
   BROADCAST_CONNECTION: reverb
   CACHE_STORE: redis
   CORS_ADDITIONAL_ORIGINS: ''
-  CORS_REGEX_DOMAIN: ceedcv.es
+  CORS_REGEX_DOMAIN: ceedcv
   DB_CONNECTION: pgsql
   DB_DATABASE: log_mgmt_db
   DB_HOST: 10.224.237.252
@@ -59,7 +59,7 @@ config:
   JWKS_CACHE_TTL: '3600'
   JWKS_URL: http://keycloak-maya-app.maya-iam.svc.cluster.local:8080/realms/CEED/protocol/openid-connect/certs
   JWT_AUDIENCE: maya-logs
-  JWT_ISSUER: https://keycloak.ceedcv.es/realms/CEED
+  JWT_ISSUER: https://keycloak.ceedcv/realms/CEED
   LOGS_ERROR_SPIKE_THRESHOLD: '10'
   LOGS_ERROR_SPIKE_WINDOW_SECONDS: '60'
   LOG_CHANNEL: stack
@@ -91,27 +91,27 @@ config:
 frontend:
   env:
     MAYA_PUBLIC_APP_NAME: Log Management
-    MAYA_PUBLIC_API_URL: https://api.logs.ceedcv.es/api/v1
-    MAYA_PUBLIC_KEYCLOAK_URL: https://keycloak.ceedcv.es
+    MAYA_PUBLIC_API_URL: https://api.logs.ceedcv/api/v1
+    MAYA_PUBLIC_KEYCLOAK_URL: https://keycloak.ceedcv
     MAYA_PUBLIC_KEYCLOAK_REALM: CEED
     MAYA_PUBLIC_KEYCLOAK_CLIENT_ID: maya-logs
-    MAYA_PUBLIC_DASHBOARD_URL: https://dashboard.ceedcv.es
-    MAYA_PUBLIC_DASHBOARD_API_URL: https://api.dashboard.ceedcv.es
+    MAYA_PUBLIC_DASHBOARD_URL: https://dashboard.ceedcv
+    MAYA_PUBLIC_DASHBOARD_API_URL: https://api.dashboard.ceedcv
     MAYA_PUBLIC_PEER_HOST_PATTERN: subdomain-api
-    MAYA_PUBLIC_REVERB_HOST: api.logs.ceedcv.es
+    MAYA_PUBLIC_REVERB_HOST: api.logs.ceedcv
     MAYA_PUBLIC_REVERB_PORT: '443'
     MAYA_PUBLIC_REVERB_SCHEME: https
-    MAYA_PUBLIC_REVERB_AUTH_ENDPOINT: https://api.logs.ceedcv.es/api/v1/broadcasting/auth
+    MAYA_PUBLIC_REVERB_AUTH_ENDPOINT: https://api.logs.ceedcv/api/v1/broadcasting/auth
     MAYA_PUBLIC_REVERB_APP_KEY: CHANGE-ME
     MAYA_CSP: 'default-src ''self''; script-src ''self''; style-src ''self'' ''unsafe-inline''; img-src ''self'' data: blob:;
-      font-src ''self'' data:; connect-src ''self'' https://api.logs.ceedcv.es https://api.dashboard.ceedcv.es https://keycloak.ceedcv.es
-      wss://api.logs.ceedcv.es; frame-src https://keycloak.ceedcv.es; frame-ancestors ''none''; base-uri ''self''; form-action
+      font-src ''self'' data:; connect-src ''self'' https://api.logs.ceedcv https://api.dashboard.ceedcv https://keycloak.ceedcv
+      wss://api.logs.ceedcv; frame-src https://keycloak.ceedcv; frame-ancestors ''none''; base-uri ''self''; form-action
       ''self'''
 scheduler:
   enabled: true
 ingress:
-  host: logs.ceedcv.es
-  apiHost: api.logs.ceedcv.es
+  host: logs.ceedcv
+  apiHost: api.logs.ceedcv
 networkPolicy:
   egress:
     cidrs:
