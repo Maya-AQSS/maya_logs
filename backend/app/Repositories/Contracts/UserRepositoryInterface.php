@@ -10,7 +10,7 @@ use App\Models\User;
 interface UserRepositoryInterface
 {
     /**
-     * Busca por clave primaria (`users.id`, UUID Keycloak / Odoo FDW).
+     * Busca por clave primaria (`users.id` = `sub` de Keycloak = res_users.oauth_uid, FDW Odoo).
      */
     public function findByKey(string $id): ?UserRefDto;
 

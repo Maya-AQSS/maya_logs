@@ -173,6 +173,8 @@ return [
 
     'fdw' => [
         // ─── Fuente Odoo (maya_erp): grupos leídos por las migraciones FDW compartidas ───
+        // El usuario se enlaza por res_users.oauth_uid (= `sub` de Keycloak = v_app_users.id),
+        // igual en todos los entornos (D26 R4); keycloak_user_id no existe en producción.
         'users'          => $odooFdw + ['table' => env('FDW_USERS_TABLE', 'v_app_users')],
         'teams'          => $odooFdw + ['table' => env('FDW_TEAMS_TABLE', 'v_dms_teams')],
         'team_members'   => $odooFdw + ['table' => env('FDW_TEAM_MEMBERS_TABLE', 'v_dms_team_members')],
