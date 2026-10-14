@@ -5,6 +5,10 @@
     <!-- Shim de `process` para react-draggable (ver public/process-shim.js). Script
          externo y no en línea: la CSP de los clústeres es script-src 'self'. -->
     <script src="/process-shim.js"></script>
+    <!-- Configuración en ejecución (window.__MAYA_CONFIG__), antes del bundle: en los
+         clústeres la genera maya/web-base desde MAYA_PUBLIC_*; con Vite no existe y se
+         usan los VITE_*. Script externo, no en línea: la CSP es script-src 'self'. -->
+    <script src="/config.js"></script>
         <link rel="icon" type="image/png+xml" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TraCEED</title>
