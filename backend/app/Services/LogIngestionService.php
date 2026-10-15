@@ -23,6 +23,15 @@ class LogIngestionService
     // Option 1 (requested): persist each consumed message immediately.
     private const DEFAULT_BATCH_SIZE = 1;
 
+    /**
+     * C6: a slug that is not in the map reloads it (an application registered in maya_auth
+     * after the worker started, e.g. `odoo`), at most once per this many seconds.
+     */
+    private const APPLICATION_MAP_RELOAD_SECONDS = 60;
+
+    /** Unix time of the last (re)load of the application map; null = never loaded. */
+    private ?int $applicationMapLoadedAt = null;
+
     public function __construct(
         private readonly LogIngestionRepositoryInterface $repository,
         private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
@@ -40,6 +49,7 @@ class LogIngestionService
     public function setApplicationMap(array $map): void
     {
         $this->slugToId = $map;
+        $this->applicationMapLoadedAt = Carbon::now()->getTimestamp();
     }
 
     /**
@@ -122,12 +132,24 @@ class LogIngestionService
     /**
      * Resolves the application slug to its database ID.
      *
+     * An unknown slug reloads the map first (at most once per APPLICATION_MAP_RELOAD_SECONDS),
+     * so applications registered after the worker started are accepted without a restart.
+     *
      * @throws UnrecoverableIngestionException if the slug is empty or not registered.
+     * @throws QueryException if reloading the map fails (infrastructure: the caller retries).
      */
     private function resolveApplicationId(string $slug): int
     {
         if ($slug === '') {
             throw new UnrecoverableIngestionException('ConsumeLogs: dropping payload — empty app slug');
+        }
+
+        if (! array_key_exists($slug, $this->slugToId) && $this->applicationMapIsStale()) {
+            $this->loadApplicationMap();
+            Log::info('ConsumeLogs: application map reloaded for an unknown slug', [
+                'slug' => $slug,
+                'applications' => count($this->slugToId),
+            ]);
         }
 
         if (! array_key_exists($slug, $this->slugToId)) {
@@ -145,6 +167,12 @@ class LogIngestionService
         }
 
         return $id;
+    }
+
+    private function applicationMapIsStale(): bool
+    {
+        return $this->applicationMapLoadedAt === null
+            || Carbon::now()->getTimestamp() - $this->applicationMapLoadedAt >= self::APPLICATION_MAP_RELOAD_SECONDS;
     }
 
     private function resolveErrorCodeId(?string $code, int $applicationId, ?string $file, ?int $line): ?int

@@ -46,7 +46,9 @@ class ConsumeLogs extends ConsumeQueueCommand
 
     public function handle(AmqpConsumer $consumer): int
     {
-        // Precarga el mapa slug→application_id antes de consumir (igual que antes).
+        // Precarga el mapa slug→application_id antes de consumir. Un slug que no esté (una
+        // aplicación dada de alta después, p. ej. odoo) lo recarga LogIngestionService, como
+        // mucho una vez por minuto (C6): no hace falta reiniciar el worker.
         $this->service->loadApplicationMap();
 
         return parent::handle($consumer);

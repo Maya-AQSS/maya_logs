@@ -7,7 +7,8 @@ namespace App\Repositories\Contracts;
 interface LogIngestionRepositoryInterface
 {
     /**
-     * Application slug => id map (small, stable set; loaded once per worker startup).
+     * Application slug => id map (small, stable set; loaded at worker startup and reloaded
+     * by LogIngestionService when an unknown slug arrives, at most once per minute).
      *
      * @return array<string, int>
      */
