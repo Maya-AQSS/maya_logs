@@ -13,17 +13,6 @@ return [
     */
     'app' => env('MAYA_MESSAGING_APP', 'maya-logs'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Nombres de colas AMQP
-    |--------------------------------------------------------------------------
-    |
-    | Centraliza los nombres de cola para evitar strings hardcodeados.
-    | Sobrescribibles por variable de entorno para distintos entornos.
-    |
-    */
-    'queues' => [
-        'logs_ingest' => env('MAYA_QUEUE_LOGS_INGEST', 'logs.ingest'),
-    ],
-
+    // Los nombres de cola (messaging.queues.*) los define el paquete: estándar de mensajería,
+    // maya_platform/messaging. No redefinir aquí `queues`, `exchanges` ni `connection`.
 ];

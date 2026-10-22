@@ -1,4 +1,4 @@
-import { resolveServiceUrl } from '@ceedcv-maya/shared-auth-react';
+import { publicConfig, resolveServiceUrl } from '@ceedcv-maya/shared-auth-react';
 import { MayaAppShell } from '@ceedcv-maya/shared-layout-react';
 import { PlaceholderPage, SkeletonPage } from '@ceedcv-maya/shared-ui-react';
 import { lazy, Suspense } from 'react';
@@ -31,14 +31,9 @@ const LogDetailPage = lazy(() =>
 );
 const LogsPage = lazy(() => import('./pages/LogsPage').then((m) => ({ default: m.LogsPage })));
 
-const DASHBOARD_URL = resolveServiceUrl(
-  import.meta.env.VITE_DASHBOARD_URL as string | undefined,
-  'dashboard',
-);
-const DASHBOARD_API_URL = resolveServiceUrl(
-  import.meta.env.VITE_DASHBOARD_API_URL as string | undefined,
-  'dashboard-api',
-);
+// /config.js (MAYA_PUBLIC_DASHBOARD_*) o, en desarrollo, VITE_DASHBOARD_*.
+const DASHBOARD_URL = resolveServiceUrl(publicConfig('DASHBOARD_URL'), 'dashboard');
+const DASHBOARD_API_URL = resolveServiceUrl(publicConfig('DASHBOARD_API_URL'), 'dashboard-api');
 
 function AppRoutes() {
   const { t } = useTranslation('common');

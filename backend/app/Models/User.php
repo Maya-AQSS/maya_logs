@@ -13,7 +13,8 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 
 /**
  * Mapea la vista FDW 'users' → odoo.v_app_users (read-only).
- * PK = keycloak_user_id (UUID Keycloak). Sin timestamps ni password local.
+ * PK = res_users.oauth_uid de Odoo, que es el `sub` de Keycloak (D26 R4).
+ * Sin timestamps ni password local.
  */
 class User extends Model implements \Illuminate\Contracts\Auth\Access\Authorizable, AuthenticatableContract
 {

@@ -1,9 +1,18 @@
 # 🏗️ Arquitectura y Riesgos — Log Management Dashboard
 
+⚠️ **DOCUMENTO HISTÓRICO / PARCIALMENTE OBSOLETO**
+
+Este documento describe decisiones arquitectónicas consideradas en 2026-03-14 pero **NO implementadas**.
+El proyecto mantiene **React 19 + Vite + TypeScript** como frontend (ver README.md). Las referencias a
+"Livewire 3" y "Laravel SSR reactivo" (líneas 46, 49–55) son **históricas** y deben ignorarse para
+desarrollo y despliegue en producción. El documento se mantiene como referencia de qué se descartó y por qué.
+
+---
+
 **Proyecto:** Panel de Administración y Gestión de Logs Multi-Aplicación
 **Fecha:** 2026-03-03
 **Skill:** System Architect — C4 Model + STRIDE + NFRs
-**Estado:** FASE 2 Completada
+**Estado:** FASE 2 Completada (pero con stack diferente al documentado aquí)
 
 ---
 

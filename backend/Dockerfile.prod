@@ -1,113 +1,123 @@
-# syntax=docker/dockerfile:1.7
-# ─── Etapa 1: vendor (composer en build, sin scripts, sin dev) ───────────────
+# syntax=docker/dockerfile:1
+#
+# maya_logs — backend de producción. Tres imágenes desde la misma base:
+#
+#   --target worker  → consumidor / colas         (Deployment worker, scheduler y Job migrate)
+#   --target reverb  → WebSocket Laravel Reverb   (Deployment reverb, puerto 8080)
+#   --target api     → nginx + php-fpm            (Deployment backend, puerto 8080; target por defecto)
+#
+# Este fichero es IDÉNTICO en todas las apps Maya salvo el bloque "Parámetros
+# de la app". Todo lo de sistema (PHP, extensiones, nginx, supervisord,
+# entrypoint y roles) vive en la base maya/php-base de maya_platform.
+#
+# Build local (con la base construida en local):
+#   docker build -f backend/Dockerfile.prod --target api    -t maya/maya-logs-api:dev    backend
+#   docker build -f backend/Dockerfile.prod --target worker -t maya/maya-logs-worker:dev backend
+#   docker build -f backend/Dockerfile.prod --target reverb -t maya/maya-logs-reverb:dev backend
+# En CI se pasa --build-arg MAYA_PHP_BASE=<registry>/maya/php-base:8.4-<fecha>.
+
+# ─── Parámetros de la app ─────────────────────────────────────────────────────
+ARG MAYA_PHP_BASE=maya/php-base:8.4
+ARG MAYA_APP=maya-logs
+ARG MAYA_WORKER_CMD="logs:consume"
+ARG PHP_MEMORY_LIMIT=256M
+ARG PHP_UPLOAD_MAX=20M
+ARG PHP_FPM_MAX_CHILDREN=8
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ─── 1. vendor: composer sin dev ni scripts (no hay artisan en esta etapa) ────
 FROM composer:2.9 AS vendor
 
-WORKDIR /app
+WORKDIR /build
 
 COPY composer.json composer.lock ./
 
-# `--no-scripts` evita ejecutar artisan en una etapa sin el código fuente.
-# `composer.local.json`/`*.dist.json` son dev-only y están excluidos por .dockerignore.
-RUN --mount=type=cache,target=/tmp/composer-cache \
-    COMPOSER_CACHE_DIR=/tmp/composer-cache \
+# --ignore-platform-reqs: la imagen de composer no tiene las extensiones del
+# runtime (pgsql, redis...); la etapa `app` valida que la app arranca de verdad.
+# El secreto composer_auth es opcional (repos VCS privados): en CI se pasa con
+# --secret id=composer_auth,env=COMPOSER_AUTH.
+RUN --mount=type=cache,target=/tmp/cache \
+    --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
     composer install \
         --no-dev \
+        --no-scripts \
         --no-interaction \
         --no-progress \
-        --no-scripts \
         --prefer-dist \
-        --optimize-autoloader
+        --ignore-platform-reqs
 
-# ─── Etapa 2: runtime (php-fpm con extensiones, sin pcov) ────────────────────
-FROM php:8.4-fpm-alpine AS runtime
-
-# Dependencias del sistema. linux-headers requerido por ext-sockets (worker
-# AMQP de RabbitMQ usa php-amqplib que necesita sockets).
-RUN apk add --no-cache \
-        bash \
-        curl \
-        libpng \
-        libxml2 \
-        oniguruma \
-        postgresql-libs \
-        procps \
-        tini \
-        tzdata \
-    && apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS \
-        libpng-dev \
-        libxml2-dev \
-        oniguruma-dev \
-        postgresql-dev \
-        linux-headers \
-    && docker-php-ext-install -j"$(nproc)" \
-        pdo \
-        pdo_pgsql \
-        pgsql \
-        mbstring \
-        exif \
-        pcntl \
-        bcmath \
-        gd \
-        sockets \
-    && PHPREDIS_VERSION=6.2.0 \
-    && curl -fsSL "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz" | tar -xz -C /tmp \
-    && cd /tmp/phpredis-${PHPREDIS_VERSION} \
-    && phpize && ./configure --enable-redis && make -j"$(nproc)" && make install \
-    && docker-php-ext-enable redis \
-    && cd / && rm -rf /tmp/phpredis-${PHPREDIS_VERSION} \
-    && apk del .build-deps
-
-# Configuración PHP de producción (opcache JIT, expose_php off).
-RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && { \
-        echo 'opcache.enable=1'; \
-        echo 'opcache.enable_cli=0'; \
-        echo 'opcache.memory_consumption=256'; \
-        echo 'opcache.max_accelerated_files=20000'; \
-        echo 'opcache.validate_timestamps=0'; \
-        echo 'opcache.interned_strings_buffer=16'; \
-        echo 'opcache.jit_buffer_size=64M'; \
-        echo 'opcache.jit=1255'; \
-        echo 'expose_php=Off'; \
-    } > "$PHP_INI_DIR/conf.d/zz-opcache-prod.ini"
-
-# Usuario no-root estable. www-data ya existe en la imagen base (uid 82).
-ENV APP_UID=82 \
-    APP_GID=82 \
-    APP_ENV=production \
-    APP_DEBUG=false \
-    CONTAINER_ROLE=api
-
-WORKDIR /var/www/html
-
-# Copiar vendor primero (cacheable) y luego el código.
-COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
-# Ajustar permisos del runtime. storage/ y bootstrap/cache se montan como
-# emptyDir desde el chart (readOnlyRootFilesystem). Mantenemos el owner para
-# fallback en builds que no apliquen el chart.
-# Eliminamos composer.local.dist.json/composer.local.json: son artefactos dev-only.
-RUN mkdir -p storage/framework/cache/data \
-             storage/framework/sessions \
-             storage/framework/views \
-             storage/logs \
-             bootstrap/cache \
-    && rm -f composer.local.json composer.local.dist.json \
+# Autoloader optimizado con todo el código ya presente.
+RUN composer dump-autoload --optimize --no-dev --no-scripts --no-interaction \
+    && rm -f composer.local.json
+
+# ─── 2. app: código + vendor sobre la base común ─────────────────────────────
+FROM ${MAYA_PHP_BASE} AS app
+
+ARG MAYA_APP
+ARG PHP_MEMORY_LIMIT
+ARG PHP_UPLOAD_MAX
+ARG PHP_FPM_MAX_CHILDREN
+
+USER root
+
+# Límites propios de la app (el resto de php.ini viene de la base).
+RUN printf 'memory_limit = %s\nupload_max_filesize = %s\npost_max_size = %s\n' \
+        "$PHP_MEMORY_LIMIT" "$PHP_UPLOAD_MAX" "$PHP_UPLOAD_MAX" \
+        > /usr/local/etc/php/conf.d/90-app.ini \
+    && printf '[www]\npm.max_children = %s\n' "$PHP_FPM_MAX_CHILDREN" \
+        > /usr/local/etc/php-fpm.d/90-app.conf
+
+# El código es de root y solo lectura para la app; storage/ y bootstrap/cache
+# son de www-data (en k8s se montan como emptyDir).
+COPY --from=vendor --chown=root:root /build /var/www/html
+RUN mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions \
+             storage/framework/views storage/framework/testing storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# Entrypoint de producción (role-based: api | worker | scheduler | reverb).
-COPY docker-entrypoint.prod.sh /usr/local/bin/docker-entrypoint.prod.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.prod.sh
+ENV APP_NAME=${MAYA_APP}
 
-# php-fpm escucha en 9000 (FastCGI); sidecar nginx del chart hace proxy.
-# reverb escucha en 8080 cuando CONTAINER_ROLE=reverb.
-EXPOSE 9000 8080
+USER 82:82
 
-USER www-data
+# Validación en build: la app tiene que poder generar sus cachés con un entorno
+# mínimo ficticio (sin base de datos). Si una config lanza excepción o hay rutas
+# con closures, falla aquí y no en el arranque del pod.
+# hadolint ignore=DL4006
+# (la base maya/php-base define SHELL bash con pipefail; hadolint no lo ve)
+RUN set -eu; \
+    APP_KEY="base64:$(head -c 32 /dev/urandom | base64)"; \
+    export APP_KEY APP_ENV=production APP_DEBUG=false LOG_CHANNEL=stderr \
+           DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PASSWORD=build \
+           CACHE_STORE=array SESSION_DRIVER=array QUEUE_CONNECTION=sync \
+           BROADCAST_CONNECTION=log JWT_AUDIENCE=build \
+           RABBITMQ_USER=build RABBITMQ_PASSWORD=build \
+           LOG_MGMT_DB_PASSWORD=build; \
+    php artisan package:discover --no-interaction; \
+    php artisan config:cache     --no-interaction; \
+    php artisan route:cache      --no-interaction; \
+    php artisan event:cache      --no-interaction; \
+    if [ -d resources/views ]; then php artisan view:cache --no-interaction; fi; \
+    php artisan optimize:clear   --no-interaction; \
+    rm -f bootstrap/cache/*.php
 
-ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/docker-entrypoint.prod.sh"]
-# CMD por defecto: api → php-fpm en foreground. El entrypoint puede
-# sobrescribirlo según CONTAINER_ROLE (worker, scheduler, reverb).
-CMD ["php-fpm", "--nodaemonize"]
+# ─── 3. Imágenes finales ─────────────────────────────────────────────────────
+FROM app AS worker
+ARG MAYA_WORKER_CMD
+LABEL org.opencontainers.image.title="${MAYA_APP}-worker"
+ENV CONTAINER_ROLE=worker \
+    MAYA_WORKER_CMD=${MAYA_WORKER_CMD}
+CMD ["worker"]
+
+FROM app AS reverb
+LABEL org.opencontainers.image.title="${MAYA_APP}-reverb"
+ENV CONTAINER_ROLE=reverb
+CMD ["reverb"]
+
+FROM app AS api
+# Último target: es el que genera `docker build` sin --target.
+LABEL org.opencontainers.image.title="${MAYA_APP}-api"
+ENV CONTAINER_ROLE=api
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD ["curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/api/v1/health/live"]
+CMD ["api"]

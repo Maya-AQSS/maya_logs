@@ -4,7 +4,7 @@
 Sistema de gestión y visualización de logs del ecosistema Maya (CEEDCV).
 - **Backend**: Laravel 13 / PHP 8.4
 - **Frontend**: React 19 + Vite + TypeScript
-- **IdP**: Keycloak 24 (realm `maya`)
+- **IdP**: Keycloak 24 (realm `CEED`)
 - **BD**: PostgreSQL 17
 - **Colas**: RabbitMQ (Laravel worker)
 
